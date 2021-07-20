@@ -25,7 +25,6 @@
 #define check_vect(x) if ( x == NULL ) { fprintf(stderr, "Vector not defined!"); abort(); }
 
 struct _vector {
-    //value_type*   array;
     uint32_t          size; // Current Array size
     uint32_t init_capacity; // Initial Capacity (this is set at creation time)
     uint32_t      capacity; // Max capacity allocated
@@ -36,23 +35,6 @@ struct _vector {
                             // or shrunk, left over values will be
                             // properly erased. 
 } __attribute__((aligned(__WORDSIZE)));
-
-/*
-typedef struct Vector {
-        int32_t (*init_context)(void **ctxt, void *engptr);
-        int32_t (*link_iface)(void *ctxt,
-                              const unsigned char *iface,
-                              const uint16_t batchsize,
-                              int8_t qid);
-        void    (*unlink_ifaces)(void *engptr);
-        int32_t (*callback)(void *engsrcptr);
-        void    (*delete_all_channels)(Brick *brick);
-        int32_t (*create_external_link)(char *in_name, char *out_name,
-                                        Target t, void *esrcptr);
-        int32_t (*shutdown)(void *engptr);
-
-} io_module_funcs __attribute__((aligned(__WORDSIZE)));
-*/
 
 vector vector_create(size_t init_capacity, size_t data_size) {
     // Create the vector first:
