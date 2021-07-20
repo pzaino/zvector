@@ -20,7 +20,7 @@
 #include <stdbool.h>
 #include "vector.h"
 
-#define INITIAL_CAPACITY 64
+#define INITIAL_CAPACITY 4
 #define min(x,y) (((x)<(y))?(x):(y))
 #define check_vect(x) if ( x == NULL ) { fprintf(stderr, "Vector not defined!"); abort(); }
 
