@@ -15,16 +15,16 @@ I'll add more functions as I have time and also the possibility to keep the vect
 ## How does it works?
 It's very simple, it's an ANSI C99 library, no funky dependeces, so it should compile everywhere (let me know if you find any issue).
 
-The vector follows the rules of immutable data, so when you extend it it gets copied, however if you are concerned about the security you can set a special flag on each security sensitive vectors and the library will ensure to erase each elements of these flagged ones when extending or squishing the vector or deleting it.
+The vector follows the rules of immutable data. So, when you extend a vector it gets copied into a new and larger one. However, if you are concerned about the security implications of immutable data structures, you can set a special flag on each security sensitive vector you create and the library will ensure to erase each element of these flagged vectors when extending or squishing the vector or deleting it.
 
-The library tries to hide the _vector datastructure so that the usage is pretty clean and as safe as possible in C.
+The library tries to hide the _vector datastructure, this to make it easier to use the library and improve a big clean coding where possible.
 
 ## How do I use it?
-To learn the API have a look at the vector.h file in src. To learn how to use it have a look at the Unit Test cod ein tests.
+To learn the API have a look at the `vector.h` file in src. To learn how to use it have a look at the Unit Test code in tests.
 
 As general rules:
 
-Add the vector.h to your C code with:
+Add the `vector.h` to your C code with:
 
 ```
 #include "vector.h"
@@ -34,7 +34,7 @@ When compile make sure you link your code to the libvector.a as shown in the Mak
 
 Before you can use a vector you need to create one using the function `vector_create([initial elements], sizeof([your data structure]))`
 
-One important note for beginners is that whenever you try to store som edata in the vector, please remember:
+One important note for beginners is that whenever you try to store some data in the vector, please remember:
 
 * If you have defined such data as a pointer then you can just use the data name, so, for example: `vector_add( myvector, myDataPointer )`
 * If instead you have defined your data as a regular variable for example, then you need to pass it to the add function with an `&` before its name, so something like `vector_add( myvector, &myInt )`
