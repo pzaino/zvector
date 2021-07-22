@@ -1,3 +1,5 @@
+![CodeQL](https://github.com/pzaino/vector/actions/workflows/codeql-analysis.yml/badge.svg)
+
 # Vector
 This is a simple yet effective library to have dynamic vectors (dynamic arrays) in C.
 
@@ -32,7 +34,7 @@ Add the `vector.h` to your C code with:
 
 When compile make sure you link your code to the libvector.a as shown in the Makefile for the Unit Tests (in `tests`).
 
-Before you can use a vector you need to create one using the function `vector_create([initial elements], sizeof([your data structure]))`
+Before you can use a vector you need to create one using the function `vector_create([initial elements], sizeof([your data structure]), secure_wipe_true|false)`
 
 One important note for beginners is that whenever you try to store some data in the vector, please remember:
 
