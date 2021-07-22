@@ -258,9 +258,7 @@ void vect_add_at(vector v, index_int i, const void *value)
 
     // Finally add new value in at the index
     memcpy(v->array[i], value, v->data_size);
-    // *(v->array + i) = value;
-    // v->array[i] = (void **)value;
-    // Increase Vector size:
+    // Increment vector size
     v->size++;
 }
 
