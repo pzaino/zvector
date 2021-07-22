@@ -64,7 +64,12 @@ vector vect_create(size_t init_capacity, size_t data_size, bool wipe_flag)
 
     // Initialize the vector:
     v->size = 0;
-    v->data_size = data_size;
+    if (data_size == 0)
+    {
+        v->data_size = DEFAULT_DATA_SIZE;
+    }
+    else
+        v->data_size = data_size;
     if (init_capacity == 0)
     {
         v->capacity = INITIAL_CAPACITY;
