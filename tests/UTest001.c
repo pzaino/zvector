@@ -3,18 +3,21 @@
 #include <assert.h>
 #include "vector.h"
 
-int main() {
+int main()
+{
     printf("=== UTest001 ===\n");
 
     printf("1st Test: Create a vector of 10 elements and using int for the vector data:\n");
     vector v;
-    v = vector_create(10, sizeof(int));
+    v = vector_create(10, sizeof(int), false);
     printf("done.\n");
 
     printf("2nd Test: Insert 10000 elements and check if they are stored correctly:\n");
-    for(int i = 0; i < 1000000; i++) {
+    int i;
+    for (i = 0; i < 1000000; i++)
+    {
         vector_add(v, &i);
-        assert(vector_size(v) == i+1);
+        assert(vector_size(v) == i + 1);
         assert(vector_get(v, (index_int)i) == &i);
     }
     printf("done.\n");
@@ -24,8 +27,9 @@ int main() {
     printf("done.\n");
 
     printf("4th Test: Remove vector elements one by one:\n");
-    while(!vector_is_empty(v)) {
-        vector_remove_at(v, vector_size(v)-1);
+    while (!vector_is_empty(v))
+    {
+        vector_remove_at(v, vector_size(v) - 1);
     }
     printf("done.\n");
 
