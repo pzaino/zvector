@@ -13,14 +13,16 @@
  *          
  */
 
+// Include standard C libs headers
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
-#include <stdbool.h>
+
+// Include vector.h header
 #include "vector.h"
 
-#define INITIAL_CAPACITY 4
+// Useful macros
 #define min(x, y) (((x) < (y)) ? (x) : (y))
 #define check_vect(x)                           \
     if (x == NULL)                              \
@@ -29,6 +31,7 @@
         abort();                                \
     }
 
+// Define the vector data structure:
 struct _vector
 {
     uint32_t size;          // Current Array size
@@ -42,7 +45,14 @@ struct _vector
                             // properly erased.
 } __attribute__((aligned(__WORDSIZE)));
 
-vector vector_create(size_t init_capacity, size_t data_size, bool wipe_flag)
+/*************
+ ** Vector API:
+ *************/
+
+/*------------------------------------------------------------------------------*/
+// Vector Creation and Destruction:
+
+vector vect_create(size_t init_capacity, size_t data_size, bool wipe_flag)
 {
     // Create the vector first:
     vector v = (vector)malloc(sizeof(struct _vector));
@@ -67,7 +77,7 @@ vector vector_create(size_t init_capacity, size_t data_size, bool wipe_flag)
     v->wipe = wipe_flag;
 
     // Allocate memory for the vector body
-    v->array = (void *)malloc(sizeof(v->data_size) * v->capacity);
+    v->array = (void **)malloc(sizeof(void *) * v->capacity);
     if (v->array == NULL)
     {
         fprintf(stderr, "Not enough memory to allocate the vector data!");
@@ -78,7 +88,7 @@ vector vector_create(size_t init_capacity, size_t data_size, bool wipe_flag)
     return v;
 }
 
-void vector_destroy(vector v)
+void vect_destroy(vector v)
 {
     // Check if the vector exists:
     check_vect(v);
@@ -88,7 +98,8 @@ void vector_destroy(vector v)
         index_int i;
         for (i = 0; i < v->size; i++)
         {
-            v->array[i] = (void **)0; // Safely clear up the old array (security measure)
+            //v->array[i] = (void **)0; // Safely clear up the old array (security measure)
+            memset(v->array[i], 0, v->data_size);
         }
     }
 
@@ -96,8 +107,12 @@ void vector_destroy(vector v)
     free(v->array);
     free(v);
 }
+/*------------------------------------------------------------------------------*/
 
-bool vector_is_empty(vector v)
+/*------------------------------------------------------------------------------*/
+// Vector Structural Information report:
+
+bool vect_is_empty(vector v)
 {
     // Check if the vector exists
     check_vect(v);
@@ -105,7 +120,7 @@ bool vector_is_empty(vector v)
     return v->size == 0;
 }
 
-index_int vector_size(vector v)
+index_int vect_size(vector v)
 {
     // Check if the vector exists
     check_vect(v);
@@ -113,7 +128,12 @@ index_int vector_size(vector v)
     return v->size;
 }
 
-static void vector_double_capacity(vector v)
+/*------------------------------------------------------------------------------*/
+
+/*------------------------------------------------------------------------------*/
+// Vector Capacity management functions:
+
+static void vect_double_capacity(vector v)
 {
     // Check if the vector exists:
     check_vect(v);
@@ -132,7 +152,10 @@ static void vector_double_capacity(vector v)
     {
         new_array[i] = v->array[i];
         if (v->wipe)
-            v->array[i] = (void **)0; // Safely clear up the old array (security measure)
+        {
+            // v->array[i] = (void **)0; // Safely clear up the old array (security measure)
+            memset(v->array[i], 0, v->data_size);
+        }
     }
 
     free(v->array);
@@ -140,7 +163,7 @@ static void vector_double_capacity(vector v)
     v->capacity = new_capacity;
 }
 
-static void vector_half_capacity(vector v)
+static void vect_half_capacity(vector v)
 {
     // Check if the vector exists:
     check_vect(v);
@@ -166,7 +189,10 @@ static void vector_half_capacity(vector v)
     {
         new_array[i] = v->array[i];
         if (v->wipe)
-            v->array[i] = (void *)0; // safely clear up the old array (security measure)
+        {
+            // v->array[i] = (void *)0; // safely clear up the old array (security measure)
+            memset(v->array[i], 0, v->data_size);
+        }
     }
 
     // Free old array:
@@ -178,7 +204,12 @@ static void vector_half_capacity(vector v)
     v->size = min(v->size, new_capacity);
 }
 
-void vector_clear(vector v)
+/*------------------------------------------------------------------------------*/
+
+/*------------------------------------------------------------------------------*/
+// Vector Data Storage functions:
+
+void vect_clear(vector v)
 {
     // check if the vector exists:
     check_vect(v);
@@ -187,27 +218,65 @@ void vector_clear(vector v)
     v->size = 0;
     while (v->capacity > v->init_capacity)
     {
-        vector_half_capacity(v);
+        vect_half_capacity(v);
     }
 }
 
-void vector_add(vector v, void *const value)
+// The following function will add an element to the vector
+// and before doing so it will move the existsting elements
+// around to make space for the new element:
+void vect_add_at(vector v, index_int i, const void *value)
 {
-    // Check if the vector exists:
+    // check if the vector exists:
     check_vect(v);
 
-    // Check if the addition of an element has to trigger
-    // vector grown:
-    if (v->size >= v->capacity)
+    // Check if the provided index is out of bounds:
+    if (i < 0 || i > v->size)
     {
-        vector_double_capacity(v);
+        fprintf(stderr, "Index out of bounds!");
+        abort();
     }
 
-    // Add new element
-    v->array[v->size++] = (void **)value;
+    // Check if we need to expand the vector:
+    if (v->size >= v->capacity)
+    {
+        vect_double_capacity(v);
+    }
+
+    // Allocat ememory for the new item:
+    v->array[v->size] = (void *)malloc(v->data_size);
+
+    // Mode vector elements around were we are adding the new one:
+    if (v->size > 0)
+    {
+        index_int j;
+        for (j = v->size; j > i; j--)
+        {
+            memcpy(v->array[j], v->array[j - 1], v->data_size);
+        }
+    }
+
+    // Finally add new value in at the index
+    memcpy(v->array[i], value, v->data_size);
+    // *(v->array + i) = value;
+    // v->array[i] = (void **)value;
+    // Increase Vector size:
+    v->size++;
 }
 
-void *vector_get(vector v, index_int i)
+void vect_add(vector v, const void *value)
+{
+    // Add an item at the END of the vector
+    vect_add_at(v, v->size, value);
+}
+
+void vect_add_front(vector v, const void *value)
+{
+    // Add an item at the FRONT of the vector
+    vect_add_at(v, 0, value);
+}
+
+void *vect_get_at(vector v, index_int i)
 {
     // check if the vector exists:
     check_vect(v);
@@ -223,7 +292,25 @@ void *vector_get(vector v, index_int i)
     return v->array[i];
 }
 
-void vector_put(vector v, index_int i, void *value)
+void *vect_get(vector v)
+{
+    // check if the vector exists:
+    check_vect(v);
+
+    // Return found element:
+    return v->array[v->size - 1];
+}
+
+void *vect_get_front(vector v)
+{
+    // check if the vector exists:
+    check_vect(v);
+
+    // Return found element:
+    return v->array[0];
+}
+
+void vect_put_at(vector v, index_int i, const void *value)
 {
     // check if the vector exists:
     check_vect(v);
@@ -239,41 +326,25 @@ void vector_put(vector v, index_int i, void *value)
     memcpy(v->array[i], value, v->data_size);
 }
 
-// The following function will add an element to the vector
-// and before doing so it will move the existsting elements
-// around to make space for the new element:
-void vector_add_at(vector v, index_int i, void *value)
+void vect_put(vector v, const void *value)
 {
     // check if the vector exists:
     check_vect(v);
 
-    // Check if the provided index is out of bounds:
-    if (i < 0 || i >= v->size)
-    {
-        fprintf(stderr, "Index out of bounds!");
-        abort();
-    }
-
-    // Check if we need to expand the vector:
-    if (v->size >= v->capacity)
-    {
-        vector_double_capacity(v);
-    }
-
-    // Mode vector elements around were we are adding the new one:
-    index_int j;
-    for (i = v->size; j > i; j--)
-    {
-        memcpy(v->array[i], v->array[j - 1], v->data_size);
-    }
-    // Finally add new value in at the index
-    memcpy(v->array[i], value, v->data_size);
-
-    // Increase Vector size:
-    v->size++;
+    // Add value at the specified index:
+    memcpy(v->array[v->size], value, v->data_size);
 }
 
-void *vector_remove_at(vector v, index_int i)
+void vect_put_front(vector v, const void *value)
+{
+    // check if the vector exists:
+    check_vect(v);
+
+    // Add value at the specified index:
+    memcpy(v->array[0], value, v->data_size);
+}
+
+void *vect_remove_at(vector v, index_int i)
 {
     // check if the vector exists:
     check_vect(v);
@@ -301,8 +372,20 @@ void *vector_remove_at(vector v, index_int i)
     // Check if we need to shrink the vector:
     if (4 * v->size < v->capacity)
     {
-        vector_half_capacity(v);
+        vect_half_capacity(v);
     }
 
     return rval;
 }
+
+void *vect_remove(vector v)
+{
+    return vect_remove_at(v, v->size);
+}
+
+void *vect_remove_front(vector v)
+{
+    return vect_remove_at(v, 0);
+}
+
+/*------------------------------------------------------------------------------*/

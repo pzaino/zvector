@@ -21,7 +21,7 @@ $(info "$(TESTBINS)")
 LIBDIR=lib
 LIB=$(LIBDIR)/lib$(LIBNAME).a
 
-CFLAGS+= -Wall 
+CFLAGS+=-Wall
 LDFLAGS+=
 
 .PHONY: all
@@ -34,6 +34,9 @@ core: $(LIBDIR) $(LIB)
 
 test: $(TEST)/bin $(TESTBINS)
 	for test in $(TESTBINS) ; do ./$(TESTBIN)$$test ; done 
+
+debug: CFLAGS+=-ggdb3
+debug: core test
 
 $(OBJF): $(SRCF)
 	$(info Building $(OBJF))
