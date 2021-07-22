@@ -30,11 +30,21 @@ Add the vector.h to your C code with:
 #include "vector.h"
 ```
 
-When compile make sure you link your code to the libvector.a (or .o) as showed in the Makefile for the Unit Tests.
+When compile make sure you link your code to the libvector.a as shown in the Makefile for the Unit Tests (in `tests`).
 
 Before you can use a vector you need to create one using the function `vector_create([initial elements], sizeof([your data structure]))`
 
+One important note for beginners is that whenever you try to store som edata in the vector, please remember:
+
+* If you have defined such data as a pointer then you can just use the data name, so, for example: `vector_add( myvector, myDataPointer )`
+* If instead you have defined your data as a regular variable for example, then you need to pass it to the add function with an `&` before its name, so something like `vector_add( myvector, &myInt )`
+
+Don't worry, in both cases the actual data contained in your reference will be copied (aka stored) in the vector, so if you free your reference or leave the function that defined it (as long as the vector scope is above such function), the data you've stored in the vector will persist.
+
 ## How do I build it?
 if you have GCC installed then use the Makefile provided, I'll add more support for other compilers when I'll have time.
+
+Wheneever you build it the Unit Tests will be executed as part of the build (I am a huge supported of tests automation, so if you are new to this you can use this library to check how powerful can be test automation and how they can help you to get faster at coding and releasing code!).
+
 
 Thanks!
