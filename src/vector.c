@@ -426,8 +426,28 @@ void *vect_remove_front(vector v)
 
 void vect_apply(vector v, void (*f)(void *))
 {
+    // check if the vector exists:
+    check_vect(v);
+
+    index_int i;
+    for (i = 0; i < v->size; i++)
+    {
+        (*f)(v->array[i]);
+    }
 }
 
 void vect_swap(vector v, index_int i1, index_int i2)
 {
+    // check if the vector exists:
+    check_vect(v);
+
+    void *temp = (void *)malloc(sizeof(void *));
+    temp = v->array[i1];
+    v->array[i2] = v->array[i1];
+    v->array[i1] = temp;
+    if (v->wipe)
+        temp = NULL;
+    free(temp);
 }
+
+/*------------------------------------------------------------------------------*/
