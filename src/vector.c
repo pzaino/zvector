@@ -209,6 +209,34 @@ static void vect_half_capacity(vector v)
     v->size = min(v->size, new_capacity);
 }
 
+void vect_shrink(vector v)
+{
+    // Check if the vector exists:
+    check_vect(v);
+
+    if (vect_is_empty(v))
+    {
+        fprintf(stderr, "Empty vector can't be srunk!");
+        abort();
+    }
+
+    index_int size = 0;
+    if (v->size < v->init_capacity)
+    {
+        size = v->init_capacity;
+    }
+    else
+        size = v->size;
+
+    v->capacity = size + 1;
+    v->array = (void **)realloc(v->array, sizeof(void *) * v->capacity);
+    if (v->array == NULL)
+    {
+        fprintf(stderr, "No memory available to shrink the vector!");
+        abort();
+    }
+}
+
 /*------------------------------------------------------------------------------*/
 
 /*------------------------------------------------------------------------------*/
@@ -230,7 +258,7 @@ void vect_clear(vector v)
 // The following function will add an element to the vector
 // and before doing so it will move the existsting elements
 // around to make space for the new element:
-void vect_add_at(vector v, index_int i, const void *value)
+void vect_add_at(vector v, const void *value, index_int i)
 {
     // check if the vector exists:
     check_vect(v);
@@ -270,13 +298,13 @@ void vect_add_at(vector v, index_int i, const void *value)
 void vect_add(vector v, const void *value)
 {
     // Add an item at the END of the vector
-    vect_add_at(v, v->size, value);
+    vect_add_at(v, value, v->size);
 }
 
 void vect_add_front(vector v, const void *value)
 {
     // Add an item at the FRONT of the vector
-    vect_add_at(v, 0, value);
+    vect_add_at(v, value, 0);
 }
 
 void *vect_get_at(vector v, index_int i)
@@ -313,7 +341,7 @@ void *vect_get_front(vector v)
     return v->array[0];
 }
 
-void vect_put_at(vector v, index_int i, const void *value)
+void vect_put_at(vector v, const void *value, index_int i)
 {
     // check if the vector exists:
     check_vect(v);
@@ -392,3 +420,14 @@ void *vect_remove_front(vector v)
 }
 
 /*------------------------------------------------------------------------------*/
+
+/*------------------------------------------------------------------------------*/
+// Vector Data Manipoulation functions
+
+void vect_apply(vector v, void (*f)(void *))
+{
+}
+
+void vect_swap(vector v, index_int i1, index_int i2)
+{
+}

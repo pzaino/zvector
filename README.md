@@ -48,5 +48,4 @@ if you have GCC installed then use the Makefile provided, I'll add more support 
 
 Wheneever you build it the Unit Tests will be executed as part of the build (I am a huge supported of tests automation, so if you are new to this you can use this library to check how powerful can be test automation and how they can help you to get faster at coding and releasing code!).
 
-
 Thanks!
