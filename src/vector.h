@@ -1,20 +1,25 @@
 #ifndef ZFP_VECTOR_H
 #define ZFP_VECTOR_H
 
-// Include some standard C lib header
-#include <stdint.h>
-#include <stdbool.h>
+/*
+ *    Name: Vector
+ * Purpose: Library to use Dynamic Arrays (Vectors) in C Language
+ *  Author: Paolo Fabio Zaino
+ *  Domain: General
+ * License: Copyright by Paolo Fabio Zaino, all right reserved
+ *          Distributed under MIT license
+ *          
+ */
 
 // Include vector configuration header
 #include "config.h"
 
 // Declare required structs:
-typedef uint32_t index_int;
-
 typedef struct _vector *vector;
-typedef int32_t value_type;
 
-// Public API declaration:
+/*****************************
+ ** Public API declaration: **
+ *****************************/
 
 // Vector contruction/Destruction and memory control:
 vector vect_create(size_t, size_t, bool);
