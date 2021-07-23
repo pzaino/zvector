@@ -265,11 +265,21 @@ void vect_clear(vector v)
     // check if the vector exists:
     check_vect(v);
 
-    // TODO: The following implementation is not secure, so I need to reimplement it in a more secure way
     v->size = 0;
     while (v->capacity > v->init_capacity)
     {
         vect_half_capacity(v);
+    }
+
+    if (v->wipe)
+    {
+        // Secure Erase the portion of the storage that
+        // has not been touched:
+        index_int i2;
+        for (i2 = 0; i2 < v->size; i2++)
+        {
+            memset(v->array[i2], 0, v->data_size);
+        }
     }
 }
 
