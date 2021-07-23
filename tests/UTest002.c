@@ -37,14 +37,19 @@ void add_a_car(vector v)
 
 int main()
 {
-    printf("=== UTest002 ===\n");
+    // Setup tests:
+    char *testGrp = "002";
+    uint8_t testID = 1;
 
-    printf("1st Test: Create a vector of 2 elements and using Car for the vector data:\n");
+    printf("=== UTest%s ===\n", testGrp);
+
+    printf("Test %s_%d: Create a vector of 2 elements and using Car for the vector data:\n", testGrp, testID);
     vector v;
     v = vect_create(2, sizeof(car), true);
     printf("done.\n");
+    testID++;
 
-    printf("2nd Test: Insert 3 elements of type Car, then free the original car element and check if they are stored correctly:\n");
+    printf("Test %s_%d: Insert 3 elements of type Car, then free the original car element and check if they are stored correctly:\n", testGrp, testID);
     car car1;
     strcpy(car1.name, "Daimler-Benz");
     car1.year = 1939;
@@ -80,30 +85,46 @@ int main()
     add_a_car(v);
 
     printf("done.\n");
+    testID++;
 
-    printf("3rd Test: Extract a car from the vector:\n");
+    printf("Test %s_%d: Extract a car from the vector:\n", testGrp, testID);
     car *carX;
     carX = (car *)vect_get_at(v, 2);
     printf("done.\n");
+    testID++;
 
-    printf("4th Test: Display the content of the extracted Car:\n");
+    printf("Test %s_%d: Display the content of the extracted Car:\n", testGrp, testID);
     printf("Car name: %s, year: %d, speed: %f\n", carX->name, carX->year, carX->speed);
     assert(!strcmp(carX->name, test_name));
     assert(carX->year == test_year);
     assert(carX->speed == test_speed);
     printf("done.\n");
+    testID++;
 
-    printf("5th Test: Clear vector:\n");
+    printf("Test %s_%d: Swap 1st vector element with last and show the result:\n", testGrp, testID);
+    vect_swap(v, 0, vect_size(v));
+
+    car *carEnd;
+    carEnd = (car *)vect_get(v);
+    printf("Car name: %s, year: %d, speed: %f\n", carEnd->name, carEnd->year, carEnd->speed);
+    printf("done.\n");
+    testID++;
+
+    printf("Test %s_%d: Clear vector:\n", testGrp, testID);
     vect_clear(v);
     printf("done.\n");
+    testID++;
 
-    printf("6th Test: Check if vector size is now 0 (zero):\n");
+    printf("Test %s_%d: Check if vector size is now 0 (zero):\n", testGrp, testID);
     assert(vect_size(v) == 0);
     printf("done.\n");
+    testID++;
 
-    printf("7th Test: destroy the vector:\n");
+    printf("Test %s_%d: destroy the vector:\n", testGrp, testID);
     vect_destroy(v);
     printf("done.\n");
+
+    printf("================\n");
 
     return 0;
 }

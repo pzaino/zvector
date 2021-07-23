@@ -143,7 +143,24 @@ void *vect_remove_at(vector, index_int);
 void *vect_remove_front(vector);
 
 // Vector Data manipoulation functions:
+
+/*
+ * vect_apply allows you to apply a C function to 
+ * each item in the vector, so you just pass the vector, 
+ * the function you want to execute against each item on
+ * a vector and make sure such function is declared and
+ * defined to accept a "void *" pointer which will be the
+ * pointer to the single item in the vector passed to your
+ * function.
+ */
 void vect_apply(vector, void (*f)(void *));
+
+/*
+ * vect_swap is a function that allows you to swap two
+ * items in the same vector.
+ * You just pass the vector and the index of both the 
+ * two items.
+ */
 void vect_swap(vector, index_int, index_int);
 
 #endif // ZFP_VECTOR_H

@@ -441,12 +441,17 @@ void vect_swap(vector v, index_int i1, index_int i2)
     // check if the vector exists:
     check_vect(v);
 
+    // Let's allocate some meory for the temporary pointer:
     void *temp = (void *)malloc(sizeof(void *));
-    temp = v->array[i1];
+
+    // Let's swap items:
+    temp = v->array[i2];
     v->array[i2] = v->array[i1];
     v->array[i1] = temp;
     if (v->wipe)
         temp = NULL;
+
+    // We are done, let's clean up memory
     free(temp);
 }
 
