@@ -145,7 +145,7 @@ static void vect_double_capacity(vector v)
 
     // Get actual capacity and double it
     index_int new_capacity = 2 * v->capacity;
-    void **new_array = (void *)malloc(sizeof(v->data_size) * new_capacity);
+    void **new_array = (void **)malloc(sizeof(v->data_size) * new_capacity);
     if (new_array == NULL)
     {
         fprintf(stderr, "Not enough memory to extend the vector capacity!");
@@ -156,11 +156,6 @@ static void vect_double_capacity(vector v)
     for (i = 0; i < v->size; i++)
     {
         new_array[i] = v->array[i];
-        if (v->wipe)
-        {
-            // v->array[i] = (void **)0; // Safely clear up the old array (security measure)
-            memset(v->array[i], 0, v->data_size);
-        }
     }
 
     free(v->array);
@@ -181,22 +176,30 @@ static void vect_half_capacity(vector v)
 
     // Get actual Capacity and halve it
     index_int new_capacity = v->capacity / 2;
-    void **new_array = (void *)malloc(sizeof(v->data_size) * new_capacity);
+    void **new_array = (void **)malloc(sizeof(v->data_size) * new_capacity);
     if (new_array == NULL)
     {
         fprintf(stderr, "Not enough memory to resize the vector!");
         abort();
     }
 
+    // Store old capacity, we'll need it for safe erase if enabled
+    index_int old_size = v->size;
+
     // Rearraange the vector data:
     index_int i;
     for (i = 0; i < min(v->size, new_capacity); i++)
     {
         new_array[i] = v->array[i];
-        if (v->wipe)
+    }
+    if (v->wipe)
+    {
+        // Secure Erase the portion of the old storage that
+        // is going to be released in a bit:
+        index_int i2;
+        for (i2 = i + 1; i2 < old_size; i2++)
         {
-            // v->array[i] = (void *)0; // safely clear up the old array (security measure)
-            memset(v->array[i], 0, v->data_size);
+            memset(v->array[i2], 0, v->data_size);
         }
     }
 
@@ -227,6 +230,21 @@ void vect_shrink(vector v)
     }
     else
         size = v->size;
+
+    if (v->wipe)
+    {
+        // Store old capacity, we'll need it for safe erase if enabled
+        index_int old_size = v->size;
+        index_int delta = old_size - size;
+
+        // Secure Erase the portion of the old storage that
+        // is going to be released in a bit:
+        index_int i2;
+        for (i2 = delta + 1; i2 < old_size; i2++)
+        {
+            memset(v->array[i2], 0, v->data_size);
+        }
+    }
 
     v->capacity = size + 1;
     v->array = (void **)realloc(v->array, sizeof(void *) * v->capacity);
@@ -276,11 +294,11 @@ void vect_add_at(vector v, const void *value, index_int i)
         vect_double_capacity(v);
     }
 
-    // Allocat ememory for the new item:
+    // Allocate memory for the new item:
     v->array[v->size] = (void *)malloc(v->data_size);
 
-    // Mode vector elements around were we are adding the new one:
-    if (v->size > 0)
+    // Move vector elements around were we are adding the new one:
+    if ((i < v->size) && (v->size > 0))
     {
         index_int j;
         for (j = v->size; j > i; j--)
@@ -448,8 +466,6 @@ void vect_swap(vector v, index_int i1, index_int i2)
     temp = v->array[i2];
     v->array[i2] = v->array[i1];
     v->array[i1] = temp;
-    if (v->wipe)
-        temp = NULL;
 
     // We are done, let's clean up memory
     free(temp);

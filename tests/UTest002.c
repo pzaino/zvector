@@ -17,9 +17,15 @@ typedef struct Car
     uint32_t year;
 } car;
 
+void clear_str(char *str, uint32_t numchars)
+{
+    memset(str, 0, numchars);
+}
+
 void add_a_car(vector v)
 {
     car car3;
+    clear_str(car3.name, 255); // Just to make sure the string is empty!
     strcpy(car3.name, "Hennessey Venom GT");
     car3.year = 2010;
     car3.speed = 270;
@@ -49,13 +55,15 @@ int main()
     printf("done.\n");
     testID++;
 
-    printf("Test %s_%d: Insert 3 elements of type Car, then free the original car element and check if they are stored correctly:\n", testGrp, testID);
+    printf("Test %s_%d: Insert 3 elements of type Car and check if they are stored correctly (for the 3rd car use an external function and data stored on the stack):\n", testGrp, testID);
     car car1;
+    clear_str(car1.name, 255); // Just to make sure the string is empty!
     strcpy(car1.name, "Daimler-Benz");
     car1.year = 1939;
     car1.speed = 394.71;
 
     car car2;
+    clear_str(car2.name, 255); // Just to make sure the string is empty!
     strcpy(car2.name, "Koenigsegg One:1");
     car2.year = 2014;
     car2.speed = 273;
@@ -68,6 +76,7 @@ int main()
     car carA = *((car *)vect_get_at(v, 0));
     // Let's check if the name is the same as the original car we have inserted:
     assert(!strcmp(carA.name, car1.name));
+    printf("1st Car added name: %s, year: %d, speed: %f\n", carA.name, carA.year, carA.speed);
 
     // Let's add another car:
     vect_add(v, &car2);
@@ -75,34 +84,31 @@ int main()
     assert(vect_size(v) == 2);
 
     // Get last car added
-    car carY = *((car *)vect_get(v));
-    printf("2nd Car added name: %s, year: %d, speed: %f\n", carY.name, carY.year, carY.speed);
+    car carB = *((car *)vect_get(v));
+    printf("2nd Car added name: %s, year: %d, speed: %f\n", carB.name, carB.year, carB.speed);
 
     // Add the 3rd car from a fuction where the func
     // will create a car on the stack and then we'll
     // check the vector for the old values in this
     // funct.
+    printf("Now adding the 3rd car from a separate function, with data allocated on the stack...\n");
     add_a_car(v);
 
     printf("done.\n");
     testID++;
 
-    printf("Test %s_%d: Extract a car from the vector:\n", testGrp, testID);
-    car *carX;
-    carX = (car *)vect_get_at(v, 2);
-    printf("done.\n");
-    testID++;
-
-    printf("Test %s_%d: Display the content of the extracted Car:\n", testGrp, testID);
-    printf("Car name: %s, year: %d, speed: %f\n", carX->name, carX->year, carX->speed);
-    assert(!strcmp(carX->name, test_name));
-    assert(carX->year == test_year);
-    assert(carX->speed == test_speed);
+    printf("Test %s_%d: Extract last car from the vector and verify if it's correct:\n", testGrp, testID);
+    // carC is defined as a point and so we do not need the extra *() around (car *)vect_get_at()
+    car *carC = (car *)vect_get(v);
+    printf("Car name: %s, year: %d, speed: %f\n", carC->name, carC->year, carC->speed);
+    assert(!strcmp(carC->name, test_name));
+    assert(carC->year == test_year);
+    assert(carC->speed == test_speed);
     printf("done.\n");
     testID++;
 
     printf("Test %s_%d: Swap 1st vector element with last and show the result:\n", testGrp, testID);
-    vect_swap(v, 0, vect_size(v));
+    vect_swap(v, 0, vect_size(v) - 1);
 
     car *carEnd;
     carEnd = (car *)vect_get(v);
@@ -123,6 +129,7 @@ int main()
     printf("Test %s_%d: destroy the vector:\n", testGrp, testID);
     vect_destroy(v);
     printf("done.\n");
+    testID++;
 
     printf("================\n");
 

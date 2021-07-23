@@ -5,14 +5,19 @@
 
 int main()
 {
-    printf("=== UTest001 ===\n");
+    // Setup tests:
+    char *testGrp = "001";
+    uint8_t testID = 1;
 
-    printf("1st Test: Create a vector of 10 elements and using int for the vector data:\n");
+    printf("=== UTest%s ===\n", testGrp);
+
+    printf("Test %s_%d: Create a vector of 10 elements and using int for the vector data:\n", testGrp, testID);
     vector v;
     v = vect_create(10, sizeof(int), false);
     printf("done.\n");
+    testID++;
 
-    printf("2nd Test: Insert 10000 elements and check if they are stored correctly:\n");
+    printf("Test %s_%d: Insert 10000 elements and check if they are stored correctly:\n", testGrp, testID);
     int i;
     for (i = 0; i < 1000000; i++)
     {
@@ -27,29 +32,37 @@ int main()
         assert(value == i);
     }
     printf("done.\n");
+    testID++;
 
-    printf("3rd Test: check if the size of the vector is now 10000:\n");
+    printf("Test %s_%d: check if the size of the vector is now 10000:\n", testGrp, testID);
     assert(vect_size(v) == 1000000);
     printf("done.\n");
+    testID++;
 
-    printf("4th Test: Remove vector elements one by one:\n");
+    printf("Test %s_%d: Remove vector elements one by one:\n", testGrp, testID);
     while (!vect_is_empty(v))
     {
         vect_remove_at(v, vect_size(v) - 1);
     }
     printf("done.\n");
+    testID++;
 
-    printf("5th Test: check if vector is empty:\n");
+    printf("Test %s_%d: check if vector is empty:\n", testGrp, testID);
     assert(vect_is_empty(v));
     printf("done.\n");
+    testID++;
 
-    printf("6th Test: Check if vector size is now 0 (zero):\n");
+    printf("Test %s_%d: Check if vector size is now 0 (zero):\n", testGrp, testID);
     assert(vect_size(v) == 0);
     printf("done.\n");
+    testID++;
 
-    printf("7th Test: destroy the vector:\n");
+    printf("Test %s_%d: destroy the vector:\n", testGrp, testID);
     vect_destroy(v);
     printf("done.\n");
+    testID++;
+
+    printf("================\n");
 
     return 0;
 }
