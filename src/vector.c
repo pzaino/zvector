@@ -452,7 +452,7 @@ void *vect_remove_front(vector v)
 /*------------------------------------------------------------------------------*/
 // Vector Data Manipoulation functions
 
-void vect_apply(vector v, void (*f)(void *))
+void vect_apply(vector v, void *(*f)(void *))
 {
     // check if the vector exists:
     check_vect(v);
@@ -460,7 +460,7 @@ void vect_apply(vector v, void (*f)(void *))
     index_int i;
     for (i = 0; i < v->size; i++)
     {
-        (*f)(v->array[i]);
+        v->array[i] = (*f)(v->array[i]);
     }
 }
 

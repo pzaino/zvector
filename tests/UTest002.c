@@ -107,12 +107,15 @@ int main()
     printf("done.\n");
     testID++;
 
-    printf("Test %s_%d: Swap 1st vector element with last and show the result:\n", testGrp, testID);
+    printf("Test %s_%d: Swap 1st vector element with last, show the results and check if it's correct:\n", testGrp, testID);
     vect_swap(v, 0, vect_size(v) - 1);
 
     car *carEnd;
     carEnd = (car *)vect_get(v);
     printf("Car name: %s, year: %d, speed: %f\n", carEnd->name, carEnd->year, carEnd->speed);
+    assert(!strcmp(car1.name, carEnd->name));
+    assert(car1.year == carEnd->year);
+    assert(car1.speed == carEnd->speed);
     printf("done.\n");
     testID++;
 

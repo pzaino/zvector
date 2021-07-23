@@ -151,9 +151,13 @@ void *vect_remove_front(vector);
  * a vector and make sure such function is declared and
  * defined to accept a "void *" pointer which will be the
  * pointer to the single item in the vector passed to your
- * function.
+ * function. The function has to return a "void *" and you
+ * can use the element storage passed to you to store your 
+ * result and return it to the vect_apply that will ensure
+ * to store the result in the appropriate vector storage
+ * element.
  */
-void vect_apply(vector, void (*f)(void *));
+void vect_apply(vector, void *(*f)(void *));
 
 /*
  * vect_swap is a function that allows you to swap two
