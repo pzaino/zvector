@@ -81,11 +81,11 @@ vector vect_create(size_t init_capacity, size_t data_size, bool wipe_flag)
     v->init_capacity = v->capacity;
     v->wipe = wipe_flag;
 
-    // Allocate memory for the vector body
+    // Allocate memory for the vector storage area
     v->array = (void **)malloc(sizeof(void *) * v->capacity);
     if (v->array == NULL)
     {
-        fprintf(stderr, "Not enough memory to allocate the vector data!");
+        fprintf(stderr, "Not enough memory to allocate the vector storage area!");
         abort();
     }
 
@@ -216,7 +216,7 @@ void vect_shrink(vector v)
 
     if (vect_is_empty(v))
     {
-        fprintf(stderr, "Empty vector can't be srunk!");
+        fprintf(stderr, "Empty vector can't be shrank!");
         abort();
     }
 
