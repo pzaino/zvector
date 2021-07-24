@@ -43,7 +43,7 @@ THREAD_SAFE_BUILD=1
 ###############################################################################
 # Automated part of th Makefile:
 
-ifeq (THREAD_SAFE_BUILD, 1)
+ifeq ($(THREAD_SAFE_BUILD), 1)
 LDFLAGS+=-lpthread
 CODE_MACROS+=-DTHREAD_SAFE
 endif

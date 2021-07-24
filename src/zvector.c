@@ -9,7 +9,8 @@
  * Credits: This Library was inspired by the work of quite few, 
  *          apologies if I forgot to  mention them all!
  *
- *          Dimitros Michail (Dynamic Array in C)
+ *          Gnome Team (GArray demo)
+ *          Dimitros Michail (Dynamic Array in C presentation)
  *          
  */
 
@@ -87,6 +88,15 @@ vector vect_create(size_t init_capacity, size_t data_size, bool wipe_flag)
     }
     v->init_capacity = v->capacity;
     v->wipe = wipe_flag;
+
+#   ifdef THREAD_SAFE
+    v->lock = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
+    if (v->lock == NULL)
+    {
+        fprintf(stderr, "Not enough memory to allocate the vector!");
+        abort();
+    }   
+#   endif
 
     // Allocate memory for the vector storage area
     v->array = (void **)malloc(sizeof(void *) * v->capacity);
