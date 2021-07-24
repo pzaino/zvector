@@ -55,6 +55,8 @@ Don't worry, in both cases the actual data contained in your reference will be c
 ## How do I build it?
 if you have GCC installed then use the Makefile provided, I'll add more support for other compilers when I'll have time.
 
-Wheneever you build it the Unit Tests will be executed as part of the build (I am a huge supported of tests automation, so if you are new to this you can use this library to check how powerful can be test automation and how they can help you to get faster at coding and releasing code!).
+Wheneever you build it the Unit Tests and Integration Tests will be build and executed as part of the library build process (I am a huge supporter of Tests Automation, Test Driven Development and BDD, so if you are new to this you can use this library to check how powerful can be test automation and how it can help you to get faster at coding and releasing code!).
+
+Have fun and happy coding, and if you'd like drop me a line telling me how you've used this library in your own projects,
 
 Thanks!
