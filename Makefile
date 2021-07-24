@@ -3,6 +3,7 @@
 #      Author: Paolo Fabio Zaino
 #     License: Copyright by Paolo Fabio Ziano, all rights reserved.
 # 			   Distributed under MIT license (read the MIT license for details)
+#
 # Description: This Makefile is intended to be reusable to build many types of
 #			   C Libraries and it will also build and execute automatically all
 #			   the provided Unit and Integration tests at every build.
@@ -21,6 +22,10 @@ CC=gcc
 CFLAGS+=-std=c99 -Wall -I./src
 LDFLAGS+=
 
+# If you want to pass some MACROS to your code you can use the following variable
+# just add your -D<MY_MACRO>:
+CODE_MACROS+=
+
 # Configure Library name:
 LIBNAME=zvector
 # Configure desired directory where to store the compiled library:
@@ -36,7 +41,10 @@ TEST=tests
 TESTBIN=$(TEST)/bin
 
 # Does the library is built to be thread safe? (and so it uses mutex etc)?
+# Set it to 0 to disable thread safe code and set it to 1 to enable the thread
+# safe code within the library:
 THREAD_SAFE_BUILD=1
+
 #
 ###############################################################################
 
@@ -44,8 +52,8 @@ THREAD_SAFE_BUILD=1
 # Automated part of th Makefile:
 
 ifeq ($(THREAD_SAFE_BUILD), 1)
-LDFLAGS+=-lpthread
-CODE_MACROS+=-DTHREAD_SAFE
+LDFLAGS+= -lpthread
+CODE_MACROS+= -DTHREAD_SAFE
 endif
 
 SRCF=$(wildcard $(SRC)/*.c)
@@ -76,7 +84,8 @@ core: $(LIBDIR) $(LIB)
 test: $(TEST)/bin $(TESTBINS)
 	for test in $(TESTBINS) ; do ./$(TESTBIN)$$test ; done 
 
-debug: CFLAGS+=-ggdb3
+debug: CFLAGS+= -ggdb3
+debug: CODE_MACROS+= -DDEBUG
 debug: core test
 
 $(OBJF): $(SRCF)
