@@ -370,6 +370,12 @@ void vect_add_at(vector v, const void *value, zvect_index i)
 #   endif
 }
 
+void vect_push(vector v, const void *value)
+{
+     // Add an item at the END of the vector
+    vect_add_at(v, value, v->size);   
+}
+
 void vect_add(vector v, const void *value)
 {
     // Add an item at the END of the vector
@@ -494,9 +500,14 @@ void *vect_remove_at(vector v, zvect_index i)
     return rval;
 }
 
+void *vect_pop(vector v)
+{
+    return vect_remove_at(v, v->size - 1);
+}
+
 void *vect_remove(vector v)
 {
-    return vect_remove_at(v, v->size);
+    return vect_remove_at(v, v->size - 1);
 }
 
 void *vect_remove_front(vector v)

@@ -62,6 +62,25 @@ void vect_clear(vector);
 // Vector Data Storage functions:
 
 /*
+ * vect_push and vect_pop are used to use the
+ * vector as a dynamic stack.
+ * 
+ * vect_push(v, 3)      pushes the element 3 at 
+ *                      the top of the vector
+ *                      as a stack would do.
+ * 
+ * vect_pop(v)          pops (returns) the element 
+ *                      at the top of the vector as
+ *                      a regular pop would do with
+ *                      a stack. Remember when you
+ *                      use vect_pop the element you
+ *                      receive is also removed from
+ *                      the vector!
+ */
+void vect_push(vector, const void *);
+void *vect_pop(vector);
+
+/*
  * vect_add adds a new item into the vector and,
  * if required, will also reorganize the vector.
  * 
