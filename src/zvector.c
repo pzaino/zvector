@@ -22,7 +22,7 @@
 // Include vector.h header
 #include "zvector.h"
 
-#ifdef ZVECT_THREAD_SAFE
+#ifdef THREAD_SAFE
 #include <pthread.h>
 #endif
 
@@ -47,7 +47,7 @@ struct _vector
                                 // every time the vector is extended
                                 // or shrunk, left over values will be
                                 // properly erased.
-#   ifdef ZVECT_THREAD_SAFE
+#   ifdef THREAD_SAFE
     pthread_mutex_t *lock;      // Vector's mutex for thread safe operations
 #   endif
 } __attribute__((aligned(__WORDSIZE)));
@@ -105,7 +105,7 @@ void vect_destroy(vector v)
     // Check if the vector exists:
     check_vect(v);
 
-#   ifdef ZVECT_THREAD_SAFE
+#   ifdef THREAD_SAFE
     pthread_mutex_lock(v->lock);
 #   endif
 
@@ -121,7 +121,7 @@ void vect_destroy(vector v)
 
     // Destroy it:
     free(v->array);
-#   ifdef ZVECT_THREAD_SAFE
+#   ifdef THREAD_SAFE
     pthread_mutex_unlock(v->lock);
     pthread_mutex_destroy(v->lock);
 #   endif
@@ -239,7 +239,7 @@ void vect_shrink(vector v)
     }
 
     zvect_index size = 0;
-#   ifdef ZVECT_THREAD_SAFE
+#   ifdef THREAD_SAFE
     pthread_mutex_lock(v->lock);
 #   endif
     if (v->size < v->init_capacity)
@@ -269,13 +269,13 @@ void vect_shrink(vector v)
     v->array = (void **)realloc(v->array, sizeof(void *) * v->capacity);
     if (v->array == NULL)
     {
-#   ifdef ZVECT_THREAD_SAFE
+#   ifdef THREAD_SAFE
         pthread_mutex_unlock(v->lock);
 #   endif
         fprintf(stderr, "No memory available to shrink the vector!");
         abort();
     }
-#   ifdef ZVECT_THREAD_SAFE
+#   ifdef THREAD_SAFE
     pthread_mutex_unlock(v->lock);
 #   endif
 }
@@ -290,7 +290,7 @@ void vect_clear(vector v)
     // check if the vector exists:
     check_vect(v);
 
-#   ifdef ZVECT_THREAD_SAFE
+#   ifdef THREAD_SAFE
     pthread_mutex_lock(v->lock);
 #   endif
     v->size = 0;
@@ -309,7 +309,7 @@ void vect_clear(vector v)
             memset(v->array[i2], 0, v->data_size);
         }
     }
-#   ifdef ZVECT_THREAD_SAFE
+#   ifdef THREAD_SAFE
     pthread_mutex_unlock(v->lock);
 #   endif
 }
@@ -329,7 +329,7 @@ void vect_add_at(vector v, const void *value, zvect_index i)
         abort();
     }
 
-#   ifdef ZVECT_THREAD_SAFE
+#   ifdef THREAD_SAFE
     pthread_mutex_lock(v->lock);
 #   endif
     // Check if we need to expand the vector:
@@ -355,7 +355,7 @@ void vect_add_at(vector v, const void *value, zvect_index i)
     memcpy(v->array[i], value, v->data_size);
     // Increment vector size
     v->size++;
-#   ifdef ZVECT_THREAD_SAFE
+#   ifdef THREAD_SAFE
     pthread_mutex_unlock(v->lock);
 #   endif
 }
@@ -417,12 +417,12 @@ void vect_put_at(vector v, const void *value, zvect_index i)
         fprintf(stderr, "Index out of bounds!");
         abort();
     }
-#   ifdef ZVECT_THREAD_SAFE
+#   ifdef THREAD_SAFE
     pthread_mutex_lock(v->lock);
 #   endif
     // Add value at the specified index:
     memcpy(v->array[i], value, v->data_size);
-#   ifdef ZVECT_THREAD_SAFE
+#   ifdef THREAD_SAFE
     pthread_mutex_unlock(v->lock);
 #   endif
 }
@@ -461,7 +461,7 @@ void *vect_remove_at(vector v, zvect_index i)
     void *rval = (void *)malloc(sizeof(v->data_size));
     memcpy(rval, v->array[i], v->data_size);
 
-#   ifdef ZVECT_THREAD_SAFE
+#   ifdef THREAD_SAFE
     pthread_mutex_lock(v->lock);
 #   endif
     // Reorganise the vector:
@@ -478,7 +478,7 @@ void *vect_remove_at(vector v, zvect_index i)
     {
         vect_half_capacity(v);
     }
-#   ifdef ZVECT_THREAD_SAFE
+#   ifdef THREAD_SAFE
     pthread_mutex_unlock(v->lock);
 #   endif
     return rval;
@@ -505,14 +505,14 @@ void vect_apply(vector v, void *(*f)(void *))
     check_vect(v);
 
     zvect_index i;
-#   ifdef ZVECT_THREAD_SAFE
+#   ifdef THREAD_SAFE
     pthread_mutex_lock(v->lock);
 #   endif
     for (i = 0; i < v->size; i++)
     {
         v->array[i] = (*f)(v->array[i]);
     }
-#   ifdef ZVECT_THREAD_SAFE
+#   ifdef THREAD_SAFE
     pthread_mutex_unlock(v->lock);
 #   endif
 }
@@ -527,12 +527,12 @@ void vect_swap(vector v, zvect_index i1, zvect_index i2)
 
     // Let's swap items:
     temp = v->array[i2];
-#   ifdef ZVECT_THREAD_SAFE
+#   ifdef THREAD_SAFE
     pthread_mutex_lock(v->lock);
 #   endif
     v->array[i2] = v->array[i1];
     v->array[i1] = temp;
-#   ifdef ZVECT_THREAD_SAFE
+#   ifdef THREAD_SAFE
     pthread_mutex_unlock(v->lock);
 #   endif
     // We are done, let's clean up memory

@@ -15,10 +15,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-// Uncomment the following define to
-// enable THREAD SAFE code:
-#define ZVECT_THREAD_SAFE
-
 // Default vector capacity
 // This will be used when the user
 // does NOT specify an Initial Capacity
