@@ -8,14 +8,14 @@ I wrote this library for fun, after watching some presentation on the internet f
 
 The library is relatively small, however it comes with some nice features:
 
-- We can store whatever data structure we want in the vector; we can use our own data structures and/or use standard base types.
-- When we add an element to the vector it gets copied in, so we can safely store elements that we have created as local (aka not using the heap).
-- We can set a vector to be securely wiped (there is a flag for that), and when we do that, the library will sero out all the bytes that composed the data that is being removed or the entire old vector when a new vector is being created after an expansion.
-- The library is also Thread Safe, so if our code is multi-threaded we can use this library without having to do complicated code. The mutex are also applied for each specific vector and only when they are required, so when two threads try to modify two different vectors there are no performance penalties at all.
-- The library should be fully reentrant, so changed are applied when we are ready to and all the library functions do not use global state.
-- If you are working on single threaded application you can easly disable the extra thread safe code, making so the library smaller and faster.
-- The library is suitable also for Embeeded and IoT coding, when compiled without thread safe code.
-- For low memory devices the library supports also a vector shrinking function to avoid any possible memory waste.
+- Any Datastructure support, we can store whatever data structure we want in the vector; we can use our own data structures and/or use standard base types.
+- Data copy support, when we add an element to the vector it gets copied in, so we can safely store elements that we have created as local (aka not using the heap).
+- Secure Data Wipe support, we can set a vector to be securely wiped (there is a flag for that), and when we do that, the library will sero out all the bytes that composed the data that is being removed or the entire old vector when a new vector is being created after an expansion.
+- Thread Safe, the library is also Thread Safe, so if our code is multi-threaded we can use this library without having to do complicated code. The mutex are also applied for each specific vector and only when they are required, so when two threads try to modify two different vectors there are no performance penalties at all.
+- Reentrant, the library should be fully reentrant, so changed are applied when we are ready to and all the library functions do not use global state.
+- Library code is configurable, for example: if you are working on single threaded application you can easly disable the extra thread safe code, making so the library smaller and faster. To configure the library check the zvector_config.h and the Makefile.
+- Suitable for Embeeded and Iot applications, the library is suitable also for Embeeded and IoT coding, when compiled without thread safe code.
+- Suitable for low memory devices, for low memory devices the library supports also a vector shrinking function to avoid any possible memory waste.
 
 I'll add more functions as I have time and also the possibility to keep the vector ordered.
 
