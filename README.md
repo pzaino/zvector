@@ -58,7 +58,7 @@ if you have GCC installed then use the Makefile provided, I'll add more support 
 Wheneever you build it the Unit Tests and Integration Tests will be build and executed as part of the library build process (I am a huge supporter of Tests Automation, Test Driven Development and BDD, so if you are new to this you can use this library to check how powerful can be test automation and how it can help you to get faster at coding and releasing code!).
 
 ## Can I use it in my own commercial applications?
-Yes, absolutely. The library is distributed with the MIT license, so please have a look at the (LICENSE)[./LICENSE] file for details.
+Yes, absolutely. The library is distributed with the MIT license, so please have a look at the [LICENSE](./LICENSE) file for details.
 
 ## A final note
 Have fun and happy coding, and if you'd like drop me a line telling me how you've used this library in your own projects,
