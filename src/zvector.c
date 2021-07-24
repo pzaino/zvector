@@ -123,6 +123,7 @@ void vect_destroy(vector v)
     free(v->array);
 #   ifdef ZVECT_THREAD_SAFE
     pthread_mutex_unlock(v->lock);
+    pthread_mutex_destroy(v->lock);
 #   endif
     free(v);
 }
