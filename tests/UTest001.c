@@ -1,7 +1,16 @@
+/*
+ *    Name: UTest001
+ * Purpose: Unit Testing ZVector Library
+ *  Author: Paolo Fabio Zaino
+ *  Domain: General
+ * License: Copyright by Paolo Fabio Zaino, all right reserved
+ *          Distributed under MIT license
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
-#include "vector.h"
+#include "zvector.h"
 
 int main()
 {
@@ -18,7 +27,7 @@ int main()
     testID++;
 
     printf("Test %s_%d: Insert 10000 elements and check if they are stored correctly:\n", testGrp, testID);
-    int i;
+    uint32_t i;
     for (i = 0; i < 1000000; i++)
     {
         // Let's add a new value in the vector:

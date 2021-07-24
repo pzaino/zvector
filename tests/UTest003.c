@@ -1,8 +1,17 @@
+/*
+ *    Name: UTest003
+ * Purpose: Unit Testing ZVector Library
+ *  Author: Paolo Fabio Zaino
+ *  Domain: General
+ * License: Copyright by Paolo Fabio Zaino, all right reserved
+ *          Distributed under MIT license
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
-#include "vector.h"
+#include "zvector.h"
 
 void *multiply_elements(void *element)
 {

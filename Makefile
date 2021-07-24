@@ -1,6 +1,6 @@
 CC=gcc
 
-LIBNAME=vector
+LIBNAME=zvector
 
 SRC=src
 OBJ=o
@@ -21,7 +21,7 @@ $(info "$(TESTBINS)")
 LIBDIR=lib
 LIB=$(LIBDIR)/lib$(LIBNAME).a
 
-CFLAGS+=-Wall
+CFLAGS+=-Wall -I./src 
 LDFLAGS+=
 
 .PHONY: all
@@ -48,7 +48,7 @@ $(LIB): $(OBJ) $(OBJF)
 
 
 $(TESTBINS): $(TESTS)
-	$(CC) $(CFLAGS) $(TEST)$@.c -std=c99 -I`pwd`/src -L`pwd`/lib -lvector -o $(TESTBIN)$@
+	$(CC) $(CFLAGS) $(TEST)$@.c -std=c99 -I`pwd`/src -L`pwd`/lib -l$(LIBNAME) -o $(TESTBIN)$@
 
 $(LIBDIR):
 	mkdir -p $@

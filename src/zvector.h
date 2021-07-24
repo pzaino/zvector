@@ -1,5 +1,5 @@
-#ifndef ZFP_VECTOR_H
-#define ZFP_VECTOR_H
+#ifndef SRC_ZVECTOR_H_
+#define SRC_ZVECTOR_H_
 
 /*
  *    Name: Vector
@@ -12,7 +12,7 @@
  */
 
 // Include vector configuration header
-#include "config.h"
+#include "zvector_config.h"
 
 // Declare required structs:
 typedef struct _vector *vector;
@@ -56,7 +56,7 @@ void vect_shrink(vector);
  * to its initial capacity.
  */
 bool vect_is_empty(vector);
-index_int vect_size(vector);
+zvect_index vect_size(vector);
 void vect_clear(vector);
 
 // Vector Data Storage functions:
@@ -85,7 +85,7 @@ void vect_clear(vector);
  *                      beginning of v.
  */
 void vect_add(vector, const void *);
-void vect_add_at(vector, const void *, index_int);
+void vect_add_at(vector, const void *, zvect_index);
 void vect_add_front(vector, const void *);
 
 /*
@@ -101,7 +101,7 @@ void vect_add_front(vector, const void *);
  *                      the vector v. 
  */
 void *vect_get(vector);
-void *vect_get_at(vector, index_int);
+void *vect_get_at(vector, zvect_index);
 void *vect_get_front(vector);
 
 /* 
@@ -120,7 +120,7 @@ void *vect_get_front(vector);
  *                      5.
  */
 void vect_put(vector, const void *);
-void vect_put_at(vector, const void *, index_int);
+void vect_put_at(vector, const void *, zvect_index);
 void vect_put_front(vector, const void *);
 
 /* 
@@ -139,7 +139,7 @@ void vect_put_front(vector, const void *);
  *                      the vector and return it.
  */
 void *vect_remove(vector);
-void *vect_remove_at(vector, index_int);
+void *vect_remove_at(vector, zvect_index);
 void *vect_remove_front(vector);
 
 // Vector Data manipoulation functions:
@@ -165,6 +165,14 @@ void vect_apply(vector, void *(*f)(void *));
  * You just pass the vector and the index of both the 
  * two items.
  */
-void vect_swap(vector, index_int, index_int);
+void vect_swap(vector, zvect_index, zvect_index);
 
-#endif // ZFP_VECTOR_H
+// Operations with multiple vectors:
+
+void vect_copy(vector v1, vector v2, zvect_index start, zvect_index max_elements);
+
+void vect_move(vector v1, vector v2, zvect_index start, zvect_index max_elements);
+
+void vect_merge(vector v1, vector v2);
+
+#endif  // SRC_ZVECTOR_H_
