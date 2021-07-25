@@ -14,6 +14,24 @@
  *          
  */
 
+// preliminary checks:
+#if defined(__APPLE__) && defined(__MACH__)
+#define macOS
+#endif
+
+#if ( defined(__CC_ARM) || defined(__clang__) || \
+      defined(__GNUC__) && ( defined(__CYGWIN__) || \
+      defined(__GNU__) || defined(__gnu_linux__) || \
+      defined(__linux__) || defined(macOS) ) \
+    )
+    // We have pthreads for mutexes here.
+#   define mutex_type 1
+#else
+    // I have no idea of which type of
+    // mutexes are used on this platform
+#   define mutex_type 0
+#endif
+
 // Include standard C libs headers
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,7 +42,9 @@
 #include "zvector.h"
 
 #ifdef THREAD_SAFE
-#include <pthread.h>
+#   if mutex_type == 1
+#       include <pthread.h>
+#endif
 #endif
 
 // Useful macros
@@ -48,9 +68,15 @@ struct _vector
                                 // every time the vector is extended
                                 // or shrunk, left over values will be
                                 // properly erased.
-#   ifdef THREAD_SAFE
+#ifdef THREAD_SAFE
+#   if mutex_type == 0
+    void *lock;                 // Vector's mutex for thread safe operations
+#   elif mutex_type == 1
     pthread_mutex_t *lock;      // Vector's mutex for thread safe operations
+#   elif mutex_type == 2
+    CRITICAL_SECTION *lock;     // Vector's mutex for thread safe operations
 #   endif
+#endif
 } __attribute__((aligned(__WORDSIZE)));
 
 /***********************
@@ -63,7 +89,32 @@ void throw_error(const char *error_message)
     abort();
 }
 
-#   ifdef THREAD_SAFE
+#ifdef THREAD_SAFE
+#   if mutex_type == 0
+// We can't use mutexes on this platform
+// I did not manage to figure which type of
+// mutex are used here.
+
+void mutex_lock(void *lock)
+{
+}
+
+void mutex_unlock(void *lock)
+{
+}
+
+void mutex_alloc(void **lock)
+{
+}
+
+void mutex_destroy(void *lock)
+{
+}
+
+#   elif mutex_type == 1
+// Ok we are on a Unix-like platform so we can use
+// pthreads mutexes!
+
 void mutex_lock(pthread_mutex_t *lock)
 {
     pthread_mutex_lock(lock);
@@ -74,10 +125,41 @@ void mutex_unlock(pthread_mutex_t *lock)
     pthread_mutex_unlock(lock);
 }
 
+void mutex_alloc(pthread_mutex_t **lock)
+{
+    *lock = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
+    if (lock == NULL)
+    {
+        throw_error("Not enough memory to allocate the vector!");
+    }
+}
+
 void mutex_destroy(pthread_mutex_t *lock)
 {
     pthread_mutex_destroy(lock);
 }
+#   elif mutex_type == 2
+// Ok we are on Windows and compiling without CIGWIN so
+// we need to use Windows CriticalSections, windoze
+// mutexes are too slow.
+void mutex_lock(CRITICAL_SECTION *lock)
+{
+    EnterCriticalSection(lock);
+}
+
+void mutex_unlock(CRITICAL_SECTION *lock)
+{
+    LeaveCriticalSection(lock);
+}
+void mutex_alloc(CRITICAL_SECTION **lock)
+{
+    InitializeCriticalSection(&lock);
+}
+void mutex_destroy(CRITICAL_SECTION *lock)
+{
+    DeleteCriticalSection(lock);
+}
+#   endif
 #endif
 
 /***********************
@@ -116,12 +198,7 @@ vector vect_create(size_t init_capacity, size_t data_size, bool wipe_flag)
     v->wipe = wipe_flag;
 
 #   ifdef THREAD_SAFE
-    v->lock = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
-    if (v->lock == NULL)
-    {
-        fprintf(stderr, "Not enough memory to allocate the vector!");
-        abort();
-    }   
+    mutex_alloc(&(v->lock));
 #   endif
 
     // Allocate memory for the vector storage area
