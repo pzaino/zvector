@@ -26,11 +26,11 @@ The library is relatively small, however it comes with some nice features:
 I'll add more functions as I have time and also the possibility to keep the vector ordered.
 
 ## How does it works?
-It's very simple, it's an ANSI C99 library, no funky dependeces, so it should compile everywhere (let me know if you find any issue).
+It's very simple, it's an ANSI C99 library, no funky dependecies, so it should compile everywhere (let me know if you find any issue).
 
 The vector follows the rules of immutable data. So, when you extend a vector it gets copied into a new and larger one. However, if you are concerned about the security implications of immutable data structures, you can set a special flag on each security sensitive vector you create and the library will ensure to erase each element of these flagged vectors when extending or squishing the vector or deleting it.
 
-The library tries to hide the _vector datastructure, this to make it easier to use the library and improve a big clean coding where possible.
+The library tries to hide the `_vector` datastructure, this to make it easier to use the library and improve clean coding where possible.
 
 ## How do I use it?
 To learn the API have a look at the `vector.h` file in src. To learn how to use it have a look at the Unit Test code in tests.
