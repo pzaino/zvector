@@ -13,12 +13,15 @@
 #include <string.h>
 #include "zvector.h"
 
-void *multiply_elements(void *element)
+void multiply_elements(void *element)
 {
-    int number = *((int *)element);
-    number *= 10;
-    element = &number;
-    return element;
+    // Let's convert element into the right
+    // C type, however we use a pointer to int
+    // so that we can modify element content
+    // directly without the need to copy it and
+    // return it.
+    int *number = (int *)element;
+    *number *= 10;
 }
 
 void add_a_int(vector v)
@@ -60,6 +63,14 @@ int main()
 
     printf("Test %s_%d: Apply function 'multiply_elements' to the entire vector and verify if it's correct:\n", testGrp, testID);
     vect_apply(v, multiply_elements);
+    for (i = 0; i < 1000000; i++)
+    {
+        // Let's retrieve the value from the vector correctly:
+        // For beginners: this is how in C we convert back a void * into the original dtata_type
+        int value = *((int *)vect_get_at(v, i));
+        // Let's test if the value we have retrieved is correct:
+        assert(value == (i * 10) );
+    }
     printf("done.\n");
     testID++;
 

@@ -521,7 +521,7 @@ void *vect_remove_front(vector v)
 /*---------------------------------------------------------------------------*/
 // Vector Data Manipoulation functions
 
-void vect_apply(vector v, void *(*f)(void *))
+void vect_apply(vector v, void (*f)(void *))
 {
     // check if the vector exists:
     check_vect(v);
@@ -532,7 +532,7 @@ void vect_apply(vector v, void *(*f)(void *))
 #   endif
     for (i = 0; i < v->size; i++)
     {
-        v->array[i] = (*f)(v->array[i]);
+        (*f)(v->array[i]);
     }
 #   ifdef THREAD_SAFE
     pthread_mutex_unlock(v->lock);
