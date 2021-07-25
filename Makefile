@@ -19,11 +19,11 @@
 CC=gcc
 
 # Configure additional compiler and linker flags:
-CFLAGS+=-std=c99 -Wall -I./src
+CFLAGS+=-O2 -std=c99 -Wall -I./src
 LDFLAGS+=
 
-# If you want to pass some MACROS to your code you can use the following variable
-# just add your -D<MY_MACRO>:
+# If you want to pass some MACROS to your code you can use the following 
+# variable just add your -D<MY_MACRO>:
 CODE_MACROS+=
 
 # Configure Library name:
@@ -35,8 +35,9 @@ LIBDIR=lib
 SRC=src
 OBJ=o
 
-# Configure directory containing source Unit Test Files and Integration Test files
-# and configure desired directory where to store compiled tests ready for execution:
+# Configure directory containing source Unit Test Files and Integration Test 
+# files and configure desired directory where to store compiled tests ready 
+# for execution:
 TEST=tests
 TESTBIN=$(TEST)/bin
 
@@ -107,3 +108,6 @@ $(OBJ):
 
 $(TEST)/bin:
 	mkdir -p $@
+
+#
+###############################################################################
