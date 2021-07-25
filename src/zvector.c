@@ -53,9 +53,19 @@ struct _vector
 #   endif
 } __attribute__((aligned(__WORDSIZE)));
 
-/******************
- ** ZVector API  **
- ******************/
+/***********************
+ ** Support Functions **
+ ***********************/ 
+
+void throw_error(const char *error_message)
+{
+    fprintf(stderr, "Error: %s\n", error_message);
+    abort();
+}
+
+/***********************
+ **    ZVector API    **
+ ***********************/
 
 /*---------------------------------------------------------------------------*/
 // Vector Creation and Destruction:
@@ -66,8 +76,7 @@ vector vect_create(size_t init_capacity, size_t data_size, bool wipe_flag)
     vector v = (vector)malloc(sizeof(struct _vector));
     if (v == NULL)
     {
-        fprintf(stderr, "Not enough memory to allocate the vector!");
-        abort();
+        throw_error("Not enough memory to allocate the vector!");
     }
 
     // Initialize the vector:
@@ -102,8 +111,7 @@ vector vect_create(size_t init_capacity, size_t data_size, bool wipe_flag)
     v->array = (void **)malloc(sizeof(void *) * v->capacity);
     if (v->array == NULL)
     {
-        fprintf(stderr, "Not enough memory to allocate the vector storage area!");
-        abort();
+        throw_error("Not enough memory to allocate the vector storage area!");
     }
 
     // Return the vector to the user:
@@ -173,8 +181,7 @@ static void vect_double_capacity(vector v)
     void **new_array = (void **)malloc(sizeof(v->data_size) * new_capacity);
     if (new_array == NULL)
     {
-        fprintf(stderr, "Not enough memory to extend the vector capacity!");
-        abort();
+        throw_error("Not enough memory to extend the vector capacity!");
     }
 
     zvect_index i;
@@ -204,8 +211,7 @@ static void vect_half_capacity(vector v)
     void **new_array = (void **)malloc(sizeof(v->data_size) * new_capacity);
     if (new_array == NULL)
     {
-        fprintf(stderr, "Not enough memory to resize the vector!");
-        abort();
+        throw_error("Not enough memory to resize the vector!");
     }
 
     // Rearraange the vector data:
@@ -244,8 +250,7 @@ void vect_shrink(vector v)
 
     if (vect_is_empty(v))
     {
-        fprintf(stderr, "Empty vector can't be shrank!");
-        abort();
+        throw_error("Empty vector can't be shrank!");
     }
 
     zvect_index size = 0;
@@ -282,8 +287,7 @@ void vect_shrink(vector v)
 #   ifdef THREAD_SAFE
         pthread_mutex_unlock(v->lock);
 #   endif
-        fprintf(stderr, "No memory available to shrink the vector!");
-        abort();
+        throw_error("No memory available to shrink the vector!");
     }
 #   ifdef THREAD_SAFE
     pthread_mutex_unlock(v->lock);
@@ -335,8 +339,7 @@ void vect_add_at(vector v, const void *value, zvect_index i)
     // Check if the provided index is out of bounds:
     if (i < 0 || i > v->size)
     {
-        fprintf(stderr, "Index out of bounds!");
-        abort();
+        throw_error("Index out of bounds!");
     }
 
 #   ifdef THREAD_SAFE
@@ -396,8 +399,7 @@ void *vect_get_at(vector v, zvect_index i)
     // Check if passed index is out of bounds:
     if (i < 0 || i >= v->size)
     {
-        fprintf(stderr, "Index out of bounds!");
-        abort();
+        throw_error("Index out of bounds!");
     }
 
     // Return found element:
@@ -430,8 +432,7 @@ void vect_put_at(vector v, const void *value, zvect_index i)
     // Check if the index passed is out of bounds:
     if (i < 0 || i >= v->size)
     {
-        fprintf(stderr, "Index out of bounds!");
-        abort();
+        throw_error("Index out of bounds!");
     }
 #   ifdef THREAD_SAFE
     pthread_mutex_lock(v->lock);
@@ -469,8 +470,7 @@ void *vect_remove_at(vector v, zvect_index i)
     // Check if the index is out of bounds:
     if (i < 0 || i >= v->size)
     {
-        fprintf(stderr, "Index out of bounds!");
-        abort();
+        throw_error("Index out of bounds!");
     }
 
     // Get the value we are about to remove:
@@ -515,7 +515,6 @@ void *vect_remove_front(vector v)
     return vect_remove_at(v, 0);
 }
 
-
 /*---------------------------------------------------------------------------*/
 
 /*---------------------------------------------------------------------------*/
@@ -539,6 +538,31 @@ void vect_apply(vector v, void (*f)(void *))
 #   endif
 }
 
+void vect_apply_if(vector v1, vector v2, void (*f1)(void *), bool (*f2)(void *, void *))
+{
+    // check if the vector exists:
+    check_vect(v1);
+    check_vect(v2);
+
+    if (v1->size > v2->size)
+    {
+        throw_error("Vector 2 size too small, can't apply 'if' function for all items in vector 1!");
+    }
+
+    zvect_index i;
+#   ifdef THREAD_SAFE
+    pthread_mutex_lock(v1->lock);
+#   endif
+    for (i = 0; i < v1->size; i++)
+    {
+        if ((*f2)(v1->array[i],v2->array[i]))
+            (*f1)(v1->array[i]);
+    }
+#   ifdef THREAD_SAFE
+    pthread_mutex_unlock(v1->lock);
+#   endif
+}
+
 void vect_swap(vector v, zvect_index i1, zvect_index i2)
 {
     // check if the vector exists:
@@ -548,10 +572,10 @@ void vect_swap(vector v, zvect_index i1, zvect_index i2)
     void *temp = (void *)malloc(sizeof(void *));
 
     // Let's swap items:
-    temp = v->array[i2];
 #   ifdef THREAD_SAFE
     pthread_mutex_lock(v->lock);
 #   endif
+    temp = v->array[i2];
     v->array[i2] = v->array[i1];
     v->array[i1] = temp;
 #   ifdef THREAD_SAFE
@@ -573,16 +597,14 @@ void vect_copy(vector v1, vector v2, zvect_index start,
     // We can only copy vectors with the same data_size!
     if ( v1->data_size != v2->data_size )
     {
-        fprintf(stderr, "Vectors data size mismatch!");
-        abort();
+        throw_error("Vectors data size mismatch!");
     }
 
     // Let's check if the indexes provided are correct for
     // v2:
     if (start + max_elements > v2->size )
     {
-        fprintf(stderr, "Index out of bounds!");
-        abort();
+        throw_error("Index out of bounds!");
     }
 
     // If the user specified 0 max_elements then
@@ -612,16 +634,14 @@ void vect_move(vector v1, vector v2, zvect_index start,
     // We can only copy vectors with the same data_size!
     if ( v1->data_size != v2->data_size )
     {
-        fprintf(stderr, "Vectors data size mismatch!");
-        abort();
+        throw_error("Vectors data size mismatch!");
     }
 
     // Let's check if the indexes provided are correct for
     // v2:
     if (start + max_elements > v2->data_size )
     {
-        fprintf(stderr, "Index out of bounds!");
-        abort();
+        throw_error("Index out of bounds!");
     }
 
     // If the user specified 0 max_elements then
@@ -651,8 +671,7 @@ void vect_merge(vector v1, vector v2)
     // We can only copy vectors with the same data_size!
     if ( v1->data_size != v2->data_size )
     {
-        fprintf(stderr, "Vectors data size mismatch!");
-        abort();
+        throw_error("Vectors data size mismatch!");
     }
 
     zvect_index i;

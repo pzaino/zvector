@@ -177,7 +177,37 @@ void *vect_remove_front(vector);
  * to deal with return values especially when you'll be
  * using complex data structures as item of the vector.
  */
-void vect_apply(vector, void (*f)(void *));
+void vect_apply(vector, void (*f1)(void *));
+
+/*
+ * vect_apply_if is a function that will apply "f1" C function
+ * to each and every items in vector v1, IF the return value of
+ * function f2 is true. So it allows what is known as conditional
+ * application. f2 will receive an item from v1 as first parameter
+ * and an item from v2 (at the same position of the item in v1) as
+ * second parameter. So, for example, if we want to increment all
+ * items in v1 of 10 if they are smaller then the corresponded item
+ * in v2 then we can simply use:
+ * 
+ * vect_apply_if(v1, v2, increment_item, is_item_too_small);
+ * 
+ * and make sure we have defined 'increment_item' and
+ * 'is_item_too_small' as:
+ * 
+ * void increment_item(void *item1)
+ * {
+ *  int *value = (int *)item1;
+ *  *value +=10;
+ * }
+ * 
+ * bool is_item_too_small(void *item1, void *item2)
+ * {
+ *  if (*((int *)item1) < *((int *)item2))
+ *      return true;
+ *  return false;
+ * }
+ */
+void vect_apply_if(vector v1, vector v2, void (*f1)(void *), bool (*f2)(void *, void *));
 
 /*
  * vect_swap is a function that allows you to swap two
