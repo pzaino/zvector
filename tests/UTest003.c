@@ -37,6 +37,7 @@ int main()
     uint8_t testID = 1;
 
     printf("=== UTest%s ===\n", testGrp);
+    printf("Testing vect_apply functions\n");
 
     printf("Test %s_%d: Create a vector of 2 elements and using int for the vector data:\n", testGrp, testID);
     vector v;

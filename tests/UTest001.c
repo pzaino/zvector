@@ -19,6 +19,7 @@ int main()
     uint8_t testID = 1;
 
     printf("=== UTest%s ===\n", testGrp);
+    printf("Testing basic vector functionalities\n");
 
     printf("Test %s_%d: Create a vector of 10 elements and using int for the vector data:\n", testGrp, testID);
     vector v;
