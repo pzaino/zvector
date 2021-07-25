@@ -523,7 +523,13 @@ void vect_put(vector v, const void *value)
     vect_check(v);
 
     // Add value at the specified index:
+#   ifdef THREAD_SAFE
+    mutex_lock(v->lock);
+#   endif
     memcpy(v->array[v->size], value, v->data_size);
+#   ifdef THREAD_SAFE
+    mutex_unlock(v->lock);
+#   endif   
 }
 
 void vect_put_front(vector v, const void *value)
@@ -532,7 +538,13 @@ void vect_put_front(vector v, const void *value)
     vect_check(v);
 
     // Add value at the specified index:
+#   ifdef THREAD_SAFE
+    mutex_lock(v->lock);
+#   endif
     memcpy(v->array[0], value, v->data_size);
+#   ifdef THREAD_SAFE
+    mutex_unlock(v->lock);
+#   endif 
 }
 
 void *vect_remove_at(vector v, zvect_index i)
