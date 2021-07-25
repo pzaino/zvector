@@ -570,7 +570,16 @@ void vect_copy(vector v1, vector v2, zvect_index start,
     // check if the vector v2 exists:
     check_vect(v2);
 
-    if (start + max_elements > v2->data_size )
+    // We can only copy vectors with the same data_size!
+    if ( v1->data_size != v2->data_size )
+    {
+        fprintf(stderr, "Vectors data size mismatch!");
+        abort();
+    }
+
+    // Let's check if the indexes provided are correct for
+    // v2:
+    if (start + max_elements > v2->size )
     {
         fprintf(stderr, "Index out of bounds!");
         abort();
@@ -600,6 +609,15 @@ void vect_move(vector v1, vector v2, zvect_index start,
     // check if the vector v2 exists:
     check_vect(v2);
 
+    // We can only copy vectors with the same data_size!
+    if ( v1->data_size != v2->data_size )
+    {
+        fprintf(stderr, "Vectors data size mismatch!");
+        abort();
+    }
+
+    // Let's check if the indexes provided are correct for
+    // v2:
     if (start + max_elements > v2->data_size )
     {
         fprintf(stderr, "Index out of bounds!");
@@ -630,13 +648,20 @@ void vect_merge(vector v1, vector v2)
     // check if the vector v2 exists:
     check_vect(v2);
 
+    // We can only copy vectors with the same data_size!
+    if ( v1->data_size != v2->data_size )
+    {
+        fprintf(stderr, "Vectors data size mismatch!");
+        abort();
+    }
+
     zvect_index i;
     for (i = 0; i < v2->size; i++)
     {
         vect_add(v1, v2->array[i]);
         vect_remove_at(v2, i);
     }
-    
+
     // Because we are merging two vectors in one
     // after merged v2 to v1 there is no need for
     // v2 to still exists, so let's destroy it to

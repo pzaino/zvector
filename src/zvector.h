@@ -188,10 +188,45 @@ void vect_swap(vector, zvect_index, zvect_index);
 
 // Operations with multiple vectors:
 
+/*
+ * vect_copy is a function that allows you to copy one
+ * vector to another. Please note: only vectors with the
+ * same data size (the parameter you've passed during the
+ * creation of both the vectors) can be copied on in the
+ * other!
+ * 
+ * vect_copy(v1, v2, 3, 5)      will copy all the items in
+ *                              vector v2, from the 4th item
+ *                              till the 9th (3 + 5, remember
+ *                              vector items start from 0) in 
+ *                              the vector v1. So at the end
+ *                              of the process you'll have such
+ *                              items copied at the end of v1.
+ */
 void vect_copy(vector v1, vector v2, zvect_index start, zvect_index max_elements);
 
+/*
+ * vect_move is a function that allows you to move items from
+ * one vector to another. It will also re-organise the source 
+ * vector and (obviously) expand the destination vector if 
+ * needed. Please note: only vectors of the same data size
+ * can be moved one in the other!
+ * 
+ * vect_move(v1, v2, 2, 2)      will move items in v2 from the
+ *                              the 3rd item in v2 till the 5th
+ *                              at the end of v1. 
+ */ 
 void vect_move(vector v1, vector v2, zvect_index start, zvect_index max_elements);
 
+/*
+ * vect_merge is a function that merges together 2 vectors
+ * and, at the end of it, the source vector will be destroyed.
+ * 
+ * vect_merge(v1, v2)           will merge vector v2 to v1 and then
+ *                              destroy v2. So at the end of the job
+ *                              v1 will contains the old v1 items + 
+ *                              all v2 items.
+ */  
 void vect_merge(vector v1, vector v2);
 
 #endif  // SRC_ZVECTOR_H_
