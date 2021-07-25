@@ -515,6 +515,7 @@ void *vect_remove_front(vector v)
     return vect_remove_at(v, 0);
 }
 
+
 /*---------------------------------------------------------------------------*/
 
 /*---------------------------------------------------------------------------*/
@@ -569,23 +570,18 @@ void vect_copy(vector v1, vector v2, zvect_index start,
     // check if the vector v2 exists:
     check_vect(v2);
 
-    if (v2->data_size != v1->data_size)
+    if (start + max_elements > v2->data_size )
     {
-        fprintf(stderr, "Vector storage size mismatch!");
+        fprintf(stderr, "Index out of bounds!");
         abort();
     }
 
+    // If the user specified 0 max_elements then
+    // copy the entire vector from start position 
+    // till the last item in the vector 2:
     if (max_elements == 0)
     {
-        max_elements = v2->size - 1;
-    }
-    else
-    {
-        if (max_elements >= v2->size)
-        {
-            fprintf(stderr, "Index out of bounds!");
-            abort();
-        }
+        max_elements = ( v2->size - 1 ) - start;
     }
 
     zvect_index i;
@@ -598,10 +594,54 @@ void vect_copy(vector v1, vector v2, zvect_index start,
 void vect_move(vector v1, vector v2, zvect_index start, 
                zvect_index max_elements)
 {
+    // check if the vector v1 exists:
+    check_vect(v1);
+
+    // check if the vector v2 exists:
+    check_vect(v2);
+
+    if (start + max_elements > v2->data_size )
+    {
+        fprintf(stderr, "Index out of bounds!");
+        abort();
+    }
+
+    // If the user specified 0 max_elements then
+    // move the entire vector from start position 
+    // till the last item in the vector 2:
+    if (max_elements == 0)
+    {
+        max_elements = ( v2->size - 1 ) - start;
+    }
+
+    zvect_index i;
+    for (i = start; i <= max_elements; i++)
+    {
+        vect_add(v1, v2->array[i]);
+        vect_remove_at(v2, i);
+    }
 }
 
 void vect_merge(vector v1, vector v2)
 {
+    // check if the vector v1 exists:
+    check_vect(v1);
+
+    // check if the vector v2 exists:
+    check_vect(v2);
+
+    zvect_index i;
+    for (i = 0; i < v2->size; i++)
+    {
+        vect_add(v1, v2->array[i]);
+        vect_remove_at(v2, i);
+    }
+    
+    // Because we are merging two vectors in one
+    // after merged v2 to v1 there is no need for
+    // v2 to still exists, so let's destroy it to
+    // free memory correctly:
+    vect_destroy(v2);
 }
 
 /*---------------------------------------------------------------------------*/
