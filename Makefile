@@ -61,7 +61,8 @@ SRCF=$(wildcard $(SRC)/*.c)
 OBJF=$(patsubst $(SRC)/%.c, $(OBJ)/%.o, $(SRCF))
 
 TESTSLIST=$(wildcard $(TEST)/*.c)
-TESTS=$(patsubst $(TEST)%.c, %, $(TESTSLIST))
+OTESTSLIST=$(sort $(TESTSLIST))
+TESTS=$(patsubst $(TEST)%.c, %, $(OTESTSLIST))
 #$(info "$(TESTS)")
 
 TESTBINS=$(patsubst %.c, %, $(TESTS))

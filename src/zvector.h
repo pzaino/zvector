@@ -11,6 +11,11 @@
  *          
  */
 
+// First library included is zvector_checks,
+// so we know on which platform and which features
+// we can use:
+#include "zvector_checks.h"
+
 // Include vector configuration header
 #include "zvector_config.h"
 

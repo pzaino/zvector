@@ -14,33 +14,6 @@
  *          
  */
 
-// preliminary checks:
-#if defined(__APPLE__) && defined(__MACH__)
-#define macOS
-#endif
-
-#if ( defined(__GNU__) || \
-      defined(__gnu_linux__) || defined(__linux__) || \
-      defined(macOS) )
-    // We are on a Unix-like OS so we can use pthreads!
-#   define OS_TYPE 1
-#   define MUTEX_TYPE 1
-#   elif ( defined(__WIN32__) && defined(__CYGWIN__) )
-    // We are on MS Windows using CIGWIN so we can use pthreads!
-#   define OS_TYPE 2
-#   define MUTEX_TYPE 1    
-#   elif ( defined(__WIN32__) && !defined(__CYGWIN__) )
-    // We are on MS Windows, so we need to use
-    // Windows stuff:
-#   define OS_TYPE 2
-#   define MUTEX_TYPE 2
-#else
-    // I have no idea on which platform are we,
-    // hence I have to use fake mutexes and go with the flow!
-#   define OS_TYPE 0
-#   define MUTEX_TYPE 0
-#endif
-
 // Include standard C libs headers
 #include <stdio.h>
 #include <stdlib.h>
@@ -53,17 +26,11 @@
 #ifdef THREAD_SAFE
 #   if MUTEX_TYPE == 1
 #       include <pthread.h>
-#endif
+#   endif
 #endif
 
 // Useful macros
 #define min(x, y) (((x) < (y)) ? (x) : (y))
-#define check_vect(x)                           \
-    if (x == NULL)                              \
-    {                                           \
-        fprintf(stderr, "Vector not defined!"); \
-        abort();                                \
-    }
 
 // Define the vector data structure:
 struct _vector
@@ -92,7 +59,7 @@ struct _vector
  ** Support Functions **
  ***********************/ 
 
-void throw_error(const char *error_message)
+static void throw_error(const char *error_message)
 {
 #if OS_TYPE == 1
     fprintf(stderr, "Error: %s\n", error_message);
@@ -103,36 +70,42 @@ void throw_error(const char *error_message)
 #endif
 }
 
+static inline void vect_check(vector x)
+{
+    if ( x == NULL ) 
+        throw_error ("Vector not defined!");
+}
+
 #ifdef THREAD_SAFE
 #   if MUTEX_TYPE == 0
-void mutex_lock(void *lock)
+static inline void mutex_lock(void *lock)
 {
 }
 
-void mutex_unlock(void *lock)
+static inline void mutex_unlock(void *lock)
 {
 }
 
-void mutex_alloc(void **lock)
+static inline void mutex_alloc(void **lock)
 {
 }
 
-void mutex_destroy(void *lock)
+static inline void mutex_destroy(void *lock)
 {
 }
 
 #   elif MUTEX_TYPE == 1
-void mutex_lock(pthread_mutex_t *lock)
+static inline void mutex_lock(pthread_mutex_t *lock)
 {
     pthread_mutex_lock(lock);
 }
 
-void mutex_unlock(pthread_mutex_t *lock)
+static inline void mutex_unlock(pthread_mutex_t *lock)
 {
     pthread_mutex_unlock(lock);
 }
 
-void mutex_alloc(pthread_mutex_t **lock)
+static inline void mutex_alloc(pthread_mutex_t **lock)
 {
     *lock = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
     if (lock == NULL)
@@ -141,27 +114,27 @@ void mutex_alloc(pthread_mutex_t **lock)
     }
 }
 
-void mutex_destroy(pthread_mutex_t *lock)
+static inline void mutex_destroy(pthread_mutex_t *lock)
 {
     pthread_mutex_destroy(lock);
 }
 #   elif MUTEX_TYPE == 2
-void mutex_lock(CRITICAL_SECTION *lock)
+static inline void mutex_lock(CRITICAL_SECTION *lock)
 {
     EnterCriticalSection(lock);
 }
 
-void mutex_unlock(CRITICAL_SECTION *lock)
+static inline void mutex_unlock(CRITICAL_SECTION *lock)
 {
     LeaveCriticalSection(lock);
 }
 
-void mutex_alloc(CRITICAL_SECTION **lock)
+static inline void mutex_alloc(CRITICAL_SECTION **lock)
 {
     InitializeCriticalSection(&lock);
 }
 
-void mutex_destroy(CRITICAL_SECTION *lock)
+static inline void mutex_destroy(CRITICAL_SECTION *lock)
 {
     DeleteCriticalSection(lock);
 }
@@ -221,7 +194,7 @@ vector vect_create(size_t init_capacity, size_t data_size, bool wipe_flag)
 void vect_destroy(vector v)
 {
     // Check if the vector exists:
-    check_vect(v);
+    vect_check(v);
 
 #   ifdef THREAD_SAFE
     mutex_lock(v->lock);
@@ -253,7 +226,7 @@ void vect_destroy(vector v)
 bool vect_is_empty(vector v)
 {
     // Check if the vector exists
-    check_vect(v);
+    vect_check(v);
 
     return v->size == 0;
 }
@@ -261,7 +234,7 @@ bool vect_is_empty(vector v)
 zvect_index vect_size(vector v)
 {
     // Check if the vector exists
-    check_vect(v);
+    vect_check(v);
 
     return v->size;
 }
@@ -274,7 +247,7 @@ zvect_index vect_size(vector v)
 static void vect_double_capacity(vector v)
 {
     // Check if the vector exists:
-    check_vect(v);
+    vect_check(v);
 
     // Get actual capacity and double it
     zvect_index new_capacity = 2 * v->capacity;
@@ -298,7 +271,7 @@ static void vect_double_capacity(vector v)
 static void vect_half_capacity(vector v)
 {
     // Check if the vector exists:
-    check_vect(v);
+    vect_check(v);
 
     // Check if new capacity is smaller than initial capacity
     if (v->capacity <= v->init_capacity)
@@ -346,7 +319,7 @@ static void vect_half_capacity(vector v)
 void vect_shrink(vector v)
 {
     // Check if the vector exists:
-    check_vect(v);
+    vect_check(v);
 
     if (vect_is_empty(v))
     {
@@ -402,7 +375,7 @@ void vect_shrink(vector v)
 void vect_clear(vector v)
 {
     // check if the vector exists:
-    check_vect(v);
+    vect_check(v);
 
 #   ifdef THREAD_SAFE
     mutex_lock(v->lock);
@@ -434,7 +407,7 @@ void vect_clear(vector v)
 void vect_add_at(vector v, const void *value, zvect_index i)
 {
     // check if the vector exists:
-    check_vect(v);
+    vect_check(v);
 
     // Check if the provided index is out of bounds:
     if (i < 0 || i > v->size)
@@ -494,7 +467,7 @@ void vect_add_front(vector v, const void *value)
 void *vect_get_at(vector v, zvect_index i)
 {
     // check if the vector exists:
-    check_vect(v);
+    vect_check(v);
 
     // Check if passed index is out of bounds:
     if (i < 0 || i >= v->size)
@@ -509,7 +482,7 @@ void *vect_get_at(vector v, zvect_index i)
 void *vect_get(vector v)
 {
     // check if the vector exists:
-    check_vect(v);
+    vect_check(v);
 
     // Return found element:
     return v->array[v->size - 1];
@@ -518,7 +491,7 @@ void *vect_get(vector v)
 void *vect_get_front(vector v)
 {
     // check if the vector exists:
-    check_vect(v);
+    vect_check(v);
 
     // Return found element:
     return v->array[0];
@@ -527,7 +500,7 @@ void *vect_get_front(vector v)
 void vect_put_at(vector v, const void *value, zvect_index i)
 {
     // check if the vector exists:
-    check_vect(v);
+    vect_check(v);
 
     // Check if the index passed is out of bounds:
     if (i < 0 || i >= v->size)
@@ -547,7 +520,7 @@ void vect_put_at(vector v, const void *value, zvect_index i)
 void vect_put(vector v, const void *value)
 {
     // check if the vector exists:
-    check_vect(v);
+    vect_check(v);
 
     // Add value at the specified index:
     memcpy(v->array[v->size], value, v->data_size);
@@ -556,7 +529,7 @@ void vect_put(vector v, const void *value)
 void vect_put_front(vector v, const void *value)
 {
     // check if the vector exists:
-    check_vect(v);
+    vect_check(v);
 
     // Add value at the specified index:
     memcpy(v->array[0], value, v->data_size);
@@ -565,7 +538,7 @@ void vect_put_front(vector v, const void *value)
 void *vect_remove_at(vector v, zvect_index i)
 {
     // check if the vector exists:
-    check_vect(v);
+    vect_check(v);
 
     // Check if the index is out of bounds:
     if (i < 0 || i >= v->size)
@@ -624,7 +597,7 @@ void *vect_remove_front(vector v)
 void vect_apply(vector v, void (*f)(void *))
 {
     // check if the vector exists:
-    check_vect(v);
+    vect_check(v);
 
     zvect_index i;
 #   ifdef THREAD_SAFE
@@ -642,8 +615,8 @@ void vect_apply(vector v, void (*f)(void *))
 void vect_apply_if(vector v1, vector v2, void (*f1)(void *), bool (*f2)(void *, void *))
 {
     // check if the vector exists:
-    check_vect(v1);
-    check_vect(v2);
+    vect_check(v1);
+    vect_check(v2);
 
     if (v1->size > v2->size)
     {
@@ -667,7 +640,7 @@ void vect_apply_if(vector v1, vector v2, void (*f1)(void *), bool (*f2)(void *, 
 void vect_swap(vector v, zvect_index i1, zvect_index i2)
 {
     // check if the vector exists:
-    check_vect(v);
+    vect_check(v);
 
     // Let's allocate some meory for the temporary pointer:
     void *temp = (void *)malloc(sizeof(void *));
@@ -690,10 +663,10 @@ void vect_copy(vector v1, vector v2, zvect_index start,
                zvect_index max_elements)
 {
     // check if the vector v1 exists:
-    check_vect(v1);
+    vect_check(v1);
 
     // check if the vector v2 exists:
-    check_vect(v2);
+    vect_check(v2);
 
     // We can only copy vectors with the same data_size!
     if ( v1->data_size != v2->data_size )
@@ -727,10 +700,10 @@ void vect_move(vector v1, vector v2, zvect_index start,
                zvect_index max_elements)
 {
     // check if the vector v1 exists:
-    check_vect(v1);
+    vect_check(v1);
 
     // check if the vector v2 exists:
-    check_vect(v2);
+    vect_check(v2);
 
     // We can only copy vectors with the same data_size!
     if ( v1->data_size != v2->data_size )
@@ -764,10 +737,10 @@ void vect_move(vector v1, vector v2, zvect_index start,
 void vect_merge(vector v1, vector v2)
 {
     // check if the vector v1 exists:
-    check_vect(v1);
+    vect_check(v1);
 
     // check if the vector v2 exists:
-    check_vect(v2);
+    vect_check(v2);
 
     // We can only copy vectors with the same data_size!
     if ( v1->data_size != v2->data_size )
