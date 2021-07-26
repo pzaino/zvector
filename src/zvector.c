@@ -146,18 +146,18 @@ static inline void mutex_destroy(CRITICAL_SECTION *lock)
 
 #ifdef THREAD_SAFE
 // The following two functions are generic locking functions
-static inline void check_mutex_lock(vector v)
+static inline void check_mutex_lock(vector v, volatile uint8_t lock_type)
 {
     if ( v->lock_type == 0 )
     {
         mutex_lock(v->lock);
-        v->lock_type = 1;
+        v->lock_type = lock_type;
     }
 }
 
-static inline void check_mutex_unlock(vector v)
+static inline void check_mutex_unlock(vector v, volatile uint8_t lock_type)
 {
-    if ( v->lock_type == 1 )
+    if ( v->lock_type == lock_type )
     {
         v->lock_type = 0;
         mutex_unlock(v->lock);
@@ -221,7 +221,7 @@ void vect_destroy(vector v)
     vect_check(v);
 
 #   ifdef THREAD_SAFE
-    check_mutex_lock(v);
+    check_mutex_lock(v, 1);
 #   endif
 
     if (v->wipe)
@@ -237,7 +237,7 @@ void vect_destroy(vector v)
     // Destroy it:
     free(v->array);
 #   ifdef THREAD_SAFE
-    check_mutex_unlock(v);
+    check_mutex_unlock(v, 1);
     mutex_destroy(v->lock);
 #   endif
     free(v);
@@ -270,20 +270,12 @@ zvect_index vect_size(vector v)
 #ifdef THREAD_SAFE
 void vect_lock(vector v)
 {
-    if ( v->lock_type == 0 )
-    {
-        mutex_lock(v->lock);
-        v->lock_type = 2;
-    }    
+    check_mutex_lock(v, 2);  
 }
 
 void vect_unlock(vector v)
 {
-    if ( v->lock_type == 2 )
-    {
-        v->lock_type = 0;
-        mutex_unlock(v->lock);
-    }    
+    check_mutex_unlock(v, 2);
 }
 #endif
 /*---------------------------------------------------------------------------*/
@@ -377,7 +369,7 @@ void vect_shrink(vector v)
 
     zvect_index size = 0;
 #   ifdef THREAD_SAFE
-    check_mutex_lock(v);
+    check_mutex_lock(v, 1);
 #   endif
     if (v->size < v->init_capacity)
     {
@@ -407,12 +399,12 @@ void vect_shrink(vector v)
     if (v->array == NULL)
     {
 #   ifdef THREAD_SAFE
-        check_mutex_unlock(v);
+        check_mutex_unlock(v, 1);
 #   endif
         throw_error("No memory available to shrink the vector!");
     }
 #   ifdef THREAD_SAFE
-    check_mutex_unlock(v);
+    check_mutex_unlock(v, 1);
 #   endif
 }
 
@@ -427,7 +419,7 @@ void vect_clear(vector v)
     vect_check(v);
 
 #   ifdef THREAD_SAFE
-    check_mutex_lock(v);
+    check_mutex_lock(v, 1);
 #   endif
     v->size = 0;
     while (v->capacity > v->init_capacity)
@@ -446,7 +438,7 @@ void vect_clear(vector v)
         }
     }
 #   ifdef THREAD_SAFE
-    check_mutex_unlock(v);
+    check_mutex_unlock(v, 1);
 #   endif
 }
 
@@ -465,7 +457,7 @@ void vect_add_at(vector v, const void *value, zvect_index i)
     }
 
 #   ifdef THREAD_SAFE
-    check_mutex_lock(v);
+    check_mutex_lock(v, 1);
 #   endif
     // Check if we need to expand the vector:
     if (v->size >= v->capacity)
@@ -491,7 +483,7 @@ void vect_add_at(vector v, const void *value, zvect_index i)
     // Increment vector size
     v->size++;
 #   ifdef THREAD_SAFE
-    check_mutex_unlock(v);
+    check_mutex_unlock(v, 1);
 #   endif
 }
 
@@ -557,12 +549,12 @@ void vect_put_at(vector v, const void *value, zvect_index i)
         throw_error("Index out of bounds!");
     }
 #   ifdef THREAD_SAFE
-    check_mutex_lock(v);
+    check_mutex_lock(v, 1);
 #   endif
     // Add value at the specified index:
     memcpy(v->array[i], value, v->data_size);
 #   ifdef THREAD_SAFE
-    check_mutex_unlock(v);
+    check_mutex_unlock(v, 1);
 #   endif
 }
 
@@ -573,11 +565,11 @@ void vect_put(vector v, const void *value)
 
     // Add value at the specified index:
 #   ifdef THREAD_SAFE
-    check_mutex_lock(v);
+    check_mutex_lock(v, 1);
 #   endif
     memcpy(v->array[v->size], value, v->data_size);
 #   ifdef THREAD_SAFE
-    check_mutex_unlock(v);
+    check_mutex_unlock(v, 1);
 #   endif   
 }
 
@@ -588,11 +580,11 @@ void vect_put_front(vector v, const void *value)
 
     // Add value at the specified index:
 #   ifdef THREAD_SAFE
-    check_mutex_lock(v);
+    check_mutex_lock(v, 1);
 #   endif
     memcpy(v->array[0], value, v->data_size);
 #   ifdef THREAD_SAFE
-    check_mutex_unlock(v);
+    check_mutex_unlock(v, 1);
 #   endif 
 }
 
@@ -611,7 +603,7 @@ void *vect_remove_at(vector v, zvect_index i)
     void *rval = (void *)malloc(sizeof(v->data_size));
     zvect_index j;
 #   ifdef THREAD_SAFE
-    check_mutex_lock(v);
+    check_mutex_lock(v, 1);
 #   endif
     memcpy(rval, v->array[i], v->data_size);
 
@@ -629,7 +621,7 @@ void *vect_remove_at(vector v, zvect_index i)
         vect_half_capacity(v);
     }
 #   ifdef THREAD_SAFE
-    check_mutex_unlock(v);
+    check_mutex_unlock(v, 1);
 #   endif
 
     return rval;
@@ -666,13 +658,13 @@ void vect_swap(vector v, zvect_index i1, zvect_index i2)
 
     // Let's swap items:
 #   ifdef THREAD_SAFE
-    check_mutex_lock(v);
+    check_mutex_lock(v, 1);
 #   endif
     temp = v->array[i2];
     v->array[i2] = v->array[i1];
     v->array[i1] = temp;
 #   ifdef THREAD_SAFE
-    check_mutex_unlock(v);
+    check_mutex_unlock(v, 1);
 #   endif
     // We are done, let's clean up memory
     free(temp);
@@ -690,14 +682,14 @@ void vect_apply(vector v, void (*f)(void *))
 
     zvect_index i;
 #   ifdef THREAD_SAFE
-    check_mutex_lock(v);
+    check_mutex_lock(v, 1);
 #   endif
     for (i = 0; i < v->size; i++)
     {
         (*f)(v->array[i]);
     }
 #   ifdef THREAD_SAFE
-    check_mutex_unlock(v);
+    check_mutex_unlock(v, 1);
 #   endif
 }
 
@@ -714,7 +706,7 @@ void vect_apply_if(vector v1, vector v2, void (*f1)(void *), bool (*f2)(void *, 
 
     zvect_index i;
 #   ifdef THREAD_SAFE
-    check_mutex_lock(v1);
+    check_mutex_lock(v1, 1);
 #   endif
     for (i = 0; i < v1->size; i++)
     {
@@ -722,7 +714,7 @@ void vect_apply_if(vector v1, vector v2, void (*f1)(void *), bool (*f2)(void *, 
             (*f1)(v1->array[i]);
     }
 #   ifdef THREAD_SAFE
-    check_mutex_unlock(v1);
+    check_mutex_unlock(v1, 1);
 #   endif
 }
 
@@ -757,10 +749,16 @@ void vect_copy(vector v1, vector v2, zvect_index start,
     }
 
     zvect_index i;
+#   ifdef THREAD_SAFE
+    check_mutex_lock(v1, 3);
+#   endif
     for (i = start; i <= max_elements; i++)
     {
         vect_add(v1, v2->array[i]);
     }
+#   ifdef THREAD_SAFE
+    check_mutex_unlock(v1, 3);
+#   endif
 }
 
 void vect_move(vector v1, vector v2, zvect_index start, 
@@ -794,11 +792,17 @@ void vect_move(vector v1, vector v2, zvect_index start,
     }
 
     zvect_index i;
+#   ifdef THREAD_SAFE
+    check_mutex_lock(v1, 3);
+#   endif
     for (i = start; i <= max_elements; i++)
     {
         vect_add(v1, v2->array[i]);
         vect_remove_at(v2, i);
     }
+#   ifdef THREAD_SAFE
+    check_mutex_unlock(v1, 3);
+#   endif 
 }
 
 void vect_merge(vector v1, vector v2)
@@ -816,12 +820,17 @@ void vect_merge(vector v1, vector v2)
     }
 
     zvect_index i;
+#   ifdef THREAD_SAFE
+    check_mutex_lock(v1, 3);
+#   endif
     for (i = 0; i < v2->size; i++)
     {
         vect_add(v1, v2->array[i]);
         vect_remove_at(v2, i);
     }
-
+#   ifdef THREAD_SAFE
+    check_mutex_unlock(v1, 3);
+#   endif 
     // Because we are merging two vectors in one
     // after merged v2 to v1 there is no need for
     // v2 to still exists, so let's destroy it to
