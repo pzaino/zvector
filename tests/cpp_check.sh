@@ -7,6 +7,8 @@ then
     exit 0
 fi
 
+cppcheck_cmd="$(which cppcheck)"
+
 # Detect Platform:
 Arch="$(uname -m)"
 Platform=""
@@ -21,9 +23,13 @@ then
     exit 0
 fi
 
+gcc_cmd="$(which gcc)"
+
+grep_cmd="$(which grep)"
+
 # Detect GCC Version and library:
-GCC_VER="$(gcc -v 2>&1 | grep -Poi 'gcc version \K[0-9]+\.[0-9]+\.[0-9]+')"
-GCC_TARGET="$( gcc -v 2>&1 | grep -Poi 'Target: \K.*' )"
+GCC_VER="$(${gcc_cmd} -v 2>&1 | ${grep_cmd} -Poi 'gcc version \K[0-9]+\.[0-9]+\.[0-9]+')"
+GCC_TARGET="$(${gcc_cmd} -v 2>&1 | ${grep_cmd} -Poi 'Target: \K.*' )"
 GCC_PATH="/usr/lib/gcc/${GCC_TARGET}/${GCC_VER}/include/"
 
 # Detect path from where we are launching this script:
@@ -39,7 +45,7 @@ else
 fi
 
 # Run CPPCheck:
-cppcheck ${start_path}/src --bug-hunting \
+${cppcheck_cmd} ${start_path}/src --bug-hunting \
              --enable=all \
              --platform=${Platform} \
              --std=c99 \
