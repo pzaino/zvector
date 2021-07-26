@@ -197,6 +197,7 @@ int main()
     fflush(stdout);
 
     printf("Test %s_%d: Check the vector to see if elements value is coerent:\n", testGrp, testID);
+    fflush(stdout);
     for (i = 0; i < MAX_ITEMS; i++)
     {
         printf ("Checking item: %d = ", i);
@@ -206,7 +207,8 @@ int main()
         int value = *((int *)vect_get_at(v, i));
 
         printf("%d\n", value);
-
+        fflush(stdout);
+        
         // Let's test if the value we have retrieved is correct:
         assert(value == (( i + 1 ) * 5) );
     }
