@@ -64,6 +64,14 @@ bool vect_is_empty(vector);
 zvect_index vect_size(vector);
 void vect_clear(vector);
 
+#ifdef THREAD_SAFE
+// Vector Thread Safe functions:
+
+void vect_lock(vector v);
+
+void vect_unlock(vector v);
+#endif
+
 // Vector Data Storage functions:
 
 /*
