@@ -51,6 +51,8 @@ int main()
     printf("=== ITest%s ===\n", testGrp);
     printf("CPPCheck Source code Analisys:\n");
 
+    fflush(stdout);
+
     printf("Test %s_%d: Check is CPPCheck is installed on this system:\n", testGrp, testID);
  
     char buffer[10240];
@@ -59,9 +61,6 @@ int main()
     run_cmd("which cppcheck 2>&1 | grep -Poi \"no cppcheck in\" | wc -l", buffer);
  
     char *result=(buffer[0] == '0') ? "yes" : "no";
-
-    printf("done.\n");
-    testID++;
 
     if ( buffer[0] == '1' )
     {
@@ -73,6 +72,11 @@ int main()
         printf("Proceeding with  CPPCheck test because I found it on your system: %s\n", result);
     }
 
+    printf("done.\n");
+    testID++;
+
+    fflush(stdout);
+
     printf("Test %s_%d: Run CPPCheck analysis against the Library sources:\n", testGrp, testID);
 
     clear_str(buffer, 10240);
@@ -80,6 +84,8 @@ int main()
     
     printf("done.\n");
     testID++;
+
+    fflush(stdout);
 
     printf("================\n\n");
 

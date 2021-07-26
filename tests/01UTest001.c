@@ -21,11 +21,15 @@ int main()
     printf("=== UTest%s ===\n", testGrp);
     printf("Testing basic vector functionalities\n");
 
+    fflush(stdout);
+
     printf("Test %s_%d: Create a vector of 10 elements and using int for the vector data:\n", testGrp, testID);
     vector v;
     v = vect_create(10, sizeof(int), false);
     printf("done.\n");
     testID++;
+
+    fflush(stdout);
 
     printf("Test %s_%d: Insert 10000 elements and check if they are stored correctly:\n", testGrp, testID);
     uint32_t i;
@@ -44,10 +48,14 @@ int main()
     printf("done.\n");
     testID++;
 
+    fflush(stdout);
+
     printf("Test %s_%d: check if the size of the vector is now 10000:\n", testGrp, testID);
     assert(vect_size(v) == 1000000);
     printf("done.\n");
     testID++;
+
+    fflush(stdout);
 
     printf("Test %s_%d: Remove vector elements one by one:\n", testGrp, testID);
     while (!vect_is_empty(v))
@@ -57,20 +65,28 @@ int main()
     printf("done.\n");
     testID++;
 
+    fflush(stdout);
+
     printf("Test %s_%d: check if vector is empty:\n", testGrp, testID);
     assert(vect_is_empty(v));
     printf("done.\n");
     testID++;
+
+    fflush(stdout);
 
     printf("Test %s_%d: Check if vector size is now 0 (zero):\n", testGrp, testID);
     assert(vect_size(v) == 0);
     printf("done.\n");
     testID++;
 
+    fflush(stdout);
+
     printf("Test %s_%d: destroy the vector:\n", testGrp, testID);
     vect_destroy(v);
     printf("done.\n");
     testID++;
+
+    fflush(stdout);
 
     printf("================\n\n");
 
