@@ -7,7 +7,7 @@
  *          Distributed under MIT license
  */
 
-#if COMP_MAJRELEASE <= 5
+#if COMP_MAJRELEASE <= 4
 #define _BSD_SOURCE
 #else
 #define _DEFAULT_SOURCE
@@ -175,16 +175,16 @@ int main()
         printf("Can't create thread :[%s]\n", strerror(err));
     i++;
 
-    err = pthread_create(&(tid[i]), NULL, &doSomething2, v);
-    if (err != 0)
-        printf("Can't create thread :[%s]\n", strerror(err));
-    i++;
-
     // Let's start the threads:
     pthread_join(tid[0], NULL);
 
     // Let's ensure that thread 0 starts always before thread 1:
     usleep(100);
+
+    err = pthread_create(&(tid[i]), NULL, &doSomething2, v);
+    if (err != 0)
+        printf("Can't create thread :[%s]\n", strerror(err));
+    i++;
 
     pthread_join(tid[1], NULL);
 
