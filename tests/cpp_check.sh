@@ -45,7 +45,7 @@ else
 fi
 
 # Run CPPCheck:
-${cppcheck_cmd} ${start_path}/src --bug-hunting \
+${cppcheck_cmd} ${start_path}/src/*.c --bug-hunting \
              --enable=all \
              --platform=${Platform} \
              --std=c99 \
@@ -56,7 +56,7 @@ ${cppcheck_cmd} ${start_path}/src --bug-hunting \
              -I/usr/include/gnu/ \
              -I/usr/include/bits/ \
              -I${GCC_PATH} \
-             -I.. \
+             -I../ -I${start_path}/src/ \
              -io/ -ilib/ \
              --suppress=missingIncludeSystem 2>&1
 
