@@ -47,6 +47,8 @@ TESTBIN=$(TEST)/bin
 
 # In this section of the Makefile you can configure which ZVector Library 
 # extensions you want to be built-in when compilin gthe library.
+# If you want an extension enabled the set the corresponded variable to 1
+# otherwise set it to 0.
 
 # Does the library is built to be thread safe? (and so it uses mutex etc)?
 # Set it to 0 to disable thread safe code and set it to 1 to enable the thread
