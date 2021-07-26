@@ -7,7 +7,7 @@
  *          Distributed under MIT license
  */
 
-#if COMP_MAJRELEASE <= 4
+#if ( COMP_MAJRELEASE <= 5 )
 #define _BSD_SOURCE
 #else
 #define _DEFAULT_SOURCE
