@@ -56,7 +56,7 @@ ${cppcheck_cmd} ${start_path}/src --bug-hunting \
              -I/usr/include/gnu/ \
              -I/usr/include/bits/ \
              -I${GCC_PATH} \
-             -I.. -I${start_path}/src \
+             -I.. \
              -io/ -ilib/ \
              --suppress=missingIncludeSystem 2>&1
 
