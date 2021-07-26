@@ -1,11 +1,17 @@
 #!/bin/bash
 
+IS_CPPCHECK=$(which cppcheck | grep -Poi "no cppcheck in" | wc -l )
+if [ $IS_CPPCHECK -gt 0 ];
+then
+    echo "I can't find cppcheck from the shell, so have to skip this test, sorry!"
+    exit 0
+fi
+
 # Detect Platform:
 Arch="$(uname -m)"
 Platform=""
 [ "$Arch" == "x86_64" ] && Platform="unix64"
 [ "$Arch" == "x86" ] && Platform="unix32"
-
 
 # Detect GCC
 IS_GCC="$(which gcc 2>&1 | grep -Poi "no gcc in" | wc -l)"
@@ -47,3 +53,5 @@ cppcheck ${start_path}/src --bug-hunting \
              -I../ -I${start_path}/src/ \
              -io/ -ilib/ \
              --suppress=missingIncludeSystem 2>&1
+
+exit $?
