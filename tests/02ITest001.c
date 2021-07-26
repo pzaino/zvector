@@ -7,9 +7,10 @@
  *          Distributed under MIT license
  */
 
-#if ( COMP_MAJRELEASE <= 5 )
+#if ( __GNUC__ <  6 )
 #define _BSD_SOURCE
-#else
+#endif
+#if ( __GNUC__ >  5 )
 #define _DEFAULT_SOURCE
 #endif
 
