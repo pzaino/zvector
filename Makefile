@@ -53,6 +53,11 @@ TESTBIN=$(TEST)/bin
 # safe code within the library:
 THREAD_SAFE_BUILD=1
 
+# Do you want the DMF (Data Manipoulation Functions) extensions enabled?
+# This extension enabled functions like vect_swap that allows you to swap
+# two elements of the same vector.
+DMF_EXTENSIONS=1
+
 # Do you want the SFMD (Single Function Multiple Data) extension enabled?
 # This extension provides ZVect functions that you can call to modify entire
 # vectors usign a single function call.
@@ -69,6 +74,10 @@ SFMD_EXTENSIONS=1
 ifeq ($(THREAD_SAFE_BUILD), 1)
 LDFLAGS+= -lpthread
 CODE_MACROS+= -DTHREAD_SAFE
+endif
+
+ifeq ($(SFMD_EXTENSIONS), 1)
+CODE_MACROS+= -DZVECT_DMF_EXTENSIONS
 endif
 
 ifeq ($(SFMD_EXTENSIONS), 1)

@@ -176,6 +176,9 @@ void *vect_remove_front(vector);
 
 // Vector Data manipoulation functions:
 
+#ifdef ZVECT_DMF_EXTENSIONS
+// Data Manipoulation Functions extensions:
+
 /*
  * vect_swap is a function that allows you to swap two
  * items in the same vector.
@@ -183,6 +186,8 @@ void *vect_remove_front(vector);
  * two items.
  */
 void vect_swap(vector, zvect_index, zvect_index);
+
+#endif
 
 #ifdef ZVECT_SFMD_EXTENSIONS
 // Single Function Multiple Data extensions:

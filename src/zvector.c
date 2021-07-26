@@ -654,6 +654,7 @@ void *vect_remove_front(vector v)
 
 /*---------------------------------------------------------------------------*/
 // Vector Data Manipoulation functions
+#ifdef ZVECT_DMF_EXTENSIONS
 
 void vect_swap(vector v, zvect_index i1, zvect_index i2)
 {
@@ -676,6 +677,8 @@ void vect_swap(vector v, zvect_index i1, zvect_index i2)
     // We are done, let's clean up memory
     free(temp);
 }
+
+#endif  // ZVECT_DMF_EXTENSIONS
 
 #ifdef ZVECT_SFMD_EXTENSIONS
 // Single Function Call Multiple Data operations extensions:
