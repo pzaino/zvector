@@ -655,6 +655,31 @@ void *vect_remove_front(vector v)
 /*---------------------------------------------------------------------------*/
 // Vector Data Manipoulation functions
 
+void vect_swap(vector v, zvect_index i1, zvect_index i2)
+{
+    // check if the vector exists:
+    vect_check(v);
+
+    // Let's allocate some meory for the temporary pointer:
+    void *temp = (void *)malloc(sizeof(void *));
+
+    // Let's swap items:
+#   ifdef THREAD_SAFE
+    check_mutex_lock(v);
+#   endif
+    temp = v->array[i2];
+    v->array[i2] = v->array[i1];
+    v->array[i1] = temp;
+#   ifdef THREAD_SAFE
+    check_mutex_unlock(v);
+#   endif
+    // We are done, let's clean up memory
+    free(temp);
+}
+
+#ifdef ZVECT_SFMD_EXTENSIONS
+// Single Function Call Multiple Data operations extensions:
+
 void vect_apply(vector v, void (*f)(void *))
 {
     // check if the vector exists:
@@ -696,28 +721,6 @@ void vect_apply_if(vector v1, vector v2, void (*f1)(void *), bool (*f2)(void *, 
 #   ifdef THREAD_SAFE
     check_mutex_unlock(v1);
 #   endif
-}
-
-void vect_swap(vector v, zvect_index i1, zvect_index i2)
-{
-    // check if the vector exists:
-    vect_check(v);
-
-    // Let's allocate some meory for the temporary pointer:
-    void *temp = (void *)malloc(sizeof(void *));
-
-    // Let's swap items:
-#   ifdef THREAD_SAFE
-    check_mutex_lock(v);
-#   endif
-    temp = v->array[i2];
-    v->array[i2] = v->array[i1];
-    v->array[i1] = temp;
-#   ifdef THREAD_SAFE
-    check_mutex_unlock(v);
-#   endif
-    // We are done, let's clean up memory
-    free(temp);
 }
 
 void vect_copy(vector v1, vector v2, zvect_index start, 
@@ -822,5 +825,6 @@ void vect_merge(vector v1, vector v2)
     // free memory correctly:
     vect_destroy(v2);
 }
+#endif
 
 /*---------------------------------------------------------------------------*/

@@ -40,11 +40,25 @@ OBJ=o
 # for execution:
 TEST=tests
 TESTBIN=$(TEST)/bin
+#
+##############################################################################
+##############################################################################
+# ZVect Extensions
+
+# In this section of the Makefile you can configure which ZVector Library 
+# extensions you want to be built-in when compilin gthe library.
 
 # Does the library is built to be thread safe? (and so it uses mutex etc)?
 # Set it to 0 to disable thread safe code and set it to 1 to enable the thread
 # safe code within the library:
 THREAD_SAFE_BUILD=1
+
+# Do you want the SFMD (Single Function Multiple Data) extension enabled?
+# This extension provides ZVect functions that you can call to modify entire
+# vectors usign a single function call.
+# If you want the SFMD extensions enabled the set the following variable to 1
+# otherwise set it to 0
+SFMD_EXTENSIONS=1
 
 #
 ###############################################################################
@@ -55,6 +69,10 @@ THREAD_SAFE_BUILD=1
 ifeq ($(THREAD_SAFE_BUILD), 1)
 LDFLAGS+= -lpthread
 CODE_MACROS+= -DTHREAD_SAFE
+endif
+
+ifeq ($(SFMD_EXTENSIONS), 1)
+CODE_MACROS+= -DZVECT_SFMD_EXTENSIONS
 endif
 
 SRCF=$(wildcard $(SRC)/*.c)
@@ -85,6 +103,7 @@ clean:
 core: $(LIBDIR) $(LIB)
 
 test: $(TEST)/bin $(TESTBINS)
+	$(info Running all found tests...)
 	for test in $(TESTBINS) ; do ./$(TESTBIN)$$test ; done 
 
 debug: CFLAGS+= -ggdb3

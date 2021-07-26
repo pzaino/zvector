@@ -177,6 +177,17 @@ void *vect_remove_front(vector);
 // Vector Data manipoulation functions:
 
 /*
+ * vect_swap is a function that allows you to swap two
+ * items in the same vector.
+ * You just pass the vector and the index of both the 
+ * two items.
+ */
+void vect_swap(vector, zvect_index, zvect_index);
+
+#ifdef ZVECT_SFMD_EXTENSIONS
+// Single Function Multiple Data extensions:
+
+/*
  * vect_apply allows you to apply a C function to 
  * each item in the vector, so you just pass the vector, 
  * the function you want to execute against each item on
@@ -222,14 +233,6 @@ void vect_apply(vector, void (*f1)(void *));
  */
 void vect_apply_if(vector v1, vector v2, void (*f1)(void *), bool (*f2)(void *, void *));
 
-/*
- * vect_swap is a function that allows you to swap two
- * items in the same vector.
- * You just pass the vector and the index of both the 
- * two items.
- */
-void vect_swap(vector, zvect_index, zvect_index);
-
 // Operations with multiple vectors:
 
 /*
@@ -272,5 +275,7 @@ void vect_move(vector v1, vector v2, zvect_index start, zvect_index max_elements
  *                              all v2 items.
  */  
 void vect_merge(vector v1, vector v2);
+
+#endif  // ZVECT_SFMD_EXTENSIONS
 
 #endif  // SRC_ZVECTOR_H_

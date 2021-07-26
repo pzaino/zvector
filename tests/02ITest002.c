@@ -18,7 +18,7 @@
 #include "zvector.h"
 
 // Setup tests:
-char *testGrp = "001";
+char *testGrp = "002";
 uint8_t testID = 1;
 
 void clear_str(char *str, uint32_t numchars)
@@ -49,7 +49,7 @@ void run_cmd(char *cmd_line, char *buffer)
 int main()
 {
     printf("=== ITest%s ===\n", testGrp);
-    printf("Testing Thread_safe features:\n");
+    printf("CPPCheck Source code Analisys:\n");
 
     printf("Test %s_%d: Check is CPPCheck is installed on this system:\n", testGrp, testID);
  
@@ -81,7 +81,7 @@ int main()
     printf("done.\n");
     testID++;
 
-    printf("================\n");
+    printf("================\n\n");
 
     return 0;
 }

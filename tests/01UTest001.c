@@ -72,7 +72,7 @@ int main()
     printf("done.\n");
     testID++;
 
-    printf("================\n");
+    printf("================\n\n");
 
     return 0;
 }

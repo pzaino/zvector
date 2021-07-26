@@ -13,6 +13,8 @@
 #include <string.h>
 #include "zvector.h"
 
+#define MAX_ITEMS 10000
+
 void multiply_elements(void *element)
 {
     // Let's convert element into the right
@@ -45,9 +47,9 @@ int main()
     printf("done.\n");
     testID++;
 
-    printf("Test %s_%d: Insert 10000 elements and check if they are stored correctly:\n", testGrp, testID);
+    printf("Test %s_%d: Insert %d elements and check if they are stored correctly:\n", testGrp, testID, MAX_ITEMS);
     int i;
-    for (i = 0; i < 1000000; i++)
+    for (i = 0; i < MAX_ITEMS; i++)
     {
         // Let's add a new value in the vector:
         vect_add(v, &i);
@@ -62,9 +64,29 @@ int main()
     printf("done.\n");
     testID++;
 
+
+
+#ifdef ZVECT_SFMD_EXTENSIONS
+    // We have SFMD extensions enabled so let's use them for this test!
     printf("Test %s_%d: Apply function 'multiply_elements' to the entire vector and verify if it's correct:\n", testGrp, testID);
+
     vect_apply(v, multiply_elements);
-    for (i = 0; i < 1000000; i++)
+
+#endif // ZVECT_SFMD_EXTENSIONS
+#ifndef ZVECT_SFMD_EXTENSIONS
+    // We DO NOT have SFMD extensions enabled so let's use a regular loop!
+    printf("Test %s_%d: Multiplying each vector's item (one-by-one):\n", testGrp, testID);
+
+    for (i = 0; i < MAX_ITEMS; i++)
+    {
+        // Let's increment each vector element one by one:
+        multiply_elements(vect_get_at((vector)v, i));
+    }
+
+#endif // ZVECT_SFMD_EXTENSIONS
+
+    // Verify Items in the Vector:
+    for (i = 0; i < MAX_ITEMS; i++)
     {
         // Let's retrieve the value from the vector correctly:
         // For beginners: this is how in C we convert back a void * into the original dtata_type
@@ -90,7 +112,7 @@ int main()
     printf("done.\n");
     testID++;
 
-    printf("================\n");
+    printf("================\n\n");
 
     return 0;
 }
