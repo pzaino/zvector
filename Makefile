@@ -19,7 +19,7 @@
 CC=gcc
 
 # Configure additional compiler and linker flags:
-CFLAGS+=-O2 -std=c99 -Wall -I./src
+CFLAGS+=-std=c99 -Wall -I./src
 LDFLAGS+=
 
 # If you want to pass some MACROS to your code you can use the following 
@@ -76,6 +76,7 @@ LIB=$(LIBDIR)/lib$(LIBNAME).a
 # Targets:
 
 .PHONY: all
+all: CFLAGS+=-O2
 all: core test
 
 clean:

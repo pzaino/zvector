@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# Detect Platform:
+Arch="$(uname -m)"
+Platform=""
+[ "$Arch" == "x86_64" ] && Platform="unix64"
+[ "$Arch" == "x86" ] && Platform="unix32"
+
+
 # Detect GCC
 IS_GCC="$(which gcc 2>&1 | grep -Poi "no gcc in" | wc -l)"
 if [ "$IS_GCC" == "1" ];
@@ -28,7 +35,7 @@ fi
 # Run CPPCheck:
 cppcheck ${start_path}/src --bug-hunting \
              --enable=all \
-             --platform=unix64 \
+             --platform=${Platform} \
              --std=c99 \
              --force \
              -I/usr/include/ \
@@ -38,5 +45,5 @@ cppcheck ${start_path}/src --bug-hunting \
              -I/usr/include/bits/ \
              -I${GCC_PATH} \
              -I../ -I${start_path}/src/ \
-             -iobj/ -ibuild/ \
-             --check-config --suppress=missingIncludeSystem 2>&1
+             -io/ -ilib/ \
+             --suppress=missingIncludeSystem 2>&1

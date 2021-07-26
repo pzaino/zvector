@@ -298,7 +298,9 @@ static void vect_double_capacity(vector v)
 
     // Get actual capacity and double it
     zvect_index new_capacity = 2 * v->capacity;
-    void **new_array = (void **)malloc(sizeof(v->data_size) * new_capacity);
+
+    // Create a new array to work on (for reentrancy):
+    void **new_array = (void **)malloc(sizeof(void *) * new_capacity);
     if (new_array == NULL)
     {
         throw_error("Not enough memory to extend the vector capacity!");
@@ -328,7 +330,7 @@ static void vect_half_capacity(vector v)
 
     // Get actual Capacity and halve it
     zvect_index new_capacity = v->capacity / 2;
-    void **new_array = (void **)malloc(sizeof(v->data_size) * new_capacity);
+    void **new_array = (void **)malloc(sizeof(void *) * new_capacity);
     if (new_array == NULL)
     {
         throw_error("Not enough memory to resize the vector!");

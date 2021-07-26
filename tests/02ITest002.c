@@ -76,12 +76,10 @@ int main()
     printf("Test %s_%d: Run CPPCheck analysis against the Library sources:\n", testGrp, testID);
 
     clear_str(buffer, 10240);
-    run_cmd("./tests/cpp_check.sh", buffer);
+    system("./tests/cpp_check.sh");
     
     printf("done.\n");
     testID++;
-
-    printf("CPPCheck Test results:\n%s\n", buffer);
 
     printf("================\n");
 
