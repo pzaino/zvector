@@ -78,7 +78,8 @@ int main()
     fflush(stdout);
 
     printf("Test %s_%d: Run CPPCheck analysis against the Library sources:\n", testGrp, testID);
-
+    fflush(stdout);
+    
     clear_str(buffer, 10240);
     system("$(pwd)/tests/cpp_check.sh");
     
