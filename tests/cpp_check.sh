@@ -9,6 +9,12 @@ fi
 
 cppcheck_cmd="$(which cppcheck)"
 
+if [ "${cppcheck_cmd}" == "" ];
+then
+    echo "I can't find cppcheck from the shell, so have to skip this test, sorry!"
+    exit 0
+fi
+
 echo ""
 echo "Using cppcheck release: $(${cppcheck_cmd} --version)"
 echo ""
