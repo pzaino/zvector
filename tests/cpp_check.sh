@@ -39,7 +39,7 @@ dpath="$(dirname "$cpath")"
 
 if [ "$bdir" == "zvector" ];
 then
-	start_path='./'
+	start_path='.'
 else
 	start_path="$(dirname "$dpath")"
 fi
