@@ -124,7 +124,9 @@ void vect_add_front(vector, const void *);
  * vect_get returns an item from the specified vector
  *
  * vect_get(v)          will return the last element in
- *                      the v vector.
+ *                      the v vector (but will not touch
+ *                      the element as it happens in
+ *                       vect_pop(v)).
  * 
  * vect_get_at(v, 3)    will return the element at location
  *                      3 in the vector v.
