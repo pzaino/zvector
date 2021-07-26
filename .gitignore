@@ -1,1 +1,5 @@
 .history/
+lib/
+o/
+tests/bin/
+

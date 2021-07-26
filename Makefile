@@ -114,7 +114,10 @@ clean:
 core: $(LIBDIR) $(LIB)
 
 test: $(TEST)/bin $(TESTBINS)
+	$(info   )
+	$(info ===========================)
 	$(info Running all found tests...)
+	$(info ===========================)
 	for test in $(TESTBINS) ; do ./$(TESTBIN)$$test ; done 
 
 debug: CFLAGS+= -ggdb3
@@ -122,14 +125,20 @@ debug: CODE_MACROS+= -DDEBUG
 debug: core test
 
 $(OBJF): $(SRCF)
+	$(info  )
+	$(info ===========================)
 	$(info Building $(OBJF))
+	$(info ===========================)
 	$(CC) -c -o $@ $< $(CFLAGS) $(CODE_MACROS)
-	$(info done)
 
 $(LIB): $(OBJ) $(OBJF) 
 	ar rcs $@ -o $(OBJF)
 
 $(TESTBINS): $(TESTS)
+	$(info  )
+	$(info ===========================)
+	$(info Building all found tests...)
+	$(info ===========================)
 	$(CC) $(CFLAGS) $(CODE_MACROS) $(TEST)$@.c -I`pwd`/src -L`pwd`/$(LIBDIR) -l$(LIBNAME) $(LDFLAGS) -o $(TESTBIN)$@
 
 $(LIBDIR):

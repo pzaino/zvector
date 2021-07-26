@@ -39,4 +39,10 @@
 #   define MUTEX_TYPE 0
 #endif
 
+#if ( defined(__GNUC__) )
+#define COMP_MAJRELEASE (__GNUC__)
+#define COMP_MINRELEASE (__GNUC_MINOR__)
+#define COMP_PATRELEASE (__GNUC_PATCHLEVEL__)
+#endif
+
 #endif  // SRC_ZVECTOR_CHECKS_H_

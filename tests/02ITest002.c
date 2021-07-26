@@ -7,7 +7,14 @@
  *          Distributed under MIT license
  */
 
+#if ( __GNUC__ <  6 )
 #define _BSD_SOURCE
+#endif
+#if ( __GNUC__ >  5 )
+#define _DEFAULT_SOURCE
+#endif
+
+#define UNUSED(x)			(void)x
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,7 +45,9 @@ void run_cmd(char *cmd_line, char *buffer)
         exit(1);
     } 
 
-    fgets(buffer, sizeof(buffer), pipe);
+    if( fgets(buffer, sizeof(buffer), pipe) != NULL) {
+        // we are populating buffer now...
+    }
 
     len = strlen(buffer);
     buffer[len-1] = '\0'; 
@@ -51,6 +60,8 @@ int main()
     printf("=== ITest%s ===\n", testGrp);
     printf("CPPCheck Source code Analisys:\n");
 
+    fflush(stdout);
+
     printf("Test %s_%d: Check is CPPCheck is installed on this system:\n", testGrp, testID);
  
     char buffer[10240];
@@ -59,9 +70,6 @@ int main()
     run_cmd("which cppcheck 2>&1 | grep -Poi \"no cppcheck in\" | wc -l", buffer);
  
     char *result=(buffer[0] == '0') ? "yes" : "no";
-
-    printf("done.\n");
-    testID++;
 
     if ( buffer[0] == '1' )
     {
@@ -73,15 +81,25 @@ int main()
         printf("Proceeding with  CPPCheck test because I found it on your system: %s\n", result);
     }
 
+    printf("done.\n");
+    testID++;
+
+    fflush(stdout);
+
     printf("Test %s_%d: Run CPPCheck analysis against the Library sources:\n", testGrp, testID);
+    fflush(stdout);
 
     clear_str(buffer, 10240);
-    system("./tests/cpp_check.sh");
+    int rval;
+    rval = system("$(pwd)/tests/cpp_check.sh");
     
     printf("done.\n");
     testID++;
 
+    fflush(stdout);
+
     printf("================\n\n");
 
     return 0;
+    UNUSED(rval);
 }

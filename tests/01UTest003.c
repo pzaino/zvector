@@ -41,11 +41,15 @@ int main()
     printf("=== UTest%s ===\n", testGrp);
     printf("Testing vect_apply functions\n");
 
+    fflush(stdout);
+
     printf("Test %s_%d: Create a vector of 2 elements and using int for the vector data:\n", testGrp, testID);
     vector v;
     v = vect_create(2, sizeof(int), true);
     printf("done.\n");
     testID++;
+
+    fflush(stdout);
 
     printf("Test %s_%d: Insert %d elements and check if they are stored correctly:\n", testGrp, testID, MAX_ITEMS);
     int i;
@@ -64,7 +68,7 @@ int main()
     printf("done.\n");
     testID++;
 
-
+    fflush(stdout);
 
 #ifdef ZVECT_SFMD_EXTENSIONS
     // We have SFMD extensions enabled so let's use them for this test!
@@ -97,20 +101,28 @@ int main()
     printf("done.\n");
     testID++;
 
+    fflush(stdout);
+
     printf("Test %s_%d: Clear vector:\n", testGrp, testID);
     vect_clear(v);
     printf("done.\n");
     testID++;
+
+    fflush(stdout);
 
     printf("Test %s_%d: Check if vector size is now 0 (zero):\n", testGrp, testID);
     assert(vect_size(v) == 0);
     printf("done.\n");
     testID++;
 
+    fflush(stdout);
+
     printf("Test %s_%d: destroy the vector:\n", testGrp, testID);
     vect_destroy(v);
     printf("done.\n");
     testID++;
+
+    fflush(stdout);
 
     printf("================\n\n");
 

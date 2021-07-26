@@ -1,11 +1,29 @@
 #!/bin/bash
 
+IS_CPPCHECK=$(which cppcheck | grep -Poi "no cppcheck in" | wc -l )
+if [ $IS_CPPCHECK -gt 0 ];
+then
+    echo "I can't find cppcheck from the shell, so have to skip this test, sorry!"
+    exit 0
+fi
+
+cppcheck_cmd="$(which cppcheck)"
+
+if [ "${cppcheck_cmd}" == "" ];
+then
+    echo "I can't find cppcheck from the shell, so have to skip this test, sorry!"
+    exit 0
+fi
+
+echo ""
+echo "Using cppcheck release: $(${cppcheck_cmd} --version)"
+echo ""
+
 # Detect Platform:
 Arch="$(uname -m)"
 Platform=""
 [ "$Arch" == "x86_64" ] && Platform="unix64"
 [ "$Arch" == "x86" ] && Platform="unix32"
-
 
 # Detect GCC
 IS_GCC="$(which gcc 2>&1 | grep -Poi "no gcc in" | wc -l)"
@@ -15,9 +33,13 @@ then
     exit 0
 fi
 
+gcc_cmd="$(which gcc)"
+
+grep_cmd="$(which grep)"
+
 # Detect GCC Version and library:
-GCC_VER="$(gcc -v 2>&1 | grep -Poi 'gcc version \K[0-9]+\.[0-9]+\.[0-9]+')"
-GCC_TARGET="$( gcc -v 2>&1 | grep -Poi 'Target: \K.*' )"
+GCC_VER="$(${gcc_cmd} -v 2>&1 | ${grep_cmd} -Poi 'gcc version \K[0-9]+\.[0-9]+\.[0-9]+')"
+GCC_TARGET="$(${gcc_cmd} -v 2>&1 | ${grep_cmd} -Poi 'Target: \K.*' )"
 GCC_PATH="/usr/lib/gcc/${GCC_TARGET}/${GCC_VER}/include/"
 
 # Detect path from where we are launching this script:
@@ -27,13 +49,13 @@ dpath="$(dirname "$cpath")"
 
 if [ "$bdir" == "zvector" ];
 then
-	start_path='./'
+	start_path='.'
 else
 	start_path="$(dirname "$dpath")"
 fi
 
 # Run CPPCheck:
-cppcheck ${start_path}/src --bug-hunting \
+${cppcheck_cmd} ${start_path}/src/*.c --bug-hunting \
              --enable=all \
              --platform=${Platform} \
              --std=c99 \
@@ -47,3 +69,6 @@ cppcheck ${start_path}/src --bug-hunting \
              -I../ -I${start_path}/src/ \
              -io/ -ilib/ \
              --suppress=missingIncludeSystem 2>&1
+
+exit $?
+
