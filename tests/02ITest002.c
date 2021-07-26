@@ -7,7 +7,8 @@
  *          Distributed under MIT license
  */
 
-#define _BSD_SOURCE
+// # define _BSD_SOURCE
+#define _DEFAULT_SOURCE
 
 #include <stdio.h>
 #include <stdlib.h>
