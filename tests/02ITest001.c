@@ -136,6 +136,8 @@ int main()
     printf("done.\n");
     testID++;
 
+    fflush(stdout);
+
     printf("Test %s_%d: Insert %d elements and check if they are stored correctly:\n", testGrp, testID, MAX_ITEMS);
     int i = 0;
     for (i = 0; i < MAX_ITEMS; i++)
@@ -156,6 +158,8 @@ int main()
     printf("done.\n");
     testID++;
 
+    fflush(stdout);
+
     printf("Test %s_%d: Spin 2 threads and use them to manipoulate the vector above.", testGrp, testID);
 
     int err = 0;
@@ -170,9 +174,6 @@ int main()
         printf("Can't create thread :[%s]\n", strerror(err));
     i++;
 
-    printf("done.\n");
-    testID++;
-
     // Let's start the threads:
     pthread_join(tid[0], NULL);
 
@@ -181,10 +182,19 @@ int main()
 
     pthread_join(tid[1], NULL);
 
-    printf("Test %s_%d: Check vector size:\n", testGrp, testID);
-    printf("Size now: %d\n", vect_size(v));
     printf("done.\n");
     testID++;
+
+    fflush(stdout);
+
+    printf("Test %s_%d: Check vector size:\n", testGrp, testID);
+
+    printf("Size now: %d\n", vect_size(v));
+
+    printf("done.\n");
+    testID++;
+
+    fflush(stdout);
 
     printf("Test %s_%d: Check the vector to see if elements value is coerent:\n", testGrp, testID);
     for (i = 0; i < MAX_ITEMS; i++)
@@ -203,20 +213,28 @@ int main()
     printf("done.\n");
     testID++;
 
+    fflush(stdout);
+
     printf("Test %s_%d: Clear vector:\n", testGrp, testID);
     vect_clear(v);
     printf("done.\n");
     testID++;
+
+    fflush(stdout);
 
     printf("Test %s_%d: Check if vector size is now 0 (zero):\n", testGrp, testID);
     assert(vect_size(v) == 0);
     printf("done.\n");
     testID++;
 
+    fflush(stdout);
+
     printf("Test %s_%d: destroy the vector:\n", testGrp, testID);
     vect_destroy(v);
     printf("done.\n");
     testID++;
+
+    fflush(stdout);
 
     printf("================\n");
 

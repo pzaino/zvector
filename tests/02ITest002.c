@@ -76,7 +76,7 @@ int main()
     printf("Test %s_%d: Run CPPCheck analysis against the Library sources:\n", testGrp, testID);
 
     clear_str(buffer, 10240);
-    system("./tests/cpp_check.sh");
+    system("$(pwd)/tests/cpp_check.sh");
     
     printf("done.\n");
     testID++;
