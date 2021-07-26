@@ -7,11 +7,15 @@
  *          Distributed under MIT license
  */
 
+#define _BSD_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+
 #include <assert.h>
 #include <string.h>
-#include <unistd.h>
+
 #include "zvector.h"
 
 //# define THREAD_SAFE
@@ -171,6 +175,10 @@ int main()
 
     // Let's start the threads:
     pthread_join(tid[0], NULL);
+
+    // Let's ensure that thread 0 starts always before thread 1:
+    usleep(100);
+
     pthread_join(tid[1], NULL);
 
     printf("Test %s_%d: Check vector size:\n", testGrp, testID);
@@ -181,12 +189,16 @@ int main()
     printf("Test %s_%d: Check the vector to see if elements value is coerent:\n", testGrp, testID);
     for (i = 0; i < MAX_ITEMS; i++)
     {
+        printf ("Checking item: %d = ", i);
+
         // Let's retrieve the value from the vector correctly:
         // For beginners: this is how in C we convert back a void * into the original dtata_type
         int value = *((int *)vect_get_at(v, i));
 
+        printf("%d\n", value);
+
         // Let's test if the value we have retrieved is correct:
-        assert(value == ((i + 1 ) * 5) );
+        assert(value == (( i + 1 ) * 5) );
     }
     printf("done.\n");
     testID++;
