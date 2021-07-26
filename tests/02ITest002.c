@@ -7,8 +7,13 @@
  *          Distributed under MIT license
  */
 
-// # define _BSD_SOURCE
+#if COMP_MAJRELEASE <= 5
+#define _BSD_SOURCE
+#else
 #define _DEFAULT_SOURCE
+#endif
+
+#define UNUSED(x)			(void)x
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -39,7 +44,9 @@ void run_cmd(char *cmd_line, char *buffer)
         exit(1);
     } 
 
-    fgets(buffer, sizeof(buffer), pipe);
+    if( fgets(buffer, sizeof(buffer), pipe) != NULL) {
+        // we are populating buffer now...
+    }
 
     len = strlen(buffer);
     buffer[len-1] = '\0'; 
@@ -80,9 +87,10 @@ int main()
 
     printf("Test %s_%d: Run CPPCheck analysis against the Library sources:\n", testGrp, testID);
     fflush(stdout);
-    
+
     clear_str(buffer, 10240);
-    system("$(pwd)/tests/cpp_check.sh");
+    int rval;
+    rval = system("$(pwd)/tests/cpp_check.sh");
     
     printf("done.\n");
     testID++;
@@ -92,4 +100,5 @@ int main()
     printf("================\n\n");
 
     return 0;
+    UNUSED(rval);
 }

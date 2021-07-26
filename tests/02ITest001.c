@@ -7,8 +7,13 @@
  *          Distributed under MIT license
  */
 
-//# define _BSD_SOURCE
+#if COMP_MAJRELEASE <= 5
+#define _BSD_SOURCE
+#else
 #define _DEFAULT_SOURCE
+#endif
+
+#define UNUSED(x)			(void)x
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -209,7 +214,7 @@ int main()
 
         printf("%d\n", value);
         fflush(stdout);
-        
+
         // Let's test if the value we have retrieved is correct:
         assert(value == (( i + 1 ) * 5) );
     }
