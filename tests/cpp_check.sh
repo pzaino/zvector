@@ -9,6 +9,10 @@ fi
 
 cppcheck_cmd="$(which cppcheck)"
 
+echo ""
+echo "Using cppcheck release: $(${cppcheck_cmd} --version)"
+echo ""
+
 # Detect Platform:
 Arch="$(uname -m)"
 Platform=""
@@ -61,3 +65,4 @@ ${cppcheck_cmd} ${start_path}/src/*.c --bug-hunting \
              --suppress=missingIncludeSystem 2>&1
 
 exit $?
+
