@@ -1,3 +1,5 @@
+<img align="right" width="320" height="280" src="/images/ZVectorLogo2.png">
+
 ![CodeQL](https://github.com/pzaino/vector/actions/workflows/codeql-analysis.yml/badge.svg)
 
 # ZVector
