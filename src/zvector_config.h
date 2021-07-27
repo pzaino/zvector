@@ -1,15 +1,18 @@
-#ifndef SRC_ZVECTOR_CONFIG_H_
-#define SRC_ZVECTOR_CONFIG_H_
-
 /*
- *    Name: Vector
- * Purpose: Library to use Dynamic Arrays (Vectors) in C Language
+ *    Name: Vector_config
+ * Purpose: Base configuration for the ZVector library
  *  Author: Paolo Fabio Zaino
  *  Domain: General
  * License: Copyright by Paolo Fabio Zaino, all right reserved
  *          Distributed under MIT license
  *          
  */
+
+#ifndef SRC_ZVECTOR_CONFIG_H_
+#define SRC_ZVECTOR_CONFIG_H_
+#if defined(_MSC_VER) && (_MSC_VER >= 1020)
+#pragma once
+#endif
 
 // Include some standard C lib header
 #include <stdint.h>

@@ -50,19 +50,19 @@ TESTBIN=$(TEST)/bin
 # If you want an extension enabled the set the corresponded variable to 1
 # otherwise set it to 0.
 
-# Does the library is built to be thread safe? (and so it uses mutex etc)?
-# Set it to 0 to disable thread safe code and set it to 1 to enable the thread
-# safe code within the library:
+# Do you want the library to be built to be thread safe? (and so it uses mutex 
+# etc)? If so, set the following variable to 1 to enable thread safe code or 
+# set it to 0 to disable the thread safe code within the library:
 THREAD_SAFE_BUILD=1
 
-# Do you want the DMF (Data Manipoulation Functions) extensions enabled?
-# This extension enabled functions like vect_swap that allows you to swap
+# Do you want the DMF (Data Manipulation Functions) extensions enabled?
+# This extension enables functions like vect_swap that allows you to swap
 # two elements of the same vector.
 DMF_EXTENSIONS=1
 
 # Do you want the SFMD (Single Function Multiple Data) extension enabled?
 # This extension provides ZVect functions that you can call to modify entire
-# vectors usign a single function call.
+# vectors using a single function call.
 # If you want the SFMD extensions enabled the set the following variable to 1
 # otherwise set it to 0
 SFMD_EXTENSIONS=1

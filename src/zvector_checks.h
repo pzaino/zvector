@@ -1,6 +1,3 @@
-#ifndef SRC_ZVECTOR_CHECKS_H_
-#define SRC_ZVECTOR_CHECKS_H_
-
 /*
  *    Name: ZVector_Checks
  * Purpose: Header used by ZVector Library to identify for which
@@ -11,6 +8,12 @@
  *          Distributed under MIT license
  *          
  */
+
+#ifndef SRC_ZVECTOR_CHECKS_H_
+#define SRC_ZVECTOR_CHECKS_H_
+#if defined(_MSC_VER) && (_MSC_VER >= 1020)
+#pragma once
+#endif
 
 // preliminary checks:
 #if defined(__APPLE__) && defined(__MACH__)

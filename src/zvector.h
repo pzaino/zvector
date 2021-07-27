@@ -1,8 +1,5 @@
-#ifndef SRC_ZVECTOR_H_
-#define SRC_ZVECTOR_H_
-
 /*
- *    Name: Vector
+ *    Name: ZVector (Header)
  * Purpose: Library to use Dynamic Arrays (Vectors) in C Language
  *  Author: Paolo Fabio Zaino
  *  Domain: General
@@ -10,6 +7,12 @@
  *          Distributed under MIT license
  *          
  */
+
+#ifndef SRC_ZVECTOR_H_
+#define SRC_ZVECTOR_H_
+#if defined(_MSC_VER) && (_MSC_VER >= 1020)
+#pragma once
+#endif
 
 // First library included is zvector_checks,
 // so we know on which platform and which features
@@ -26,7 +29,7 @@ typedef struct _vector *vector;
  ** Public API declaration: **
  *****************************/
 
-// Vector contruction/Destruction and memory control:
+// Vector construction/Destruction and memory control:
 
 /*
  * vect_create creates and returns a new vector
@@ -35,14 +38,14 @@ typedef struct _vector *vector;
  * have an automatic secure erasing enabled (secure_wipe
  * = true) or disabled (secure_wipe = false).
  * 
- * vect_destroy destroies the specified vector and, if 
+ * vect_destroy destrois the specified vector and, if 
  * secure_wipe is enabled, also ensure erasing each single
  * value in the vector before destroying it.
  * 
  * vect_shrink is useful when operating on systems with 
  * small amount of RAM and it basically allow to shrink
  * the vector capacity to match the actual used size, to
- * same unused memory locations. 
+ * save unused memory locations. 
  */
 vector vect_create(size_t capacity, size_t item_size, bool secure_wipe);
 void vect_destroy(vector);
