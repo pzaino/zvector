@@ -23,9 +23,15 @@
 // Include vector.h header
 #include "zvector.h"
 
+// Include non-ANSI Libraries
+// only if the user has requested
+// special extensions:
 #ifdef THREAD_SAFE
 #   if MUTEX_TYPE == 1
 #       include <pthread.h>
+#   elif MUTEX_TYPE == 2
+#       include <windows.h>
+#       include <psapi.h>
 #   endif
 #endif
 
