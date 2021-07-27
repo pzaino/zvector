@@ -1,8 +1,5 @@
-#ifndef SRC_ZVECTOR_H_
-#define SRC_ZVECTOR_H_
-
 /*
- *    Name: Vector
+ *    Name: ZVector (Header)
  * Purpose: Library to use Dynamic Arrays (Vectors) in C Language
  *  Author: Paolo Fabio Zaino
  *  Domain: General
@@ -10,6 +7,12 @@
  *          Distributed under MIT license
  *          
  */
+
+#ifndef SRC_ZVECTOR_H_
+#define SRC_ZVECTOR_H_
+#if defined(_MSC_VER) && (_MSC_VER >= 1020)
+#pragma once
+#endif
 
 // First library included is zvector_checks,
 // so we know on which platform and which features
