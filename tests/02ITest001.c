@@ -180,7 +180,7 @@ int main()
     pthread_join(tid[0], NULL);
 
     // Let's ensure that thread 0 starts always before thread 1:
-    usleep(100);
+    //usleep(100);
 
     err = pthread_create(&(tid[i]), NULL, &doSomething2, v);
     if (err != 0)

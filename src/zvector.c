@@ -289,32 +289,34 @@ void vect_unlock(vector v)
 /*---------------------------------------------------------------------------*/
 // Vector Capacity management functions:
 
+// This function double the CAPACITY of a vector.
 static void vect_double_capacity(vector v)
 {
     // Check if the vector exists:
     vect_check(v);
 
     // Get actual capacity and double it
-    zvect_index new_capacity = 2 * v->capacity;
-
-    // Create a new array to work on (for reentrancy):
+    zvect_index new_capacity = v->capacity * 2;
     void **new_array = (void **)malloc(sizeof(void *) * new_capacity);
     if (new_array == NULL)
     {
         throw_error("Not enough memory to extend the vector capacity!");
     }
 
+    // Copy array of pointers to items into the new (larger) array
     zvect_index i;
     for (i = 0; i < v->size; i++)
     {
         new_array[i] = v->array[i];
     }
 
+    // Apply changes and release memory
     free(v->array);
     v->array = new_array;
     v->capacity = new_capacity;
 }
 
+// This function halves the CAPACITY of a vector.
 static void vect_half_capacity(vector v)
 {
     // Check if the vector exists:
@@ -336,33 +338,37 @@ static void vect_half_capacity(vector v)
 
     // Rearraange the vector data:
     zvect_index i;
-    // Store old capacity, we'll need it for safe erase if enabled
-    zvect_index old_size = v->size;
-
     for (i = 0; i < min(v->size, new_capacity); i++)
     {
+        // Copy pointers to items from v->array
+        // to new array. This makes us fast while
+        // still secure (if Secure Wipe is true 
+        // for this vector).
         new_array[i] = v->array[i];
     }
 
     if (v->wipe)
     {
-        // Secure Erase the portion of the old storage that
-        // is going to be released in a bit:
+        // If Secure Wipe is true then we may need to secure wipe
+        // a potential left over portion of the old storage that
+        // is going to be freed in a bit:
         zvect_index i2;
-        for (i2 = i + 1; i2 < old_size; i2++)
+        for (i2 = i + 1; i2 < v->size; i2++)
         {
             memset(v->array[i2], 0, v->data_size);
         }
     }
-    // Free old array:
+    
+    // Apply changes and release memory:
     free(v->array);
-
-    // Update vector:
     v->array = new_array;
     v->capacity = new_capacity;
     v->size = min(v->size, new_capacity);
 }
 
+// Thi sfunction shrinks the CAPACITY of a vector
+// not its size. To reduce the size of a vector we
+// need to remove items from it.
 void vect_shrink(vector v)
 {
     // Check if the vector exists:
@@ -373,34 +379,18 @@ void vect_shrink(vector v)
         throw_error("Empty vector can't be shrank!");
     }
 
-    zvect_index size = 0;
+    zvect_index new_capacity;
 #   ifdef THREAD_SAFE
     check_mutex_lock(v, 1);
 #   endif
     if (v->size < v->init_capacity)
     {
-        size = v->init_capacity;
+        new_capacity = v->init_capacity;
     }
     else
-        size = v->size;
+        new_capacity = v->size + 1;
 
-    // Secure wipe unused data
-    if (v->wipe)
-    {
-        // Store old capacity, we'll need it for safe erase if enabled
-        zvect_index old_size = v->size;
-        zvect_index delta = old_size - size;
-
-        // Secure Erase the portion of the old storage that
-        // is going to be released in a bit:
-        zvect_index i2;
-        for (i2 = delta + 1; i2 < old_size; i2++)
-        {
-            memset(v->array[i2], 0, v->data_size);
-        }
-    }
-
-    v->capacity = size + 1;
+    v->capacity = new_capacity;
     v->array = (void **)realloc(v->array, sizeof(void *) * v->capacity);
     if (v->array == NULL)
     {
