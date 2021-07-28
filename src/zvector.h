@@ -166,8 +166,8 @@ void vect_put_front(vector, const void *);
  * the item remove from the vector, so you can
  * use it to simulate a stack behaviour as well.
  * 
- * vect_remove(v)       will remove and return
- *                      the last item in the vector
+ * vect_remove(v)       will remove and return the
+ *                      last item in the vector.
  * 
  * vect_remove_at(v, 3) will remove the 3rd item in
  *                      the vector and return it.
@@ -178,6 +178,24 @@ void vect_put_front(vector, const void *);
 void *vect_remove(vector);
 void *vect_remove_at(vector, zvect_index);
 void *vect_remove_front(vector);
+
+/* 
+ * vect_delete deletes an item from the vector
+ * and reorganise the vector. It does not return
+ * the item like remove.
+ * 
+ * vect_delete(v)       will delete and the last 
+ *                      item in the vector.
+ * 
+ * vect_delete_at(v, 3) will delete the 3rd item in
+ *                      the vector.
+ *
+ * vect_delete_front(v) will delete the 1st item in
+ *                      the vector.
+ */
+void vect_delete(vector);
+void vect_delete_at(vector, zvect_index);
+void vect_delete_front(vector);
 
 // Vector Data manipoulation functions:
 
