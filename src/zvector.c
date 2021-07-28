@@ -289,6 +289,7 @@ void vect_unlock(vector v)
 /*---------------------------------------------------------------------------*/
 // Vector Capacity management functions:
 
+// This function double the CAPACITY of a vector.
 static void vect_double_capacity(vector v)
 {
     // Check if the vector exists:
@@ -315,6 +316,7 @@ static void vect_double_capacity(vector v)
     v->capacity = new_capacity;
 }
 
+// This function halves the CAPACITY of a vector.
 static void vect_half_capacity(vector v)
 {
     // Check if the vector exists:
@@ -364,6 +366,9 @@ static void vect_half_capacity(vector v)
     v->size = min(v->size, new_capacity);
 }
 
+// Thi sfunction shrinks the CAPACITY of a vector
+// not its size. To reduce the size of a vector we
+// need to remove items from it.
 void vect_shrink(vector v)
 {
     // Check if the vector exists:
@@ -374,34 +379,18 @@ void vect_shrink(vector v)
         throw_error("Empty vector can't be shrank!");
     }
 
-    zvect_index size = 0;
+    zvect_index new_capacity;
 #   ifdef THREAD_SAFE
     check_mutex_lock(v, 1);
 #   endif
     if (v->size < v->init_capacity)
     {
-        size = v->init_capacity;
+        new_capacity = v->init_capacity;
     }
     else
-        size = v->size;
+        new_capacity = v->size + 1;
 
-    // Secure wipe unused data
-    if (v->wipe)
-    {
-        // Store old capacity, we'll need it for safe erase if enabled
-        zvect_index old_size = v->size;
-        zvect_index delta = old_size - size;
-
-        // Secure Erase the portion of the old storage that
-        // is going to be released in a bit:
-        zvect_index i2;
-        for (i2 = delta + 1; i2 < old_size; i2++)
-        {
-            memset(v->array[i2], 0, v->data_size);
-        }
-    }
-
-    v->capacity = size + 1;
+    v->capacity = new_capacity;
     v->array = (void **)realloc(v->array, sizeof(void *) * v->capacity);
     if (v->array == NULL)
     {
