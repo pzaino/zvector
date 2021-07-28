@@ -448,10 +448,8 @@ void vect_clear(vector v)
 #   endif
 }
 
-// The following function will add an element to the vector
-// and before doing so it will move the existsting elements
-// around to make space for the new element:
-void vect_add_at(vector v, const void *value, zvect_index i)
+// inline implementation for all add(s):
+static inline void _vect_add_at(vector v, const void *value, zvect_index i)
 {
     // check if the vector exists:
     vect_check(v);
@@ -493,25 +491,26 @@ void vect_add_at(vector v, const void *value, zvect_index i)
 #   endif
 }
 
-void vect_push(vector v, const void *value)
+inline void vect_push(vector v, const void *value)
 {
-     // Add an item at the END of the vector
-    vect_add_at(v, value, v->size);   
+    // Add an item at the END (top) of the vector
+    _vect_add_at(v, value, v->size);   
 }
 
 void vect_add(vector v, const void *value)
 {
     // Add an item at the END of the vector
-    vect_add_at(v, value, v->size);
+    _vect_add_at(v, value, v->size);
 }
 
 void vect_add_front(vector v, const void *value)
 {
     // Add an item at the FRONT of the vector
-    vect_add_at(v, value, 0);
+    _vect_add_at(v, value, 0);
 }
 
-void *vect_get_at(vector v, zvect_index i)
+// inline implementation for all get(s):
+static inline void *_vect_get_at(vector v, zvect_index i)
 {
     // check if the vector exists:
     vect_check(v);
@@ -528,23 +527,21 @@ void *vect_get_at(vector v, zvect_index i)
 
 void *vect_get(vector v)
 {
-    // check if the vector exists:
-    vect_check(v);
+    return _vect_get_at(v, v->size - 1);
+}
 
-    // Return found element:
-    return v->array[v->size - 1];
+void *vect_get_at(vector v, zvect_index i)
+{
+    return _vect_get_at(v, i);
 }
 
 void *vect_get_front(vector v)
 {
-    // check if the vector exists:
-    vect_check(v);
-
-    // Return found element:
-    return v->array[0];
+    return _vect_get_at(v, 0);
 }
 
-void vect_put_at(vector v, const void *value, zvect_index i)
+// inlin eimplementation for all put:
+static inline void _vect_put_at(vector v, const void *value, zvect_index i)
 {
     // check if the vector exists:
     vect_check(v);
@@ -566,35 +563,21 @@ void vect_put_at(vector v, const void *value, zvect_index i)
 
 void vect_put(vector v, const void *value)
 {
-    // check if the vector exists:
-    vect_check(v);
+    _vect_put_at(v, value, v->size - 1); 
+}
 
-    // Add value at the specified index:
-#   ifdef THREAD_SAFE
-    check_mutex_lock(v, 1);
-#   endif
-    memcpy(v->array[v->size], value, v->data_size);
-#   ifdef THREAD_SAFE
-    check_mutex_unlock(v, 1);
-#   endif   
+void vect_put_at(vector v, const void *value, zvect_index i)
+{
+    _vect_put_at(v, value, i);
 }
 
 void vect_put_front(vector v, const void *value)
 {
-    // check if the vector exists:
-    vect_check(v);
-
-    // Add value at the specified index:
-#   ifdef THREAD_SAFE
-    check_mutex_lock(v, 1);
-#   endif
-    memcpy(v->array[0], value, v->data_size);
-#   ifdef THREAD_SAFE
-    check_mutex_unlock(v, 1);
-#   endif 
+    _vect_put_at(v, value, 0);
 }
 
-void *vect_remove_at(vector v, zvect_index i)
+// This is the inlin eimplementation for all the remove and pop
+static inline void *_vect_remove_at(vector v, zvect_index i)
 {
     // check if the vector exists:
     vect_check(v);
@@ -633,19 +616,45 @@ void *vect_remove_at(vector v, zvect_index i)
     return rval;
 }
 
-void *vect_pop(vector v)
+inline void *vect_pop(vector v)
 {
-    return vect_remove_at(v, v->size - 1);
+    return _vect_remove_at(v, v->size - 1);
 }
 
 void *vect_remove(vector v)
 {
-    return vect_remove_at(v, v->size - 1);
+    return _vect_remove_at(v, v->size - 1);
+}
+
+void *vect_remove_at(vector v, zvect_index i)
+{
+    return _vect_remove_at(v, i);
 }
 
 void *vect_remove_front(vector v)
 {
-    return vect_remove_at(v, 0);
+    return _vect_remove_at(v, 0);
+}
+
+void vect_delete(vector v)
+{
+    void *item = _vect_remove_at(v, v->size - 1);
+    if (v->wipe)
+        memset(item, 0, v->data_size);
+}
+
+void vect_delete_at(vector v, zvect_index i)
+{
+    void *item = _vect_remove_at(v, i);
+    if (v->wipe)
+        memset(item, 0, v->data_size);
+}
+
+void vect_delete_front(vector v)
+{
+    void *item = _vect_remove_at(v, 0);
+    if (v->wipe)
+        memset(item, 0, v->data_size);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -832,7 +841,6 @@ void vect_merge(vector v1, vector v2)
     for (i = 0; i < v2->size; i++)
     {
         vect_add(v1, v2->array[i]);
-        vect_remove_at(v2, i);
     }
 #   ifdef THREAD_SAFE
     check_mutex_unlock(v1, 3);
