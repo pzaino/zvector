@@ -1,4 +1,18 @@
 #!/bin/bash
+#################################################################
+#
+#    Name: cpp_check.sh
+# Purpose: Script to check and run CPPChecks for code quality
+#  Author: Paolo Fabio Zaino
+#  Domain: General
+# License: Copyright by Paolo Fabio Zaino, all right reserved
+#          Distributed under MIT license
+#
+##################################################################
+
+###############
+# Init script:
+###############
 
 IS_CPPCHECK=$(which cppcheck | grep -Poi "no cppcheck in" | wc -l )
 if [ $IS_CPPCHECK -gt 0 ];
@@ -54,7 +68,10 @@ else
 	start_path="$(dirname "$dpath")"
 fi
 
+###############
 # Run CPPCheck:
+###############
+
 ${cppcheck_cmd} ${start_path}/src/*.c --bug-hunting \
              --enable=all \
              --platform=${Platform} \
