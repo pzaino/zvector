@@ -15,6 +15,8 @@
 ###############################################################################
 # Manual part of the Makefile
 
+WDIR=$(shell pwd)
+
 # Configure desired compiler:
 CC=gcc
 
@@ -34,6 +36,9 @@ LIBDIR=lib
 # Configure Library source directory and temporary object directory:
 SRC=src
 OBJ=o
+
+# Configure Library build scripts dir (scripts required to build the library)
+SCRIPTSDIR=scripts
 
 # Configure directory containing source Unit Test Files and Integration Test 
 # files and configure desired directory where to store compiled tests ready 
@@ -75,15 +80,24 @@ SFMD_EXTENSIONS=1
 
 ifeq ($(THREAD_SAFE_BUILD), 1)
 LDFLAGS+= -lpthread
-CODE_MACROS+= -DTHREAD_SAFE
+#CODE_MACROS+= -DTHREAD_SAFE
+RVAL1 = $(shell $(WDIR)/$(SCRIPTSDIR)/ux_set_extension THREAD_SAFE 1)
+else
+RVAL1 = $(shell $(WDIR)/$(SCRIPTSDIR)/ux_set_extension THREAD_SAFE 0)
 endif
 
 ifeq ($(SFMD_EXTENSIONS), 1)
-CODE_MACROS+= -DZVECT_DMF_EXTENSIONS
+#CODE_MACROS+= -DZVECT_DMF_EXTENSIONS
+RVAL2 = $(shell $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_DMF_EXTENSIONS 1)
+else
+RVAL2 = $(shell $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_DMF_EXTENSIONS 0)
 endif
 
 ifeq ($(SFMD_EXTENSIONS), 1)
-CODE_MACROS+= -DZVECT_SFMD_EXTENSIONS
+#CODE_MACROS+= -DZVECT_SFMD_EXTENSIONS
+RVAL3 = $(shell $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_SFMD_EXTENSIONS 1)
+else
+RVAL3 = $(shell $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_SFMD_EXTENSIONS 0)
 endif
 
 SRCF=$(wildcard $(SRC)/*.c)
@@ -111,7 +125,14 @@ all: core test
 clean:
 	$(RM) -r $(LIBDIR) $(OBJ) $(TEST)/bin ./*.o
 
-core: $(LIBDIR) $(LIB)
+configure: $(SCRIPTSDIR)/ux_set_extension $(SRC)/$(LIBNAME)_config.h
+	$(info ----------------------------------------------------------------)
+	$(info $(RVAL1))
+	$(info $(RVAL2))
+	$(info $(RVAL3))
+	$(info ----------------------------------------------------------------)
+
+core: configure $(LIBDIR) $(LIB)
 
 test: $(TEST)/bin $(TESTBINS)
 	$(info   )
