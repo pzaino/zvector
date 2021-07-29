@@ -37,6 +37,9 @@ LIBDIR=lib
 SRC=src
 OBJ=o
 
+# Configure Library build scripts dir (scripts required to build the library)
+SCRIPTSDIR=scripts
+
 # Configure directory containing source Unit Test Files and Integration Test 
 # files and configure desired directory where to store compiled tests ready 
 # for execution:
@@ -75,33 +78,27 @@ SFMD_EXTENSIONS=1
 ###############################################################################
 # Automated part of th Makefile:
 
-$(info ----------------------------------------------------------------)
 ifeq ($(THREAD_SAFE_BUILD), 1)
 LDFLAGS+= -lpthread
 #CODE_MACROS+= -DTHREAD_SAFE
-RVAL = $(shell $(WDIR)/scripts/ux_set_extension THREAD_SAFE 1)
+RVAL1 = $(shell $(WDIR)/$(SCRIPTSDIR)/ux_set_extension THREAD_SAFE 1)
 else
-RVAL = $(shell $(WDIR)/scripts/ux_set_extension THREAD_SAFE 0)
+RVAL1 = $(shell $(WDIR)/$(SCRIPTSDIR)/ux_set_extension THREAD_SAFE 0)
 endif
-$(info $(RVAL))
 
 ifeq ($(SFMD_EXTENSIONS), 1)
 #CODE_MACROS+= -DZVECT_DMF_EXTENSIONS
-RVAL = $(shell $(WDIR)/scripts/ux_set_extension ZVECT_DMF_EXTENSIONS 1)
+RVAL2 = $(shell $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_DMF_EXTENSIONS 1)
 else
-RVAL = $(shell $(WDIR)/scripts/ux_set_extension ZVECT_DMF_EXTENSIONS 0)
+RVAL2 = $(shell $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_DMF_EXTENSIONS 0)
 endif
-$(info $(RVAL))
 
 ifeq ($(SFMD_EXTENSIONS), 1)
 #CODE_MACROS+= -DZVECT_SFMD_EXTENSIONS
-RVAL = $(shell $(WDIR)/scripts/ux_set_extension ZVECT_SFMD_EXTENSIONS 1)
+RVAL3 = $(shell $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_SFMD_EXTENSIONS 1)
 else
-RVAL = $(shell $(WDIR)/scripts/ux_set_extension ZVECT_SFMD_EXTENSIONS 0)
+RVAL3 = $(shell $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_SFMD_EXTENSIONS 0)
 endif
-$(info $(RVAL))
-
-$(info ----------------------------------------------------------------)
 
 SRCF=$(wildcard $(SRC)/*.c)
 OBJF=$(patsubst $(SRC)/%.c, $(OBJ)/%.o, $(SRCF))
@@ -128,7 +125,14 @@ all: core test
 clean:
 	$(RM) -r $(LIBDIR) $(OBJ) $(TEST)/bin ./*.o
 
-core: $(LIBDIR) $(LIB)
+configure: $(SCRIPTSDIR)/ux_set_extension $(SRC)/$(LIBNAME)_config.h
+	$(info ----------------------------------------------------------------)
+	$(info $(RVAL1))
+	$(info $(RVAL2))
+	$(info $(RVAL3))
+	$(info ----------------------------------------------------------------)
+
+core: configure $(LIBDIR) $(LIB)
 
 test: $(TEST)/bin $(TESTBINS)
 	$(info   )
