@@ -18,18 +18,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-// Default vector capacity
-// This will be used when the user
-// does NOT specify an Initial Capacity
-// or set it to 0 (zero):
-#define ZVECT_INITIAL_CAPACITY 4
-
-// Default vector storage size
-// This will be used when the user
-// specifies 0 (zero) as data type
-// size.
-#define ZVECT_DEFAULT_DATA_SIZE sizeof(int)
-
 // Default vector Index type
 // This is set to unsigned int of 32bit
 // size (so all different architectures
@@ -37,5 +25,29 @@
 // If you want a larger index you can
 // change it to, for example, uint64_t
 typedef uint32_t zvect_index;
+
+// Default vector storage size
+// This will be used when the user
+// specifies 0 (zero) as data type
+// size.
+#define ZVECT_DEFAULT_DATA_SIZE sizeof(int)
+
+// Default vector capacity
+// This will be used when the user
+// does NOT specify an Initial Capacity
+// or set it to 0 (zero):
+#define ZVECT_INITIAL_CAPACITY 4
+
+// The following options are handled by Make
+// So you should not need to modify them here.
+
+// Enable/Disable thread safe code:
+#define THREAD_SAFE 1
+
+// Enable/Disable DMF Extensions:
+#define ZVECT_DMF_EXTENSIONS 1
+
+// Enable/Disable SFMD Extensions: 
+#define ZVECT_SFMD_EXTENSIONS 1
 
 #endif  // SRC_ZVECTOR_CONFIG_H_

@@ -1,0 +1,101 @@
+#!/bin/bash
+#################################################################
+#
+#    Name: ux_set_extension
+# Purpose: Script to configure a Library from a Makefile
+#  Author: Paolo Fabio Zaino
+#  Domain: General
+# License: Copyright by Paolo Fabio Zaino, all right reserved
+#          Distributed under MIT license
+#
+##################################################################
+
+###############
+# Init script:
+###############
+
+par1="$1"
+par2="$2"
+
+# Generic Types and Macros
+readonly projname="zvector"
+readonly cpath="/usr/bin"
+readonly csbin="/usr/sbin"
+readonly cfgfile='zvector_config.h'
+readonly tmpfile="/tmp/${cfgfile}"
+
+# Check OS Type
+rval="$($cpath/uname -s)"
+OS_TYPE=""
+case "${rval}" in
+     Linux*) readonly OS_TYPE="Linux"  ;;
+    Darwin*) readonly OS_TYPE="macOS"  ;;
+    CYGWIN*) readonly OS_TYPE="Cygwin" ;;
+     MINGW*) readonly OS_TYPE="MinGw"  ;;
+          *) readonly OS_TYPE="UNKNOWN:${rval}" ;;
+esac
+
+# Check if required tools are installed:
+dependecies_arr=( "grep" "sed" "basename" "dirname" "pwd" )
+for dep_name in "${dependecies_arr[@]}"; do
+    if [ "$OS_TYPE" != "macOS" ]; then
+        dep_name="${dep_name//\-/\\-}"
+        check_dep="$($cpath/whereis $dep_name | $cpath/tr -d \"$dep_name:\" | $cpath/tr -d '\n')"
+    else
+        check_dep="$($cpath/which $dep_name | $cpath/tr -d \"$dep_name\" | $cpath/tr -d '\n')"
+    fi
+    if [ "$check_dep" == "" ]; then
+        (printf >&2 "%b\n" "Dependecy error: '$dep_name not found!' $cmd_name requires command $dep_name installed, without it it cannot be executed.")
+        exit 1
+    fi
+done
+
+# Initialization
+readonly cmd_name="$($cpath/basename "$0")"
+
+# Detect path from where we are launching this script:
+curpath=$(pwd)
+bdir="$(basename "$curpath")"
+dpath="$(dirname "$curpath")"
+
+if [ "$bdir" == "${projname}" ];
+then
+	start_path='.'
+else
+	start_path="$(dirname "$dpath")"
+fi
+
+# get commands full paths:
+if [ "$OS_TYPE" != "macOS" ]; then
+    check_cmd="$cpath/whereis"
+else
+    check_cmd="$cpath/which"
+fi
+sed_cmd="$(${check_cmd} sed)"
+grep_cmd="$(${check_cmd} grep)"
+
+echo ""
+echo "Configuring ${par1} to ${par2} in ${start_path}/src/${cfgfile} ..."
+echo ""
+
+# Check backups
+if [ ! -f ${start_path}/${projname}/${cfgfile}.backup ];
+then
+    # Need to backup the original configuration first
+    cp ${start_path}/src/${cfgfile} ${start_path}/src/${cfgfile}.backup
+fi
+
+#$cpath/sed -i -e "/\#define ${par1}/ s/ $par2//" ${start_path}/src/${cfgfile} 
+$cpath/sed -e "s/^\#[[:blank:]]*[dD][eE][fF][iI][nN][eE][[:blank:]]${par1}[[:blank:]].*/\#define ${par1} ${par2}/" ${start_path}/src/${cfgfile} >${tmpfile}
+if [ $? -eq 0 ];
+then
+    # everything seems to be ok, so let's apply the changes
+    rval="0"
+    #rval=$( mv -f ${tmpfile} ${start_path}/src/${cfgfile} 2>&1 | wc -l )
+    if [ "$rval" != "0" ];
+    then
+        echo "WARNING: There was an issue during the reconfiguration. Can't reconfigure, so proceeding with default values. rval == $rval"
+    fi
+fi
+echo ""
+exit 0
