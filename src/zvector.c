@@ -303,12 +303,8 @@ static void vect_double_capacity(vector v)
         throw_error("Not enough memory to extend the vector capacity!");
     }
 
-    // Copy array of pointers to items into the new (larger) array
-    zvect_index i;
-    for (i = 0; i < v->size; i++)
-    {
-        new_array[i] = v->array[i];
-    }
+    // Copy array of pointers to items into the new (larger) list:
+    memcpy(new_array, v->array, sizeof(void *) * (v->size));
 
     // Apply changes and release memory
     free(v->array);
@@ -330,22 +326,15 @@ static void vect_half_capacity(vector v)
 
     // Get actual Capacity and halve it
     zvect_index new_capacity = v->capacity / 2;
+    zvect_index new_size = min(v->size, new_capacity);
     void **new_array = (void **)malloc(sizeof(void *) * new_capacity);
     if (new_array == NULL)
     {
         throw_error("Not enough memory to resize the vector!");
     }
 
-    // Rearraange the vector data:
-    zvect_index i;
-    for (i = 0; i < min(v->size, new_capacity); i++)
-    {
-        // Copy pointers to items from v->array
-        // to new array. This makes us fast while
-        // still secure (if Secure Wipe is true 
-        // for this vector).
-        new_array[i] = v->array[i];
-    }
+    // Copy old vector's storage pointers list into new one:
+    memcpy(new_array, v->array, sizeof(void *) * new_size);
 
     if (v->wipe)
     {
@@ -353,7 +342,7 @@ static void vect_half_capacity(vector v)
         // a potential left over portion of the old storage that
         // is going to be freed in a bit:
         zvect_index i2;
-        for (i2 = i + 1; i2 < v->size; i2++)
+        for (i2 = new_size; i2 < v->size; i2++)
         {
             memset(v->array[i2], 0, v->data_size);
         }
@@ -363,7 +352,7 @@ static void vect_half_capacity(vector v)
     free(v->array);
     v->array = new_array;
     v->capacity = new_capacity;
-    v->size = min(v->size, new_capacity);
+    v->size = new_size;
 }
 
 // Thi sfunction shrinks the CAPACITY of a vector
