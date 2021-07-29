@@ -15,6 +15,8 @@
 ###############################################################################
 # Manual part of the Makefile
 
+WDIR=$(shell pwd)
+
 # Configure desired compiler:
 CC=gcc
 
@@ -76,23 +78,23 @@ SFMD_EXTENSIONS=1
 ifeq ($(THREAD_SAFE_BUILD), 1)
 LDFLAGS+= -lpthread
 #CODE_MACROS+= -DTHREAD_SAFE
-$(shell $(WDIR)/scripts/ux_set_extension THREAD_SAFE 1)
+$(shell "$(WDIR)/scripts/ux_set_extension THREAD_SAFE 1")
 else
-$(shell $(WDIR)/scripts/ux_set_extension THREAD_SAFE 0)
+$(shell "$(WDIR)/scripts/ux_set_extension THREAD_SAFE 0")
 endif
 
 ifeq ($(SFMD_EXTENSIONS), 1)
 #CODE_MACROS+= -DZVECT_DMF_EXTENSIONS
-$(shell $(WDIR)/scripts/ux_set_extension ZVECT_DMF_EXTENSIONS 1)
+$(shell "$(WDIR)/scripts/ux_set_extension ZVECT_DMF_EXTENSIONS 1")
 else
-$(shell $(WDIR)/scripts/ux_set_extension ZVECT_DMF_EXTENSIONS 0)
+$(shell "$(WDIR)/scripts/ux_set_extension ZVECT_DMF_EXTENSIONS 0")
 endif
 
 ifeq ($(SFMD_EXTENSIONS), 1)
 #CODE_MACROS+= -DZVECT_SFMD_EXTENSIONS
-$(shell $(WDIR)/scripts/ux_set_extension ZVECT_SFMD_EXTENSIONS 1)
+$(shell "$(WDIR)/scripts/ux_set_extension ZVECT_SFMD_EXTENSIONS 1")
 else
-$(shell $(WDIR)/scripts/ux_set_extension ZVECT_SFMD_EXTENSIONS 0)
+$(shell "$(WDIR)/scripts/ux_set_extension ZVECT_SFMD_EXTENSIONS 0")
 endif
 
 SRCF=$(wildcard $(SRC)/*.c)
