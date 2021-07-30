@@ -457,7 +457,7 @@ static inline void _vect_add_at(vector v, const void *value, zvect_index i)
         zvect_index j;
         for (j = v->size; j > i; j--)
         {
-            memcpy(v->array[j], v->array[j - 1], v->data_size);
+            memcpy(v->array[j], v->array[j - 1], sizeof(void *));
         }
     }
 
@@ -480,6 +480,12 @@ void vect_add(vector v, const void *value)
 {
     // Add an item at the END of the vector
     _vect_add_at(v, value, v->size);
+}
+
+void vect_add_at(vector v, const void *value, zvect_index i)
+{
+    // Add an item at position "i" of the vector
+    _vect_add_at(v, value, i);
 }
 
 void vect_add_front(vector v, const void *value)
@@ -578,7 +584,7 @@ static inline void *_vect_remove_at(vector v, zvect_index i)
     // Reorganise the vector:
     for (j = i + 1; j < v->size; j++)
     {
-        memcpy(v->array[j - 1], v->array[j], v->data_size);
+        memcpy(v->array[j - 1], v->array[j], sizeof(void *));
     }
     // Reduce vector size:
     v->size--;

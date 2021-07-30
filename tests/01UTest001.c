@@ -57,10 +57,18 @@ int main()
 
     fflush(stdout);
 
+    printf("Test %s_%d: Add elements in the middle of the vector:\n", testGrp, testID);
+    i=555555;
+    vect_add_at(v, &i, 100);
+    assert(*((int *)vect_get_at(v, 100)) == i);
+    assert(*((int *)vect_get_at(v, 101)) == 100);
+    printf("done.\n");
+    testID++;
+
     printf("Test %s_%d: Remove vector elements one by one:\n", testGrp, testID);
     while (!vect_is_empty(v))
     {
-        vect_remove_at(v, vect_size(v) - 1);
+        vect_remove(v);
     }
     printf("done.\n");
     testID++;
