@@ -451,14 +451,12 @@ static inline void _vect_add_at(vector v, const void *value, zvect_index i)
     // Allocate memory for the new item:
     v->array[v->size] = (void *)malloc(v->data_size);
 
-    // Move vector elements around were we are adding the new one:
+    // "Shift" right the array of one position to make space for the new item:
     if ((i < v->size) && (v->size > 0))
     {
         zvect_index j;
         for (j = v->size; j > i; j--)
-        {
             memcpy(v->array[j], v->array[j - 1], sizeof(void *));
-        }
     }
 
     // Finally add new value in at the index
@@ -573,6 +571,9 @@ static inline void *_vect_remove_at(vector v, zvect_index i)
         throw_error("Index out of bounds!");
     }
 
+    if (v->size == 0)
+        return NULL;
+
     // Get the value we are about to remove:
     void *rval = (void *)malloc(sizeof(v->data_size));
     zvect_index j;
@@ -581,11 +582,13 @@ static inline void *_vect_remove_at(vector v, zvect_index i)
 #   endif
     memcpy(rval, v->array[i], v->data_size);
 
-    // Reorganise the vector:
-    for (j = i + 1; j < v->size; j++)
+    // "shift" left the array of one position:
+    if ( (i < (v->size - 1)) && (v->size > 0))
     {
-        memcpy(v->array[j - 1], v->array[j], sizeof(void *));
+        for (j = i + 1; j < v->size; j++)
+            memcpy(v->array[j - 1], v->array[j], sizeof(void *));
     }
+
     // Reduce vector size:
     v->size--;
 
