@@ -85,6 +85,16 @@ static inline void vect_check(vector x)
         throw_error ("Vector not defined!");
 }
 
+static inline void vect_memcpy(void *dst, const void *src, size_t size)
+{
+    memcpy(dst, src, size);
+}
+
+static inline void vect_memmove(void *dst, const void *src, size_t size)
+{
+    memmove(dst, src, size);
+}
+
 #ifdef THREAD_SAFE
 #   if MUTEX_TYPE == 0
 static inline void mutex_lock(void *lock)
@@ -304,7 +314,7 @@ static void vect_double_capacity(vector v)
     }
 
     // Copy array of pointers to items into the new (larger) list:
-    memcpy(new_array, v->array, sizeof(void *) * (v->size));
+    vect_memcpy(new_array, v->array, sizeof(void *) * (v->size));
 
     // Apply changes and release memory
     free(v->array);
@@ -334,7 +344,7 @@ static void vect_half_capacity(vector v)
     }
 
     // Copy old vector's storage pointers list into new one:
-    memcpy(new_array, v->array, sizeof(void *) * new_size);
+    vect_memcpy(new_array, v->array, sizeof(void *) * new_size);
 
     if (v->wipe)
     {
@@ -451,18 +461,16 @@ static inline void _vect_add_at(vector v, const void *value, zvect_index i)
     // Allocate memory for the new item:
     v->array[v->size] = (void *)malloc(v->data_size);
 
-    // Move vector elements around were we are adding the new one:
+    // "Shift" right the array of one position to make space for the new item:
     if ((i < v->size) && (v->size > 0))
     {
         zvect_index j;
         for (j = v->size; j > i; j--)
-        {
-            memcpy(v->array[j], v->array[j - 1], sizeof(void *));
-        }
+            vect_memcpy(v->array[j], v->array[j - 1], sizeof(void *));
     }
 
     // Finally add new value in at the index
-    memcpy(v->array[i], value, v->data_size);
+    vect_memcpy(v->array[i], value, v->data_size);
     // Increment vector size
     v->size++;
 #   ifdef THREAD_SAFE
@@ -540,7 +548,7 @@ static inline void _vect_put_at(vector v, const void *value, zvect_index i)
     check_mutex_lock(v, 1);
 #   endif
     // Add value at the specified index:
-    memcpy(v->array[i], value, v->data_size);
+    vect_memcpy(v->array[i], value, v->data_size);
 #   ifdef THREAD_SAFE
     check_mutex_unlock(v, 1);
 #   endif
@@ -573,19 +581,24 @@ static inline void *_vect_remove_at(vector v, zvect_index i)
         throw_error("Index out of bounds!");
     }
 
+    if (v->size == 0)
+        return NULL;
+
     // Get the value we are about to remove:
     void *rval = (void *)malloc(sizeof(v->data_size));
     zvect_index j;
 #   ifdef THREAD_SAFE
     check_mutex_lock(v, 1);
 #   endif
-    memcpy(rval, v->array[i], v->data_size);
+    vect_memcpy(rval, v->array[i], v->data_size);
 
-    // Reorganise the vector:
-    for (j = i + 1; j < v->size; j++)
+    // "shift" left the array of one position:
+    if ( (i < (v->size - 1)) && (v->size > 0))
     {
-        memcpy(v->array[j - 1], v->array[j], sizeof(void *));
+        for (j = i + 1; j < v->size; j++)
+            vect_memcpy(v->array[j - 1], v->array[j], sizeof(void *));
     }
+
     // Reduce vector size:
     v->size--;
 
