@@ -45,6 +45,8 @@ Add the `zvector.h` to your C code with:
 #include "zvector.h"
 ```
 
+I wrote a full User Guide [here](https://paolozaino.wordpress.com/2021/07/27/software-development-zvector-an-ansi-c-open-source-vector-library/). I also try to keep it up-to-date.
+
 When compile make sure you link your code to the libvector.a as shown in the Makefile for the Unit Tests (in `tests`).
 
 Before you can use a vector you need to create one using the function `vect_create([initial elements], sizeof([your data structure]), secure_wipe_true|false)`

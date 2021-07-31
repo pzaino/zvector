@@ -48,4 +48,14 @@
 #define COMP_PATRELEASE (__GNUC_PATCHLEVEL__)
 #endif
 
+// Try to determien architecture:
+#if defined(__amd64__) || defined(__x86_64__) || \
+    defined(__aarch64__) || defined(__ia64__) || \
+    defined(_M_IA64) || defined(_M_AMD64) || \
+    defined(_M_X64)
+#define Arch64
+#else
+#define Arch32
+#endif
+
 #endif  // SRC_ZVECTOR_CHECKS_H_
