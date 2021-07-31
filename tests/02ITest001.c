@@ -72,18 +72,16 @@ void * doSomething1(void *arg)
 
 #ifdef ZVECT_SFMD_EXTENSIONS
     // We have SFMD extensions enabled so let's use them for this test!
-    printf("Test %s_%d: Apply function 'increment_elements' to the entire vector at once:\n", testGrp, testID);
+    printf("Test %s_%d:  -  Apply function 'increment_elements' to the entire vector at once:\n", testGrp, testID);
 
     // Let's run a vector wide function:
     vect_apply((vector)v, increment_elements);
 
-    printf("All items incremented.\n");
-    printf("done.\n");
-    testID++;
+    printf("Test %s_%d:  -  All items incremented.\n", testGrp, testID);
 #endif // ZVECT_SFMD_EXTENSIONS
 #ifndef ZVECT_SFMD_EXTENSIONS
     // We DO NOT have SFMD extensions enabled so let's use a regular loop!
-    printf("Test %s_%d: Incrementing each vector's item (one-by-one):\n", testGrp, testID);
+    printf("Test %s_%d:  -  Incrementing each vector's item (one-by-one):\n", testGrp, testID);
     int i;
     for (i = 0; i < MAX_ITEMS; i++)
     {
@@ -91,9 +89,7 @@ void * doSomething1(void *arg)
         increment_elements(vect_get_at((vector)v, i));
     }
 
-    printf("All items incremented.\n");
-    printf("done.\n");
-    testID++;
+    printf("Test %s_%d:  -  All items incremented.\n", testGrp, testID);
 #endif  // ZVECT_SFMD_EXTENSIONS
 
     return NULL;
@@ -106,17 +102,16 @@ void * doSomething2(void *arg)
 #ifdef ZVECT_SFMD_EXTENSIONS
     // We have SFMD extensions enabled so let's use them for this test!
 
-    printf("Test %s_%d: Apply function 'multiply_elements' to the entire vector at once:\n", testGrp, testID);
+    printf("Test %s_%d:  -  Apply function 'multiply_elements' to the entire vector at once:\n", testGrp, testID);
 
     // Let's run a vector wide function:
     vect_apply((vector)v, multiply_elements);
 
-    printf("done.\n");
-    testID++;
+    printf("Test %s_%d:  -  All items multiplied.\n", testGrp, testID);
 #endif // ZVECT_SFMD_EXTENSIONS
 #ifndef ZVECT_SFMD_EXTENSIONS
     // We DO NOT have SFMD extensions enabled so let's use a regular loop!
-    printf("Test %s_%d: Multiplying each vector's item (one-by-one):\n", testGrp, testID);
+    printf("Test %s_%d:  -  Multiplying each vector's item (one-by-one):\n", testGrp, testID);
     int i;
     for (i = 0; i < MAX_ITEMS; i++)
     {
@@ -124,9 +119,7 @@ void * doSomething2(void *arg)
         multiply_elements(vect_get_at((vector)v, i));
     }
 
-    printf("All items incremented.\n");
-    printf("done.\n");
-    testID++;
+    printf("Test %s_%d:  -  All items multiplied.\n", testGrp, testID);
 #endif
 
     return NULL;
@@ -167,7 +160,7 @@ int main()
 
     fflush(stdout);
 
-    printf("Test %s_%d: Spin 2 threads and use them to manipoulate the vector above.", testGrp, testID);
+    printf("Test %s_%d: Spin 2 threads and use them to manipoulate the vector above.\n", testGrp, testID);
 
     int err = 0;
     i = 0;

@@ -43,8 +43,8 @@ SCRIPTSDIR=scripts
 # Configure directory containing source Unit Test Files and Integration Test 
 # files and configure desired directory where to store compiled tests ready 
 # for execution:
-TEST=tests
-TESTBIN=$(TEST)/bin
+TESTDIR=tests
+TESTBIN=$(TESTDIR)/bin
 #
 ##############################################################################
 ##############################################################################
@@ -101,17 +101,18 @@ RVAL3 = $(shell $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_SFMD_EXTENSIONS 0)
 endif
 
 SRCF=$(wildcard $(SRC)/*.c)
-OBJF=$(patsubst $(SRC)/%.c, $(OBJ)/%.o, $(SRCF))
+OSRCF=$(sort $(SRCF))
+OBJF=$(patsubst $(SRC)/%.c, $(OBJ)/%.o, $(OSRCF))
 
-TESTSLIST=$(wildcard $(TEST)/*.c)
+TESTSLIST=$(wildcard $(TESTDIR)/*.c)
 OTESTSLIST=$(sort $(TESTSLIST))
-TESTS=$(patsubst $(TEST)%.c, %, $(OTESTSLIST))
+TESTS=$(patsubst $(TESTDIR)%.c, %, $(OTESTSLIST))
 #$(info "$(TESTS)")
 
 TESTBINS=$(patsubst %.c, %, $(TESTS))
 #$(info "$(TESTBINS)")
 
-LIB=$(LIBDIR)/lib$(LIBNAME).a
+LIBST=$(LIBDIR)/lib$(LIBNAME).a
 #
 ###############################################################################
 
@@ -123,7 +124,7 @@ all: CFLAGS+=-O2
 all: core test
 
 clean:
-	$(RM) -r $(LIBDIR) $(OBJ) $(TEST)/bin ./*.o
+	$(RM) -r $(LIBDIR) $(OBJ) $(TESTDIR)/bin ./*.o
 
 configure: $(SCRIPTSDIR)/ux_set_extension $(SRC)/$(LIBNAME)_config.h
 	$(info ----------------------------------------------------------------)
@@ -132,12 +133,12 @@ configure: $(SCRIPTSDIR)/ux_set_extension $(SRC)/$(LIBNAME)_config.h
 	$(info $(RVAL3))
 	$(info ----------------------------------------------------------------)
 
-core: configure $(LIBDIR) $(LIB)
+core: configure $(LIBDIR) $(LIBST)
 
-test: $(TEST)/bin $(TESTBINS)
+test: $(TESTDIR)/bin $(TESTBINS)
 	$(info   )
 	$(info ===========================)
-	$(info Running all found tests...)
+	$(info Running all found tests... )
 	$(info ===========================)
 	for test in $(TESTBINS) ; do ./$(TESTBIN)$$test ; done 
 
@@ -145,14 +146,18 @@ debug: CFLAGS+= -ggdb3
 debug: CODE_MACROS+= -DDEBUG
 debug: core test
 
-$(OBJF): $(SRCF)
+$(OBJF): $(OSRCF)
 	$(info  )
 	$(info ===========================)
-	$(info Building $(OBJF))
+	$(info Building $@                )
 	$(info ===========================)
 	$(CC) -c -o $@ $< $(CFLAGS) $(CODE_MACROS)
 
-$(LIB): $(OBJ) $(OBJF) 
+$(LIBST): $(OBJ) $(OBJF)
+	$(info  )
+	$(info ===========================)
+	$(info Building $(LIBNAME) library)
+	$(info ===========================)
 	ar rcs $@ -o $(OBJF)
 
 $(TESTBINS): $(TESTS)
@@ -160,16 +165,17 @@ $(TESTBINS): $(TESTS)
 	$(info ===========================)
 	$(info Building all found tests...)
 	$(info ===========================)
-	$(CC) $(CFLAGS) $(CODE_MACROS) $(TEST)$@.c -I`pwd`/src -L`pwd`/$(LIBDIR) -l$(LIBNAME) $(LDFLAGS) -o $(TESTBIN)$@
+	$(CC) $(CFLAGS) $(CODE_MACROS) $(TESTDIR)$@.c -I$(WDIR)/src -L$(WDIR)/$(LIBDIR) -l$(LIBNAME) $(LDFLAGS)  -o $(TESTBIN)$@
 
 $(LIBDIR):
-	mkdir -p $@
+	[ ! -d $@ ] && mkdir -p $@
 
 $(OBJ):
-	mkdir -p $@
+	[ ! -d $@ ] && mkdir -p $@
 
-$(TEST)/bin:
-	mkdir -p $@
+$(TESTDIR)/bin:
+	$(info  )
+	[ ! -d $@ ] && mkdir -p $@
 
 #
 ###############################################################################

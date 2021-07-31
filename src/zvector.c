@@ -1,5 +1,5 @@
 /*
- *    Name: Vector
+ *    Name: ZVector
  * Purpose: Library to use Dynamic Arrays (Vectors) in C Language
  *  Author: Paolo Fabio Zaino
  *  Domain: General
@@ -85,14 +85,54 @@ static inline void vect_check(vector x)
         throw_error ("Vector not defined!");
 }
 
-static inline void vect_memcpy(void *dst, const void *src, size_t size)
+#ifndef ZVECT_MEMX_METHOD
+#define ZVECT_MEMX_METHOD 1
+#endif
+
+#if defined(Arch32)
+#define MASK 0xFFFFFFFC
+#define ADDR_CONV uint32_t
+#else
+#define MASK 0xFFFFFFFFFFFFFFFC
+#define ADDR_CONV uint64_t
+#endif
+
+static inline void *vect_memcpy(void *dst, const void *src, size_t size)
 {
-    memcpy(dst, src, size);
+#if ( ZVECT_MEMX_METHOD == 0 )
+    return memcpy(dst, src, size);
+#elif ( ZVECT_MEMX_METHOD == 1 )
+    int i;
+    if ( size > 0 )
+    {
+        if ((uintptr_t)dst % sizeof(ADDR_CONV) == 0 &&
+            (uintptr_t)src % sizeof(ADDR_CONV) == 0 &&
+            size % sizeof(ADDR_CONV) == 0)
+        {
+            ADDR_CONV * pExDst = (ADDR_CONV *) dst;
+            ADDR_CONV const * pExSrc = (ADDR_CONV const *) src;
+
+            for (i = 0; i < size/sizeof(ADDR_CONV); i++) {
+                *pExDst++ = *pExSrc++;
+            }
+        }
+        else 
+        {
+            char * pChDst = (char *) dst;
+            char const * pChSrc = (char const *) src;
+            for (i = 0; i < size; i++)
+            {
+                *pChDst++ = *pChSrc++;
+            }
+        }
+    }
+    return dst;
+#endif
 }
 
-static inline void vect_memmove(void *dst, const void *src, size_t size)
+static inline void *vect_memmove(void *dst, const void *src, size_t size)
 {
-    memmove(dst, src, size);
+    return memmove(dst, src, size);
 }
 
 #ifdef THREAD_SAFE
@@ -502,6 +542,11 @@ void vect_add_front(vector v, const void *value)
     _vect_add_at(v, value, 0);
 }
 
+void vect_add_ordered(vector v, const void *value, void (*f1)())
+{
+
+}
+
 // inline implementation for all get(s):
 static inline void *_vect_get_at(vector v, zvect_index i)
 {
@@ -681,6 +726,18 @@ void vect_swap(vector v, zvect_index i1, zvect_index i2)
 #   endif
     // We are done, let's clean up memory
     free(temp);
+}
+
+void vect_rotate_left(vector v, zvect_index i)
+{
+    // TODO(pzaino): Implement an inline rotation to the left
+
+}
+
+void vect_rotate_right(vector v, zvect_index i)
+{
+    // TODO(pzaino): Implement an inline rotation to the right
+
 }
 
 #endif  // ZVECT_DMF_EXTENSIONS
