@@ -37,6 +37,7 @@
 
 // Useful macros
 #define min(x, y) (((x) < (y)) ? (x) : (y))
+#define UNUSED(x) (void)x
 
 // Define the vector data structure:
 struct _vector
@@ -104,7 +105,7 @@ static inline void *vect_memcpy(void *dst, const void *src, size_t size)
     return memcpy(dst, src, size);
 #elif ( ZVECT_MEMX_METHOD == 1 )
     // Using improved memcpy:
-    int i;
+    size_t i;
     if ( size > 0 )
     {
         if ((uintptr_t)dst % sizeof(ADDR_CONV) == 0 &&
@@ -484,7 +485,7 @@ static inline void _vect_add_at(vector v, const void *value, zvect_index i)
     vect_check(v);
 
     // Check if the provided index is out of bounds:
-    if (i < 0 || i > v->size)
+    if ( i > v->size )
         throw_error("Index out of bounds!");
 
 #   ifdef THREAD_SAFE
@@ -540,7 +541,12 @@ void vect_add_front(vector v, const void *value)
 
 void vect_add_ordered(vector v, const void *value, void (*f1)())
 {
-
+    /* TODO(pzaino): Implement a vect_add function that stores items in 
+     *               an order fashion in the given vector. 
+     */
+    UNUSED(v);
+    UNUSED(value);
+    UNUSED(f1);
 }
 
 // inline implementation for all get(s):
@@ -550,7 +556,7 @@ static inline void *_vect_get_at(vector v, zvect_index i)
     vect_check(v);
 
     // Check if passed index is out of bounds:
-    if (i < 0 || i >= v->size)
+    if ( i >= v->size )
         throw_error("Index out of bounds!");
 
     // Return found element:
@@ -579,7 +585,7 @@ static inline void _vect_put_at(vector v, const void *value, zvect_index i)
     vect_check(v);
 
     // Check if the index passed is out of bounds:
-    if (i < 0 || i >= v->size)
+    if ( i >= v->size )
         throw_error("Index out of bounds!");
 
 #   ifdef THREAD_SAFE
@@ -614,11 +620,11 @@ static inline void *_vect_remove_at(vector v, zvect_index i)
     vect_check(v);
 
     // Check if the index is out of bounds:
-    if (i < 0 || i >= v->size)
+    if ( i >= v->size )
         throw_error("Index out of bounds!");
 
     // If the vector is empty just return null
-    if (v->size == 0)
+    if ( v->size == 0 )
         return NULL;
 
     // Get the value we are about to remove:
@@ -722,13 +728,16 @@ void vect_swap(vector v, zvect_index i1, zvect_index i2)
 void vect_rotate_left(vector v, zvect_index i)
 {
     // TODO(pzaino): Implement an inline rotation to the left
+    UNUSED(v);
+    UNUSED(i);
 
 }
 
 void vect_rotate_right(vector v, zvect_index i)
 {
     // TODO(pzaino): Implement an inline rotation to the right
-
+    UNUSED(v);
+    UNUSED(i);
 }
 
 #endif  // ZVECT_DMF_EXTENSIONS

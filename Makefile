@@ -21,7 +21,7 @@ WDIR=$(shell pwd)
 CC=gcc
 
 # Configure additional compiler and linker flags:
-CFLAGS+=-std=c99 -Wall -I./src
+CFLAGS+=-std=c99 -Wall -Wextra -I./src
 LDFLAGS+=
 
 # If you want to pass some MACROS to your code you can use the following 
@@ -163,7 +163,7 @@ $(LIBST): $(OBJ) $(OBJF)
 $(TESTBINS): $(TESTS)
 	$(info  )
 	$(info ===========================)
-	$(info Building all found tests...)
+	$(info Building test: $@          )
 	$(info ===========================)
 	$(CC) $(CFLAGS) $(CODE_MACROS) $(TESTDIR)$@.c -I$(WDIR)/src -L$(WDIR)/$(LIBDIR) -l$(LIBNAME) $(LDFLAGS)  -o $(TESTBIN)$@
 

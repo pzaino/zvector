@@ -32,13 +32,13 @@ int main()
     fflush(stdout);
 
     printf("Test %s_%d: Insert 10000 elements and check if they are stored correctly:\n", testGrp, testID);
-    uint32_t i;
+    int i;
     for (i = 0; i < 1000000; i++)
     {
         // Let's add a new value in the vector:
         vect_add(v, &i);
         // Let's check if the vector size has grown correctly:
-        assert(vect_size(v) == i + 1);
+        assert(vect_size(v) == (zvect_index)i + 1);
         // Let's retrieve the value from the vector correctly:
         // For beginners: this is how in C we convert back a void * into the original dtata_type
         int value = *((int *)vect_get_at(v, i));
