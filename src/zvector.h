@@ -14,6 +14,9 @@
 #pragma once
 #endif
 
+// Requires standard C libraries:
+#include <stdarg.h>
+
 // First library included is zvector_checks,
 // so we know on which platform and which features
 // we can use:
@@ -42,9 +45,11 @@ enum {
 /*
  * vect_create creates and returns a new vector
  * of the specified "capacity", with a storage area that
- * can store items of "item_size" size and if we want to 
- * have an automatic secure erasing enabled (secure_wipe
- * = true) or disabled (secure_wipe = false).
+ * can store items of "item_size" size and, if we want to 
+ * have an automatic secure erasing enabled (ZV_SAFE_WIPE
+ * ), we can simply pass ZV_SAFE_WIPE (or other flags too)
+ * afer item_size. Flags syntax is the usual C flag sets:
+ * ZV_SAFE_WIPE | ZV_AUTOSHRINK etc.
  * 
  * vect_destroy destrois the specified vector and, if 
  * secure_wipe is enabled, also ensure erasing each single
@@ -89,7 +94,8 @@ void vect_unlock(vector v);
  * vect_push and vect_pop are used to use the
  * vector as a dynamic stack.
  * 
- * vect_push(v, 3)      pushes the element 3 at 
+ * int i = 3;
+ * vect_push(v, &i)     pushes the element 3 at 
  *                      the top of the vector
  *                      as a stack would do.
  * 
@@ -108,24 +114,27 @@ void *vect_pop(vector);
  * vect_add adds a new item into the vector and,
  * if required, will also reorganize the vector.
  * 
- * vect_add(v, 3)       will add the new item 3
- *                      into the vector at the end
- *                      of the v vector.
+ * int i = 3;
+ * vect_add(v, &i)       will add the new item 3
+ *                       into the vector at the end
+ *                       of the v vector.
  * 
- * vect_add_at(v, 4, 2) will add the new item 4
- *                      at position 2 in the v
- *                      vector and move all the
- *                      items from the original 2nd
- *                      onward of a position to make 
- *                      space for the new item 4.
+ * int i = 4;
+ * vect_add_at(v, &i, 2) will add the new item 4
+ *                       at position 2 in the v
+ *                       vector and move all the
+ *                       items from the original 2nd
+ *                       onward of a position to make 
+ *                       space for the new item 4.
  * 
- * vect_add_front(v, 5) will add the new item 5
- *                      at the beginning of the vector 
- *                      v and will also move all the
- *                      existsing elements of one
- *                      position in the vector to make
- *                      space for the new item 5 at the
- *                      beginning of v.
+ * int i = 5;
+ * vect_add_front(v, &i) will add the new item 5
+ *                       at the beginning of the vector 
+ *                       v and will also move all the
+ *                       existsing elements of one
+ *                       position in the vector to make
+ *                       space for the new item 5 at the
+ *                       beginning of v.
  */
 void vect_add(vector, const void *);
 void vect_add_at(vector, const void *, zvect_index);
@@ -152,17 +161,21 @@ void *vect_get_front(vector);
 /* 
  *vect_put allows you to REPLACE an item
  * in the vector.
- * vect_put(v, 3)       will replace the last element
- *                      in the vector with 3.
  * 
- * vect_put_at(v, 4, 2) will replace the 3rd element
- *                      (2 + 1, as vector's 1st item
- *                      starts at v[0]) with the
- *                      item 4.
+ * int i = 3;
+ * vect_put(v, &i)       will replace the last element
+ *                       in the vector with 3.
  * 
- * vect_put_front(v, 5) will replace the 1st element
- *                      of the vector with the item 
- *                      5.
+ * int i = 4;
+ * vect_put_at(v, &i, 2) will replace the 3rd element
+ *                       (2 + 1, as vector's 1st item
+ *                       starts at v[0]) with the
+ *                       item 4.
+ * 
+ * int i = 5;
+ * vect_put_front(v, &i) will replace the 1st element
+ *                       of the vector with the item 
+ *                       5.
  */
 void vect_put(vector, const void *);
 void vect_put_at(vector, const void *, zvect_index);

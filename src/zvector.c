@@ -15,8 +15,8 @@
  */
 
 // Include standard C libs headers
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <assert.h>
 #include <string.h>
 
@@ -244,7 +244,7 @@ static inline void check_mutex_unlock(vector v, volatile uint8_t lock_type)
 
 /*---------------------------------------------------------------------------*/
 // Vector Creation and Destruction:
-
+// vector vect_create(size_t init_capacity, size_t data_size, uint32_t flags)
 vector vect_create(size_t init_capacity, size_t data_size, uint32_t flags)
 {
     // Create the vector first:
