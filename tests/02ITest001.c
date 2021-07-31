@@ -146,7 +146,7 @@ int main()
         vect_add(v, &i);
 
         // Let's check if the vector size has grown correctly:
-        assert(vect_size(v) == i + 1);
+        assert(vect_size(v) == (zvect_index)i + 1);
      
         // Let's retrieve the value from the vector correctly:
         // For beginners: this is how in C we convert back a void * into the original dtata_type

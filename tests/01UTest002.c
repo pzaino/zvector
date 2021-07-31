@@ -17,7 +17,7 @@
 // one of the tests later:
 char test_name[255];
 float test_speed;
-int test_year;
+uint32_t test_year;
 
 typedef struct Car
 {

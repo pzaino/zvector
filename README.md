@@ -3,10 +3,17 @@
 Development branch status: ![CodeQL](https://github.com/pzaino/vector/actions/workflows/codeql-analysis.yml/badge.svg)
 
 # ZVector
-This is a simple yet effective library to have dynamic vectors (dynamic arrays) in ANSI C.
+This is a fast, configurable, portable, thread safe and reentrant Vector Library (dynamic arrays) in ANSI C.
+
+You can use ZVector to create:
+- Dynamic Arrays
+- Dynamic Stacks
+- Dynamic Queues
+
+The library also offers automatic safe data wiping, so you can use it to store sensitive data. It is also constantly tested for security and bug hunting.
 
 ## Introduction
-I wrote this library for fun, after watching some presentation on the internet from different authors that were talking about dynamic arrays in standard C.
+I wrote this library for fun, after watching some presentations on the internet (from different authors) that were talking about dynamic arrays in standard C.
 
 The library is relatively small, however it comes with some nice features:
 
