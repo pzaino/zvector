@@ -15,8 +15,8 @@
  */
 
 // Include standard C libs headers
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <assert.h>
 #include <string.h>
 
@@ -45,9 +45,9 @@ struct _vector
     uint32_t size;              // Current Array size
     uint32_t init_capacity;     // Initial Capacity (this is set at creation time)
     uint32_t capacity;          // Max capacity allocated
-    size_t data_size;           // User DataType size
-    void **array;               // Vector's storage
-    bool wipe;                  // If this flag is set to true then
+      size_t data_size;         // User DataType size
+        void **array;           // Vector's storage
+    uint32_t flags;             // If this flag is set to true then
                                 // every time the vector is extended
                                 // or shrunk, left over values will be
                                 // properly erased.
@@ -244,8 +244,8 @@ static inline void check_mutex_unlock(vector v, volatile uint8_t lock_type)
 
 /*---------------------------------------------------------------------------*/
 // Vector Creation and Destruction:
-
-vector vect_create(size_t init_capacity, size_t data_size, bool wipe_flag)
+// vector vect_create(size_t init_capacity, size_t data_size, uint32_t flags)
+vector vect_create(size_t init_capacity, size_t data_size, uint32_t flags)
 {
     // Create the vector first:
     vector v = (vector)malloc(sizeof(struct _vector));
@@ -271,7 +271,7 @@ vector vect_create(size_t init_capacity, size_t data_size, bool wipe_flag)
     }
 
     v->init_capacity = v->capacity;
-    v->wipe = wipe_flag;
+    v->flags = flags;
 
 #   ifdef THREAD_SAFE
     mutex_alloc(&(v->lock));
@@ -295,7 +295,7 @@ void vect_destroy(vector v)
     check_mutex_lock(v, 1);
 #   endif
 
-    if (v->wipe)
+    if (v->flags & ZV_SAFE_WIPE)
     {
         // Safely clear up the old array (security measure)
         zvect_index i;
@@ -393,7 +393,7 @@ static void vect_half_capacity(vector v)
     // Copy old vector's storage pointers list into new one:
     vect_memcpy(new_array, v->array, sizeof(void *) * new_size);
 
-    if (v->wipe)
+    if (v->flags & ZV_SAFE_WIPE)
     {
         // If Secure Wipe is true then we may need to secure wipe
         // a potential left over portion of the old storage that
@@ -465,7 +465,7 @@ void vect_clear(vector v)
         vect_half_capacity(v);
     }
 
-    if (v->wipe)
+    if (v->flags & ZV_SAFE_WIPE)
     {
         // Secure Erase the portion of the storage that
         // has not been touched:
@@ -679,21 +679,21 @@ void *vect_remove_front(vector v)
 void vect_delete(vector v)
 {
     void *item = _vect_remove_at(v, v->size - 1);
-    if (v->wipe)
+    if (v->flags & ZV_SAFE_WIPE)
         memset(item, 0, v->data_size);
 }
 
 void vect_delete_at(vector v, zvect_index i)
 {
     void *item = _vect_remove_at(v, i);
-    if (v->wipe)
+    if (v->flags & ZV_SAFE_WIPE)
         memset(item, 0, v->data_size);
 }
 
 void vect_delete_front(vector v)
 {
     void *item = _vect_remove_at(v, 0);
-    if (v->wipe)
+    if (v->flags & ZV_SAFE_WIPE)
         memset(item, 0, v->data_size);
 }
 

@@ -132,7 +132,7 @@ int main()
 
     printf("Test %s_%d: Create a vector of 2 elements and using int for the vector data:\n", testGrp, testID);
     vector v;
-    v = vect_create(2, sizeof(int), true);
+    v = vect_create(2, sizeof(int), ZV_SAFE_WIPE);
     printf("done.\n");
     testID++;
 
