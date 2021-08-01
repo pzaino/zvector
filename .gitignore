@@ -3,4 +3,5 @@ lib/
 o/
 tests/bin/
 **/*.backup
+/tests/bin/.*
 
