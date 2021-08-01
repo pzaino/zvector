@@ -42,6 +42,7 @@
 // Define the vector data structure:
 struct _vector
 {
+         zvect_index prev_size;     // Used when clearing a vector
          zvect_index size;          // Current Array size
          zvect_index init_capacity; // Initial Capacity (this is set at creation time)
          zvect_index capacity;      // Max capacity allocated
@@ -51,6 +52,9 @@ struct _vector
                                     // every time the vector is extended
                                     // or shrunk, left over values will be
                                     // properly erased.
+                void (*SfWpFunc)(const void *item, size_t size);     
+                                    // Pointer to a CUSTOM Safe Wipe function (optional)
+                                    // needed only for safe wiping special structures.
 #ifdef THREAD_SAFE
 #   if MUTEX_TYPE == 0
                 void *lock;         // Vector's mutex for thread safe micro-transactions 
@@ -86,16 +90,31 @@ static inline void vect_check(vector x)
         throw_error ("Vector not defined!");
 }
 
+static inline void item_safewipe(vector v, const void *item)
+{
+    if (item != NULL)
+    {
+        if (!v->SfWpFunc)
+        {
+            memset((void *)item, 0, v->data_size);
+        }
+        else
+        {
+            (*(v->SfWpFunc))(item, v->data_size);
+        }
+    }
+}
+
 #ifndef ZVECT_MEMX_METHOD
 #define ZVECT_MEMX_METHOD 1
 #endif
 
 #if defined(Arch32)
-#define MASK 0xFFFFFFFC
-#define ADDR_CONV uint32_t
+#define ADDR_TYPE1 uint32_t
+#define ADDR_TYPE2 uint16_t
 #else
-#define MASK 0xFFFFFFFFFFFFFFFC
-#define ADDR_CONV uint64_t
+#define ADDR_TYPE1 uint64_t
+#define ADDR_TYPE2 uint32_t
 #endif
 
 static inline void *vect_memcpy(void *dst, const void *src, size_t size)
@@ -108,21 +127,35 @@ static inline void *vect_memcpy(void *dst, const void *src, size_t size)
     size_t i;
     if ( size > 0 )
     {
-        if ((uintptr_t)dst % sizeof(ADDR_CONV) == 0 &&
-            (uintptr_t)src % sizeof(ADDR_CONV) == 0 &&
-            size % sizeof(ADDR_CONV) == 0)
+        if ((uintptr_t)dst % sizeof(ADDR_TYPE1) == 0 &&
+            (uintptr_t)src % sizeof(ADDR_TYPE1) == 0 &&
+            size % sizeof(ADDR_TYPE1) == 0)
         {
-            ADDR_CONV * pExDst = (ADDR_CONV *) dst;
-            ADDR_CONV const * pExSrc = (ADDR_CONV const *) src;
+            ADDR_TYPE1 * pExDst = (ADDR_TYPE1 *) dst;
+            ADDR_TYPE1 const * pExSrc = (ADDR_TYPE1 const *) src;
 
-            for (i = 0; i < size/sizeof(ADDR_CONV); i++) {
+            for (i = 0; i < size/sizeof(ADDR_TYPE1); i++) {
                 // The following should be compiled as: (-O2 on x86_64)
                 //         mov     rdi, QWORD PTR [rsi+rcx]
                 //         mov     QWORD PTR [rax+rcx], rdi
                 *pExDst++ = *pExSrc++;
             }
         }
-        else 
+        else if ((uintptr_t)dst % sizeof(ADDR_TYPE2) == 0 &&
+                 (uintptr_t)src % sizeof(ADDR_TYPE2) == 0 &&
+                 size % sizeof(ADDR_TYPE2) == 0)
+        {
+            ADDR_TYPE2 * pExDst = (ADDR_TYPE2 *) dst;
+            ADDR_TYPE2 const * pExSrc = (ADDR_TYPE2 const *) src;
+
+            for (i = 0; i < size/sizeof(ADDR_TYPE2); i++) {
+                // The following should be compiled as: (-O2 on x86_64)
+                //         mov     rdi, WORD PTR [rsi+rcx]
+                //         mov     WORD PTR [rax+rcx], rdi
+                *pExDst++ = *pExSrc++;
+            }
+        }
+        else
         {
             char * pChDst = (char *) dst;
             char const * pChSrc = (char const *) src;
@@ -253,6 +286,7 @@ vector vect_create(size_t init_capacity, size_t data_size, uint32_t flags)
         throw_error("Not enough memory to allocate the vector!");
 
     // Initialize the vector:
+    v->prev_size = 0;
     v->size = 0;
     if (data_size == 0)
     {
@@ -272,6 +306,7 @@ vector vect_create(size_t init_capacity, size_t data_size, uint32_t flags)
 
     v->init_capacity = v->capacity;
     v->flags = flags;
+    v->SfWpFunc = NULL;
 
 #   ifdef THREAD_SAFE
     mutex_alloc(&(v->lock));
@@ -300,11 +335,12 @@ void vect_destroy(vector v)
         // Safely clear up the old array (security measure)
         zvect_index i;
         for (i = 0; i < v->size; i++)
-            memset(v->array[i], 0, v->data_size);
+            item_safewipe(v, v->array[i]);
     }
 
     // Destroy it:
-    free(v->array);
+    if (!v->array)
+        free(v->array);
 #   ifdef THREAD_SAFE
     check_mutex_unlock(v, 1);
     mutex_destroy(v->lock);
@@ -395,14 +431,13 @@ static void vect_half_capacity(vector v)
 
     if (v->flags & ZV_SAFE_WIPE)
     {
-        // If Secure Wipe is true then we may need to secure wipe
-        // a potential left over portion of the old storage that
-        // is going to be freed in a bit:
+        // Secure Erase the portion of the storage that
+        // has not been touched:
         zvect_index i2;
-        for (i2 = new_size; i2 < v->size; i2++)
-            memset(v->array[i2], 0, v->data_size);
+        for (i2 = (v->capacity - 1); i2 > new_capacity; i2--)
+            item_safewipe(v, v->array[i2]);
     }
-    
+
     // Apply changes and release memory:
     free(v->array);
     v->array = new_array;
@@ -459,7 +494,9 @@ void vect_clear(vector v)
 #   ifdef THREAD_SAFE
     check_mutex_lock(v, 1);
 #   endif
-    v->size = 0;
+    v->prev_size = v->size;
+    v->size = v->init_capacity;
+
     while (v->capacity > v->init_capacity)
     {
         vect_half_capacity(v);
@@ -469,10 +506,16 @@ void vect_clear(vector v)
     {
         // Secure Erase the portion of the storage that
         // has not been touched:
-        zvect_index i2;
-        for (i2 = 0; i2 < v->size; i2++)
-            memset(v->array[i2], 0, v->data_size);
+        zvect_index i2 = (v->init_capacity - 1);
+        while ( i2 )
+        {
+            item_safewipe(v, v->array[i2]);
+            i2--;
+        }
     }
+
+    v->size = 0;
+
 #   ifdef THREAD_SAFE
     check_mutex_unlock(v, 1);
 #   endif
@@ -509,6 +552,7 @@ static inline void _vect_add_at(vector v, const void *value, zvect_index i)
     // Finally add new value in at the index
     vect_memcpy(v->array[i], value, v->data_size);
     // Increment vector size
+    v->prev_size=v->size;
     v->size++;
 #   ifdef THREAD_SAFE
     check_mutex_unlock(v, 1);
@@ -643,6 +687,7 @@ static inline void *_vect_remove_at(vector v, zvect_index i)
     }
 
     // Reduce vector size:
+    v->prev_size=v->size;
     v->size--;
 
     // Check if we need to shrink the vector:
@@ -679,22 +724,22 @@ void *vect_remove_front(vector v)
 void vect_delete(vector v)
 {
     void *item = _vect_remove_at(v, v->size - 1);
-    if (v->flags & ZV_SAFE_WIPE)
-        memset(item, 0, v->data_size);
+    if ( v->flags & ZV_SAFE_WIPE )
+        item_safewipe(v, item);
 }
 
 void vect_delete_at(vector v, zvect_index i)
 {
     void *item = _vect_remove_at(v, i);
-    if (v->flags & ZV_SAFE_WIPE)
-        memset(item, 0, v->data_size);
+    if ( v->flags & ZV_SAFE_WIPE )
+        item_safewipe(v, item);
 }
 
 void vect_delete_front(vector v)
 {
     void *item = _vect_remove_at(v, 0);
     if (v->flags & ZV_SAFE_WIPE)
-        memset(item, 0, v->data_size);
+        item_safewipe(v, item);
 }
 
 /*---------------------------------------------------------------------------*/
