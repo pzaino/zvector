@@ -50,37 +50,52 @@ enum {
  * ), we can simply pass ZV_SAFE_WIPE (or other flags too)
  * afer item_size. Flags syntax is the usual C flag sets:
  * ZV_SAFE_WIPE | ZV_AUTOSHRINK etc.
- * 
+ */
+vector vect_create(size_t capacity, size_t item_size, uint32_t flags);
+
+/*
  * vect_destroy destrois the specified vector and, if 
  * secure_wipe is enabled, also ensure erasing each single
  * value in the vector before destroying it.
- * 
+ */ 
+void vect_destroy(vector);
+
+/* 
  * vect_shrink is useful when operating on systems with 
  * small amount of RAM and it basically allow to shrink
  * the vector capacity to match the actual used size, to
  * save unused memory locations. 
  */
-vector vect_create(size_t capacity, size_t item_size, uint32_t flags);
-void vect_destroy(vector);
 void vect_shrink(vector);
+
+/* 
+ * vect_set_wipefunct allows you to pass ZVector a pointer to a custom
+ * function (of your creation) to securely wipe data from the vector v
+ * when automatic safe wipe is called.
+ */
+void vect_set_wipefunct(vector v, void (*f1)(const void *item, size_t size));
 
 // Vector state checks:
 
 /*
  * vect_is_empty returns true if the vector is empty
  * and false if the vector is NOT empty.
- * 
+ */ 
+bool vect_is_empty(vector);
+
+/*
  * vect_size returns the actual size (the number of)
  * USED slots in the vector storage.
- * 
+ */ 
+zvect_index vect_size(vector);
+
+/* 
  * vect_clear clears out a vector and also resizes it
  * to its initial capacity.
  */
-bool vect_is_empty(vector);
-zvect_index vect_size(vector);
 void vect_clear(vector);
 
-#ifdef THREAD_SAFE
+#if ( THREAD_SAFE == 1 )
 // Vector Thread Safe functions:
 
 void vect_lock(vector v);
@@ -88,6 +103,7 @@ void vect_lock(vector v);
 void vect_unlock(vector v);
 #endif
 
+/////////////////////////////////////////////////////
 // Vector Data Storage functions:
 
 /*
@@ -98,7 +114,10 @@ void vect_unlock(vector v);
  * vect_push(v, &i)     pushes the element 3 at 
  *                      the top of the vector
  *                      as a stack would do.
- * 
+ */
+void vect_push(vector, const void *);
+
+/*
  * vect_pop(v)          pops (returns) the element 
  *                      at the top of the vector as
  *                      a regular pop would do with
@@ -107,7 +126,6 @@ void vect_unlock(vector v);
  *                      receive is also removed from
  *                      the vector!
  */
-void vect_push(vector, const void *);
 void *vect_pop(vector);
 
 /*
