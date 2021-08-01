@@ -216,6 +216,7 @@ void *vect_remove_front(vector);
  */
 void vect_delete(vector);
 void vect_delete_at(vector, zvect_index);
+void vect_delete_range(vector v, zvect_index first_elemeny, zvect_index last_element);
 void vect_delete_front(vector);
 
 // Vector Data manipoulation functions:
