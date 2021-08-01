@@ -42,25 +42,25 @@
 // Define the vector data structure:
 struct _vector
 {
-    uint32_t size;              // Current Array size
-    uint32_t init_capacity;     // Initial Capacity (this is set at creation time)
-    uint32_t capacity;          // Max capacity allocated
-      size_t data_size;         // User DataType size
-        void **array;           // Vector's storage
-    uint32_t flags;             // If this flag is set to true then
-                                // every time the vector is extended
-                                // or shrunk, left over values will be
-                                // properly erased.
+         zvect_index size;          // Current Array size
+         zvect_index init_capacity; // Initial Capacity (this is set at creation time)
+         zvect_index capacity;      // Max capacity allocated
+              size_t data_size;     // User DataType size
+                void **array;       // Vector's storage
+            uint32_t flags;         // If this flag is set to true then
+                                    // every time the vector is extended
+                                    // or shrunk, left over values will be
+                                    // properly erased.
 #ifdef THREAD_SAFE
 #   if MUTEX_TYPE == 0
-    void *lock;                 // Vector's mutex for thread safe micro-transactions 
-    volatile uint8_t lock_type; // This field contains the lock used for this Vector.
+                void *lock;         // Vector's mutex for thread safe micro-transactions 
+    volatile uint8_t lock_type;     // This field contains the lock used for this Vector.
 #   elif MUTEX_TYPE == 1
-    pthread_mutex_t *lock;      // Vector's mutex for thread safe micro-transactions
-    volatile uint8_t lock_type; // This field contains the lock used for this Vector.
+     pthread_mutex_t *lock;         // Vector's mutex for thread safe micro-transactions
+    volatile uint8_t lock_type;     // This field contains the lock used for this Vector.
 #   elif MUTEX_TYPE == 2
-    CRITICAL_SECTION *lock;     // Vector's mutex for thread safe micro-transactions
-    volatile uint8_t lock_type; // This field contains the lock used for this Vector.
+    CRITICAL_SECTION *lock;         // Vector's mutex for thread safe micro-transactions
+    volatile uint8_t lock_type;     // This field contains the lock used for this Vector.
 #   endif
 #endif
 } __attribute__((aligned(__WORDSIZE)));
