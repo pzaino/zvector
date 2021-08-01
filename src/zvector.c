@@ -117,7 +117,10 @@ static inline void item_safewipe(vector v, const void *item)
 #define ADDR_TYPE2 uint32_t
 #endif
 
-static inline void *vect_memcpy(void *dst, const void *src, size_t size)
+#if ( ZVECT_MEMX_METHOD == 0 )
+static inline 
+#endif
+void *vect_memcpy(void *dst, const void *src, size_t size)
 {
 #if ( ZVECT_MEMX_METHOD == 0 )
     // Using regular memcpy:
