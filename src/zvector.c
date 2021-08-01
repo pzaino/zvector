@@ -182,21 +182,9 @@ static inline void *vect_memmove(void *dst, const void *src, size_t size)
 
 #ifdef THREAD_SAFE
 #   if MUTEX_TYPE == 0
-static inline void mutex_lock(void *lock)
-{
-}
-
-static inline void mutex_unlock(void *lock)
-{
-}
-
-static inline void mutex_alloc(void **lock)
-{
-}
-
-static inline void mutex_destroy(void *lock)
-{
-}
+#error I can't identify your Operating Systsem, \
+so you cannot compile me with THREAD_SAFE support, \
+please disable it in the Makefile and try to recompile.
 
 #   elif MUTEX_TYPE == 1
 static inline void mutex_lock(pthread_mutex_t *lock)
