@@ -103,6 +103,13 @@ int main()
 
     fflush(stdout);
 
+    printf("Test %s_%d: Dellete a range of elements in the vector:\n", testGrp, testID);
+    vect_delete_range(v, 10, 20);
+    printf("done.\n");
+    testID++;
+
+    fflush(stdout);
+
     printf("Test %s_%d: Clear vector:\n", testGrp, testID);
     vect_clear(v);
     printf("done.\n");

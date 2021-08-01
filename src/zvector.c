@@ -657,7 +657,7 @@ void vect_put_front(vector v, const void *value)
     _vect_put_at(v, value, 0);
 }
 
-// This is the inlin eimplementation for all the remove and pop
+// This is the inline implementation for all the remove and pop
 static inline void *_vect_remove_at(vector v, zvect_index i)
 {
     // check if the vector exists:
@@ -721,25 +721,70 @@ void *vect_remove_front(vector v)
     return _vect_remove_at(v, 0);
 }
 
+// This is the inline implementation for all the delete 
+static inline void _vect_delete_at(vector v, zvect_index start, zvect_index offset)
+{
+    // check if the vector exists:
+    vect_check(v);
+
+    // Check if the index is out of bounds:
+    if ( ( start + offset ) >= v->size )
+        throw_error("Index out of bounds!");
+
+    // If the vector is empty just return null
+    if ( v->size == 0 )
+        return;
+
+    zvect_index j;
+#   ifdef THREAD_SAFE
+    check_mutex_lock(v, 1);
+#   endif
+
+    // "shift" left the array of one position:
+    if ( ((start + offset) < (v->size - 1)) && (v->size > 0))
+    {
+        for ( j = (start + offset) + 1; j < v->size; j++)
+            vect_memcpy(v->array[(j - offset) - 1], v->array[j], sizeof(void *));
+        if ( v->flags & ZV_SAFE_WIPE )
+        {
+            zvect_index j2;
+            for ( j2 = (v->size - 1); j2 >= ((v->size - 1) - offset); j2--)
+                item_safewipe(v, v->array[j2]);
+        }
+    }
+
+    // Reduce vector size:
+    v->prev_size=v->size;
+    v->size = v->size - (offset + 1);
+
+    // Check if we need to shrink the vector:
+    if ((4 * v->size) < v->capacity)
+        vect_half_capacity(v);
+
+#   ifdef THREAD_SAFE
+    check_mutex_unlock(v, 1);
+#   endif
+}
+
 void vect_delete(vector v)
 {
-    void *item = _vect_remove_at(v, v->size - 1);
-    if ( v->flags & ZV_SAFE_WIPE )
-        item_safewipe(v, item);
+    _vect_delete_at(v, v->size - 1, 0);
 }
 
 void vect_delete_at(vector v, zvect_index i)
 {
-    void *item = _vect_remove_at(v, i);
-    if ( v->flags & ZV_SAFE_WIPE )
-        item_safewipe(v, item);
+    _vect_delete_at(v, i, 0);
+}
+
+void vect_delete_range(vector v, zvect_index first_element, zvect_index last_element)
+{
+    last_element = ( last_element - first_element );
+    _vect_delete_at(v, first_element, last_element);
 }
 
 void vect_delete_front(vector v)
 {
-    void *item = _vect_remove_at(v, 0);
-    if (v->flags & ZV_SAFE_WIPE)
-        item_safewipe(v, item);
+    _vect_delete_at(v, 0, 0);
 }
 
 /*---------------------------------------------------------------------------*/
