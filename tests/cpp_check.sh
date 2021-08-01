@@ -85,7 +85,7 @@ ${cppcheck_cmd} ${start_path}/src/*.c --bug-hunting \
              -I${GCC_PATH} \
              -I../ -I${start_path}/src/ \
              -io/ -ilib/ \
-             --suppress=missingIncludeSystem 2>&1
+             --suppress=missingIncludeSystem -v 2>&1
 
 exit $?
 
