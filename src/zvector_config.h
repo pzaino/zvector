@@ -41,6 +41,12 @@ typedef uint32_t zvect_index;
 // The following options are handled by Make
 // So you should not need to modify them here.
 
+// Choose which type of memory functions you want 
+// to use for your case:
+// 0 = Use Standard memcpy and memmove
+// 1 = Use Optimised memcpy and memove
+#define ZVECT_MEMX_METHOD 1
+
 // Enable/Disable thread safe code:
 #define THREAD_SAFE 1
 
