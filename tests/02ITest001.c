@@ -200,13 +200,13 @@ int main()
     fflush(stdout);
     for (i = 0; i < MAX_ITEMS; i++)
     {
-        printf ("Checking item: %d = ", i);
+        printf ("Checking item: %*d = ", 4, i);
 
         // Let's retrieve the value from the vector correctly:
         // For beginners: this is how in C we convert back a void * into the original dtata_type
         int value = *((int *)vect_get_at(v, i));
 
-        printf("%d\n", value);
+        printf("%*d\n", 4, value);
         fflush(stdout);
 
         // Let's test if the value we have retrieved is correct:

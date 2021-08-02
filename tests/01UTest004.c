@@ -15,7 +15,7 @@
 #include "zvector.h"
 
 #define MAX_ITEMS 20
-#define MAX_MSG_SIZE 64
+#define MAX_MSG_SIZE 72
 typedef struct QueueItem
 {
     uint32_t eventID;
@@ -53,7 +53,7 @@ int main()
 
     // Initialise Random Gnerator
     static int mySeed = 25011984;
-    int max_strLen = 48;
+    int max_strLen = 64;
 
     srand((time(NULL) * max_strLen) + (++mySeed));
 
@@ -99,7 +99,7 @@ int main()
 
         QueueItem item = *((QueueItem *)vect_get_at(v, i));
         // Let's test if the value we have retrieved is correct:
-        printf("Event %d: ID (%d) - Message: %s\n", i, item.eventID, item.msg);
+        printf("Event %*d: ID (%*d) - Message: %s\n", 2, i, 2, item.eventID, item.msg);
     }
     printf("done.\n");
     testID++;
@@ -116,7 +116,7 @@ int main()
         QueueItem *item = (QueueItem *)malloc(sizeof(QueueItem *));
         item = (QueueItem *)vect_remove_front(v);
         // Let's test if the value we have retrieved is correct:
-        printf("Event %d: ID (%d) - Message: %s\n", i, item->eventID, item->msg);
+        printf("Event %*d: ID (%*d) - Message: %s\n", 2, i, 2, item->eventID, item->msg);
         free(item);
     }
 
