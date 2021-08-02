@@ -239,10 +239,11 @@ static inline void check_mutex_lock(vector v, volatile uint8_t lock_type)
     // higher priority locks already in place, then lock the vector. 
     // For example: NO previous user's request or ZVector complex feature
     // requested a lock already.
-    if ( lock_type == 1 && v->lock_type == 0 )
+    if ( lock_type == 1 && v->lock_type == 2 )
     {
-        mutex_lock(v->lock);
-        v->lock_type = lock_type;
+        // In this particoular case we shall not lock
+        // mutex_lock(v->lock);
+        // v->lock_type = lock_type;
     }
     else
     {
@@ -365,12 +366,12 @@ zvect_index vect_size(vector v)
 /*---------------------------------------------------------------------------*/
 // Vector Thread Safe user functions:
 #if ( THREAD_SAFE == 1 )
-void vect_lock(vector v)
+inline void vect_lock(vector v)
 {
     check_mutex_lock(v, 2);  
 }
 
-void vect_unlock(vector v)
+inline void vect_unlock(vector v)
 {
     check_mutex_unlock(v, 2);
 }
