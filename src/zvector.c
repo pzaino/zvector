@@ -3,7 +3,7 @@
  * Purpose: Library to use Dynamic Arrays (Vectors) in C Language
  *  Author: Paolo Fabio Zaino
  *  Domain: General
- * License: Copyright by Paolo Fabio Zaino, all right reserved
+ * License: Copyright by Paolo Fabio Zaino, all rights reserved
  *          Distributed under MIT license
  *
  * Credits: This Library was inspired by the work of quite few, 
