@@ -81,8 +81,7 @@ struct _vector
 #   endif
 #endif
                 void **data;            // Vector's storage.
-};
-// __attribute__((aligned(__WORDSIZE)));
+} __attribute__((aligned(__WORDSIZE)));
 
 /***********************
  ** Support Functions **
@@ -233,29 +232,30 @@ static inline void mutex_destroy(CRITICAL_SECTION *lock)
 
 #if ( ZVECT_THREAD_SAFE == 1 )
 // The following two functions are generic locking functions
+
+/*
+ * ZVector uses the concept of Priorities for locking.
+ * A user lock has the higher priority while ZVector itself
+ * uses two different levels of priorities (both lower than 
+ * the user lock priority). 
+ * level 1 is the lower priority and it's used just by the
+ *         primitives in ZVector.
+ * level 2 is the priority used by the ZVEctor functions that 
+ *         uses ZVEctor primitives. 
+ * level 3 is the priority of the User's locks.
+ */
 static inline void check_mutex_lock(vector v, volatile uint8_t lock_type)
 {
-    // If the request comes from ZVector itself and there are no existing
-    // higher priority locks already in place, then lock the vector. 
-    // For example: NO previous user's request or ZVector complex feature
-    // requested a lock already.
-    if ( lock_type == 1 && v->lock_type == 2 )
+    if ( lock_type >= v->lock_type )
     {
-        // In this particoular case we shall not lock
-        // mutex_lock(v->lock);
-        // v->lock_type = lock_type;
-    }
-    else
-    {
-        // Otherwise lock as you would do regularly:
         mutex_lock(v->lock);
         v->lock_type = lock_type;
-    } 
+    }
 }
 
 static inline void check_mutex_unlock(vector v, volatile uint8_t lock_type)
 {
-    if ( v->lock_type == lock_type )
+    if ( lock_type == v->lock_type )
     {
         v->lock_type = 0;
         mutex_unlock(v->lock);
@@ -368,12 +368,12 @@ zvect_index vect_size(vector v)
 #if ( ZVECT_THREAD_SAFE == 1 )
 inline void vect_lock(vector v)
 {
-    check_mutex_lock(v, 2);  
+    check_mutex_lock(v, 3);  
 }
 
 inline void vect_unlock(vector v)
 {
-    check_mutex_unlock(v, 2);
+    check_mutex_unlock(v, 3);
 }
 #endif
 /*---------------------------------------------------------------------------*/
@@ -942,12 +942,12 @@ void vect_copy(vector v1, vector v2, zvect_index start,
 
     zvect_index i;
 #   if ( ZVECT_THREAD_SAFE == 1 )
-    check_mutex_lock(v1, 3);
+    check_mutex_lock(v1, 2);
 #   endif
     for (i = start; i <= max_elements; i++)
         vect_add(v1, v2->data[i]);
 #   if ( ZVECT_THREAD_SAFE == 1 )
-    check_mutex_unlock(v1, 3);
+    check_mutex_unlock(v1, 2);
 #   endif
 }
 
@@ -977,7 +977,7 @@ void vect_move(vector v1, vector v2, zvect_index start,
 
     zvect_index i;
 #   if ( ZVECT_THREAD_SAFE == 1 )
-    check_mutex_lock(v1, 3);
+    check_mutex_lock(v1, 2);
 #   endif
     for (i = start; i <= max_elements; i++)
     {
@@ -985,7 +985,7 @@ void vect_move(vector v1, vector v2, zvect_index start,
         vect_remove_at(v2, i);
     }
 #   if ( ZVECT_THREAD_SAFE == 1 )
-    check_mutex_unlock(v1, 3);
+    check_mutex_unlock(v1, 2);
 #   endif 
 }
 
@@ -1003,12 +1003,12 @@ void vect_merge(vector v1, vector v2)
 
     zvect_index i;
 #   if ( ZVECT_THREAD_SAFE == 1 )
-    check_mutex_lock(v1, 3);
+    check_mutex_lock(v1, 2);
 #   endif
     for (i = 0; i < v2->size; i++)
         vect_add(v1, v2->data[i]);
 #   if ( ZVECT_THREAD_SAFE == 1 )
-    check_mutex_unlock(v1, 3);
+    check_mutex_unlock(v1, 2);
 #   endif 
     // Because we are merging two vectors in one
     // after merged v2 to v1 there is no need for
