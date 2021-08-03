@@ -126,15 +126,18 @@ void *consumer(void *arg)
         // Let's retrieve the value from the vector correctly:
         // For beginners: this is how in C we convert back a void * into the original dtata_type
         QueueItem *item = (QueueItem *)malloc(sizeof(QueueItem *));
-        item = (QueueItem *)vect_remove_front(v);
+        if (!vect_is_empty(v))
+            item = (QueueItem *)vect_remove_front(v);
 
         vect_unlock(v);
 
-        // Let's test if the value we have retrieved is correct:
-        printf("Consumed Event %*d: ID (%*d) - Message: %s\n", 2, i, 2, item->eventID, item->msg);
+        if ( item != NULL )
+        {
+            // Let's test if the value we have retrieved is correct:
+            printf("Consumed Event %*d: ID (%*d) - Message: %s\n", 2, i, 2, item->eventID, item->msg);
 
-        fflush(stdout);
-
+            fflush(stdout);
+        }
         free(item);
     }
 

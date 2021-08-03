@@ -232,27 +232,30 @@ static inline void mutex_destroy(CRITICAL_SECTION *lock)
 
 #if ( ZVECT_THREAD_SAFE == 1 )
 // The following two functions are generic locking functions
+
+/*
+ * ZVector uses the concept of Priorities for locking.
+ * A user lock has the higher priority while ZVector itself
+ * uses two different levels of priorities (both lower than 
+ * the user lock priority). 
+ * level 1 is the lower priority and it's used just by the
+ *         primitives in ZVector.
+ * level 2 is the priority used by the ZVEctor functions that 
+ *         uses ZVEctor primitives. 
+ * level 3 is the priority of the User's locks.
+ */
 static inline void check_mutex_lock(vector v, volatile uint8_t lock_type)
 {
-    // ZVector uses the concept of Priorities for locking.
-    // A user lock has the higher priority while ZVector itself
-    // uses two different levels of priorities (both lower than 
-    // the user lock priority). 
-    // level 1 is the lower priority and it's used just by the
-    //         primitives in ZVector.
-    // level 2 is the priority used by the ZVEctor functions that 
-    //         uses ZVEctor primitives. 
-    // level 3 is the priority of the User's locks.
-    if ( lock_type > v->lock_type )
+    if ( lock_type >= v->lock_type )
     {
         mutex_lock(v->lock);
         v->lock_type = lock_type;
-    } 
+    }
 }
 
 static inline void check_mutex_unlock(vector v, volatile uint8_t lock_type)
 {
-    if ( v->lock_type == lock_type )
+    if ( lock_type == v->lock_type )
     {
         v->lock_type = 0;
         mutex_unlock(v->lock);
