@@ -25,14 +25,13 @@
 
 #include "zvector.h"
 
-//# define THREAD_SAFE
 #define MAX_ITEMS 200
 
 // Setup tests:
 char *testGrp = "001";
 uint8_t testID = 1;
 
-#if defined(THREAD_SAFE) && OS_TYPE == 1
+#if ( ZVECT_THREAD_SAFE == 1 ) && ( OS_TYPE == 1 )
 
 #include<pthread.h>
 

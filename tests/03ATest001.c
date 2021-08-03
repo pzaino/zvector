@@ -57,7 +57,7 @@ void run_cmd(char *cmd_line, char *buffer)
 
 int main()
 {
-    printf("=== ITest%s ===\n", testGrp);
+    printf("=== ATest%s ===\n", testGrp);
     printf("CPPCheck Source code Analisys:\n");
 
     fflush(stdout);

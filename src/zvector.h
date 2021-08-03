@@ -95,7 +95,7 @@ zvect_index vect_size(vector);
  */
 void vect_clear(vector);
 
-#if ( THREAD_SAFE == 1 )
+#if ( ZVECT_THREAD_SAFE == 1 )
 // Vector Thread Safe functions:
 
 void vect_lock(vector v);

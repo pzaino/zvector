@@ -30,11 +30,11 @@
 char *testGrp = "003";
 uint8_t testID = 1;
 
+#if ( ZVECT_THREAD_SAFE == 1 ) && ( OS_TYPE == 1 )
+
 // Initialise Random Gnerator
 static int mySeed = 25011984;
 int max_strLen = 64;
-
-#if defined(THREAD_SAFE) && OS_TYPE == 1
 
 #include <pthread.h>
 
