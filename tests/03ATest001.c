@@ -25,7 +25,7 @@
 #include "zvector.h"
 
 // Setup tests:
-char *testGrp = "002";
+char *testGrp = "001";
 uint8_t testID = 1;
 
 void clear_str(char *str, uint32_t numchars)

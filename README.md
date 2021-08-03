@@ -7,8 +7,8 @@ This is a fast, configurable, portable, thread safe and reentrant Vector Library
 
 You can use ZVector to create:
 - Dynamic Arrays
-- Dynamic Stacks
-- Dynamic Queues
+- Dynamic Stacks (LIFO)
+- Dynamic Queues (FIFO)
 
 The library also offers automatic safe data wiping, so you can use it to store sensitive data. It is also constantly tested for security and bug hunting.
 
