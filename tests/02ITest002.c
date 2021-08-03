@@ -1,5 +1,5 @@
 /*
- *    Name: ITest003
+ *    Name: ITest002
  * Purpose: Unit Testing ZVector Library
  *  Author: Paolo Fabio Zaino
  *  Domain: General
@@ -27,7 +27,7 @@
 #define MAX_MSG_SIZE 72
 
 // Setup tests:
-char *testGrp = "003";
+char *testGrp = "002";
 uint8_t testID = 1;
 
 #if ( ZVECT_THREAD_SAFE == 1 ) && ( OS_TYPE == 1 )
@@ -40,12 +40,12 @@ int max_strLen = 64;
 
 pthread_t tid[2]; // Two threads IDs
 
-typedef struct QueueItem
+typedef struct StackItem
 {
     uint32_t eventID;
     char msg[MAX_MSG_SIZE];
     uint32_t priority;
-} QueueItem;
+} StackItem;
 
 // Generates random strings of chars:
 void mk_rndstr(char *rndStr, size_t len)
@@ -82,7 +82,7 @@ void *producer(void *arg)
     uint32_t i;
     for (i = 0; i < MAX_ITEMS; i++)
     {
-        QueueItem qi;
+        StackItem qi;
         qi.eventID = i;
         // qi.msg = malloc(sizeof(char) * max_strLen);
         clear_str(qi.msg, MAX_MSG_SIZE);
@@ -95,7 +95,7 @@ void *producer(void *arg)
         // Let's add a new item in the queue:
         vect_add(v, &qi);
 
-        QueueItem item = *((QueueItem *)vect_get(v));
+        StackItem item = *((StackItem *)vect_get(v));
 
         vect_unlock(v);
 
@@ -117,7 +117,7 @@ void *consumer(void *arg)
     vector v = (vector)arg;
     int evt_counter = 0;
     // Simulating Consumer:
-    printf("Test %s_%d: Consume %d events from the queue in FIFO order:\n", testGrp, testID, MAX_ITEMS);
+    printf("Test %s_%d: Consume %d events from the queue in LIFO order:\n", testGrp, testID, MAX_ITEMS);
     uint32_t i;
     for (i = 0; i < MAX_ITEMS; i++)
     {
@@ -126,9 +126,9 @@ void *consumer(void *arg)
 
         // Let's retrieve the value from the vector correctly:
         // For beginners: this is how in C we convert back a void * into the original dtata_type
-        QueueItem *item = (QueueItem *)malloc(sizeof(QueueItem *));
+        StackItem *item = (StackItem *)malloc(sizeof(StackItem *));
         if (!vect_is_empty(v))
-            item = (QueueItem *)vect_remove_front(v);
+            item = (StackItem *)vect_remove(v);
 
         vect_unlock(v);
 
@@ -156,19 +156,19 @@ int main()
     srand((time(NULL) * max_strLen) + (++mySeed));
 
     printf("=== UTest%s ===\n", testGrp);
-    printf("Testing Dynamic QUEUES (MULTI thread)\n");
+    printf("Testing Dynamic STACKS (MULTI thread)\n");
 
     fflush(stdout);
 
-    printf("Test %s_%d: Create a Queue of 2 initial elements capacity:\n", testGrp, testID);
+    printf("Test %s_%d: Create a dynamic stack of 2 initial elements capacity:\n", testGrp, testID);
     vector v;
-    v = vect_create(2, sizeof(struct QueueItem), ZV_SAFE_WIPE);
+    v = vect_create(2, sizeof(struct StackItem), ZV_SAFE_WIPE);
     printf("done.\n");
     testID++;
 
     fflush(stdout);
 
-    printf("Test %s_%d: Spin 2 threads and use them to manipoulate the Queue above.\n", testGrp, testID);
+    printf("Test %s_%d: Spin 2 threads and use them to manipoulate the stack created above.\n", testGrp, testID);
 
     int err = 0;
     int i = 0;
@@ -208,21 +208,21 @@ int main()
 
     fflush(stdout);
 
-    printf("Test %s_%d: Clear Queue:\n", testGrp, testID);
+    printf("Test %s_%d: Clear stack:\n", testGrp, testID);
     vect_clear(v);
     printf("done.\n");
     testID++;
 
     fflush(stdout);
 
-    printf("Test %s_%d: Check if Queue size is now 0 (zero):\n", testGrp, testID);
+    printf("Test %s_%d: Check if stack size is now 0 (zero):\n", testGrp, testID);
     assert(vect_size(v) == 0);
     printf("done.\n");
     testID++;
 
     fflush(stdout);
 
-    printf("Test %s_%d: destroy the Queue:\n", testGrp, testID);
+    printf("Test %s_%d: destroy the stack:\n", testGrp, testID);
     vect_destroy(v);
     printf("done.\n");
     testID++;

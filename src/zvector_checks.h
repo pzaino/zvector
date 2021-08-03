@@ -4,7 +4,7 @@
  *          platform ZVector is being compiled.
  *  Author: Paolo Fabio Zaino
  *  Domain: General
- * License: Copyright 2021 by Paolo Fabio Zaino, all right reserved
+ * License: Copyright 2021 by Paolo Fabio Zaino, all rights reserved
  *          Distributed under MIT license
  *          
  */

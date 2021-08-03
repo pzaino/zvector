@@ -3,7 +3,7 @@
  * Purpose: Base configuration for the ZVector library
  *  Author: Paolo Fabio Zaino
  *  Domain: General
- * License: Copyright by Paolo Fabio Zaino, all right reserved
+ * License: Copyright by Paolo Fabio Zaino, all rights reserved
  *          Distributed under MIT license
  *          
  */
