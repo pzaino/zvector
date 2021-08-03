@@ -80,8 +80,9 @@ struct _vector
     volatile uint8_t lock_type;         // This field contains the lock used for this Vector.
 #   endif
 #endif
-                void **data;            // Vector's storage.
-} __attribute__((aligned(__WORDSIZE)));
+                void **data __attribute__((aligned));
+                                        // Vector's storage.
+} __attribute__((aligned));
 
 /***********************
  ** Support Functions **
