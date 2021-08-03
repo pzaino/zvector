@@ -130,10 +130,10 @@ OBJF=$(patsubst $(SRC)/%.c, $(OBJ)/%.o, $(OSRCF))
 
 TESTSLIST=$(wildcard $(TESTDIR)/*.c)
 OTESTSLIST=$(sort $(TESTSLIST))
-TESTS=$(patsubst $(TESTDIR)%.c, %, $(OTESTSLIST))
-#$(info "$(TESTS)")
+TESTSRCS=$(patsubst $(TESTDIR)%.c, %, $(OTESTSLIST))
+#$(info "$(TESTSRCS)")
 
-TESTBINS=$(patsubst %.c, %, $(TESTS))
+TESTBINS=$(patsubst %.c, %, $(TESTSRCS))
 #$(info "$(TESTBINS)")
 
 LIBST=$(LIBDIR)/lib$(LIBNAME).a
@@ -145,7 +145,7 @@ LIBST=$(LIBDIR)/lib$(LIBNAME).a
 
 .PHONY: all
 all: CFLAGS+=-O2
-all: core tests
+all: core test tests
 
 clean:
 	$(RM) -r $(LIBDIR) $(OBJ) $(TESTDIR)/bin ./*.o
@@ -163,7 +163,7 @@ core: configure $(LIBDIR) $(LIBST)
 
 test: $(TESTDIR)/bin
 
-tests: test $(TESTBINS)
+tests: $(TESTBINS)
 	$(info   )
 	$(info ===========================)
 	$(info Running all found tests... )
@@ -172,7 +172,7 @@ tests: test $(TESTBINS)
 
 debug: CFLAGS+= -ggdb3
 debug: CODE_MACROS+= -DDEBUG
-debug: core test
+debug: core test tests
 
 $(OBJF): $(OSRCF)
 	$(info  )
@@ -188,7 +188,7 @@ $(LIBST): $(OBJ) $(OBJF)
 	$(info ===========================)
 	ar rcs $@ -o $(OBJF)
 
-$(TESTBINS): $(TESTS)
+$(TESTBINS): $(TESTSRCS)
 	$(info  )
 	$(info ===========================)
 	$(info Building test: $@          )

@@ -73,6 +73,7 @@ int main()
 
     // Simulating Producer:
     printf("Test %s_%d: Produce %d events, store them in the queue and check if they are stored correctly:\n", testGrp, testID, MAX_ITEMS);
+    fflush(stdout);
     uint32_t i;
     for (i = 0; i < MAX_ITEMS; i++)
     {
@@ -109,15 +110,18 @@ int main()
 
     // Simulating Consumer:
     printf("Test %s_%d: Consume %d events from the queue:\n", testGrp, testID, MAX_ITEMS);
-
+    fflush(stdout);
     for (i = 0; i < MAX_ITEMS; i++)
     {
         // Let's retrieve the value from the vector correctly:
         // For beginners: this is how in C we convert back a void * into the original dtata_type
         QueueItem *item = (QueueItem *)malloc(sizeof(QueueItem *));
         item = (QueueItem *)vect_remove_front(v);
+
         // Let's test if the value we have retrieved is correct:
         printf("Event %*d: ID (%*d) - Message: %s\n", 2, i, 2, item->eventID, item->msg);
+        fflush(stdout);
+        
         free(item);
     }
 
