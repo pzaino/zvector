@@ -429,22 +429,6 @@ static void vect_half_capacity(vector v)
 
     // Copy old vector's storage pointers list into new one:
     vect_memcpy(new_data, v->data, sizeof(void *) * new_size);
-    /* zvect_index j;
-    for (j = 0; j < v->size; j++)
-    {
-        // Just move the pointers to the elements!
-        // vect_memcpy(v->data[j - 1], v->data[j], sizeof(void *));
-        new_data[j] = v->data[j];
-    }*/
-
-    if (v->flags & ZV_SAFE_WIPE)
-    {
-        // Secure Erase the portion of the storage that
-        // has not been touched:
-        zvect_index i2;
-        for (i2 = (v->capacity - 1); i2 > new_capacity; i2--)
-            item_safewipe(v, v->data[i2]);
-    }
 
     // Apply changes and release memory:
     free(v->data);
@@ -468,6 +452,8 @@ void vect_shrink(vector v)
 #   if ( ZVECT_THREAD_SAFE == 1 )
     check_mutex_lock(v, 1);
 #   endif
+
+    // Determine the correct shrunk size:
     if (v->size < v->init_capacity)
     {
         new_capacity = v->init_capacity;
@@ -475,6 +461,7 @@ void vect_shrink(vector v)
     else
         new_capacity = v->size + 1;
 
+    // shrink the vector:
     v->capacity = new_capacity;
     v->data = (void **)realloc(v->data, sizeof(void *) * v->capacity);
     if (v->data == NULL)
@@ -502,24 +489,24 @@ void vect_clear(vector v)
 #   if ( ZVECT_THREAD_SAFE == 1 )
     check_mutex_lock(v, 1);
 #   endif
+
+    if (v->flags & ZV_SAFE_WIPE)
+    {
+        // Secure Wipe the vector
+        zvect_index i = v->size - 1;
+        while (i)
+        {
+            item_safewipe(v, v->data[i]);
+            i--;
+        }
+    }
+
     v->prev_size = v->size;
     v->size = v->init_capacity;
 
     while (v->capacity > v->init_capacity)
     {
         vect_half_capacity(v);
-    }
-
-    if (v->flags & ZV_SAFE_WIPE)
-    {
-        // Secure Erase the portion of the storage that
-        // has not been touched:
-        zvect_index i2 = (v->init_capacity - 1);
-        while ( i2 )
-        {
-            item_safewipe(v, v->data[i2]);
-            i2--;
-        }
     }
 
     v->size = 0;
@@ -691,11 +678,17 @@ static inline void *_vect_remove_at(vector v, zvect_index i)
         return NULL;
 
     // Get the value we are about to remove:
-    void *rval = (void *)malloc(v->data_size);
+    // Remove returns a pointer to it, so no need
+    // to copy the entire value or do safe wipe!
+    // When using remove it's user responsability
+    // to wipe safely the returned data.
+    // void *rval = (void *)malloc(v->data_size);
+    void *rval = (void *)malloc(sizeof(void *));
 #   if ( ZVECT_THREAD_SAFE == 1 )
     check_mutex_lock(v, 1);
 #   endif
-    vect_memcpy(rval, v->data[i], v->data_size);
+    //vect_memcpy(rval, v->data[i], v->data_size);
+    rval = v->data[i];
 
 #   if ( ZVECT_FULL_REENTRANT == 1 )
     void **new_data = (void **)malloc(sizeof(void *) * v->capacity);
@@ -731,6 +724,7 @@ static inline void *_vect_remove_at(vector v, zvect_index i)
         v->data = new_data;
     }
 #endif
+    
     // Reduce vector size:
     v->prev_size=v->size;
     v->size--;
