@@ -48,10 +48,10 @@ typedef uint32_t zvect_index;
 #define ZVECT_MEMX_METHOD 1
 
 // Enable/Disable thread safe code:
-#define THREAD_SAFE 1
+#define ZVECT_THREAD_SAFE 1
 
 // Enable/Disbale reentrant code:
-#define FULL_REENTRANT 1
+#define ZVECT_FULL_REENTRANT 1
 
 // Enable/Disable DMF Extensions:
 #define ZVECT_DMF_EXTENSIONS 1
