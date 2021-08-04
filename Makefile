@@ -58,7 +58,7 @@ TESTBIN=$(TESTDIR)/bin
 # Which type of memory management functions do you want to use?
 # 0 for standard CLib memcpy and memmove
 # 1 for optimised ZVector memcpy and memmove
-MEMX_METHOD = 1
+MEMX_METHOD=1
 
 # Do you want the library to be built to be thread safe? (and so it uses mutex 
 # etc)? If so, set the following variable to 1 to enable thread safe code or 
@@ -88,40 +88,40 @@ SFMD_EXTENSIONS=1
 ###############################################################################
 # Automated part of th Makefile:
 
-ifeq ($(THREAD_SAFE_BUILD), 1)
+ifeq ($(THREAD_SAFE_BUILD),1)
 LDFLAGS+= -lpthread
 #CODE_MACROS+= -DTHREAD_SAFE
-RVAL1 = $(shell $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_THREAD_SAFE 1)
+RVAL1 = $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_THREAD_SAFE 1
 else
-RVAL1 = $(shell $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_THREAD_SAFE 0)
+RVAL1 = $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_THREAD_SAFE 0
 endif
 
-ifeq ($(SFMD_EXTENSIONS), 1)
+ifeq ($(SFMD_EXTENSIONS),1)
 #CODE_MACROS+= -DZVECT_DMF_EXTENSIONS
-RVAL2 = $(shell $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_DMF_EXTENSIONS 1)
+RVAL2 = $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_DMF_EXTENSIONS 1
 else
-RVAL2 = $(shell $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_DMF_EXTENSIONS 0)
+RVAL2 = $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_DMF_EXTENSIONS 0
 endif
 
-ifeq ($(SFMD_EXTENSIONS), 1)
+ifeq ($(SFMD_EXTENSIONS),1)
 #CODE_MACROS+= -DZVECT_SFMD_EXTENSIONS
-RVAL3 = $(shell $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_SFMD_EXTENSIONS 1)
+RVAL3 = $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_SFMD_EXTENSIONS 1
 else
-RVAL3 = $(shell $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_SFMD_EXTENSIONS 0)
+RVAL3 = $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_SFMD_EXTENSIONS 0
 endif
 
-ifeq ($(FULL_REENTRANT), 1)
+ifeq ($(FULL_REENTRANT),1)
 #CODE_MACROS+= -DZVECT_SFMD_EXTENSIONS
-RVAL4 = $(shell $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_FULL_REENTRANT 1)
+RVAL4 = $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_FULL_REENTRANT 1
 else
-RVAL4 = $(shell $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_FULL_REENTRANT 0)
+RVAL4 = $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_FULL_REENTRANT 0
 endif
 
-ifeq ($(MEMX_METHOD), 1)
+ifeq ($(MEMX_METHOD),1)
 #CODE_MACROS+= -DZVECT_SFMD_EXTENSIONS
-RVAL5 = $(shell $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_MEMX_METHOD 1)
+RVAL5 = $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_MEMX_METHOD 1
 else
-RVAL5 = $(shell $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_MEMX_METHOD 0)
+RVAL5 = $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_MEMX_METHOD 0
 endif
 
 SRCF=$(wildcard $(SRC)/*.c)
@@ -151,13 +151,13 @@ clean:
 	$(RM) -r $(LIBDIR) $(OBJ) $(TESTDIR)/bin ./*.o
 
 configure: $(SCRIPTSDIR)/ux_set_extension $(SRC)/$(LIBNAME)_config.h
-	$(info ----------------------------------------------------------------)
-	$(info $(RVAL1))
-	$(info $(RVAL2))
-	$(info $(RVAL3))
-	$(info $(RVAL4))
-	$(info $(RVAL5))
-	$(info ----------------------------------------------------------------)
+	@echo ----------------------------------------------------------------
+	$(RVAL1)
+	$(RVAL2)
+	$(RVAL3)
+	$(RVAL4)
+	$(RVAL5)
+	@echo ----------------------------------------------------------------
 
 core: configure $(LIBDIR) $(LIBST)
 

@@ -490,7 +490,7 @@ void vect_clear(vector v)
     check_mutex_lock(v, 1);
 #   endif
 
-    if (v->flags & ZV_SAFE_WIPE)
+    if ((v->flags & ZV_SAFE_WIPE) && (v->size > 0))
     {
         // Secure Wipe the vector
         zvect_index i = v->size - 1;
