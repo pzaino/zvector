@@ -80,9 +80,9 @@ struct _vector
     volatile uint8_t lock_type;         // This field contains the lock used for this Vector.
 #   endif
 #endif
-                void **data __attribute__((aligned));
+                void **data ZVECT_DATAALIGN;
                                         // Vector's storage.
-} __attribute__((aligned));
+}ZVECT_DATAALIGN;
 
 /***********************
  ** Support Functions **
@@ -126,10 +126,13 @@ static inline
 void *vect_memcpy(void *dst, const void *src, size_t size)
 {
 #if ( ZVECT_MEMX_METHOD == 0 )
-    // Using regular memcpy:
+    // Using regular memcpy 
+    // If you are using ZVector on Linux/macOS/BSD/Windows
+    // your should stick to this one!
     return memcpy(dst, src, size);
 #elif ( ZVECT_MEMX_METHOD == 1 )
-    // Using improved memcpy:
+    // Using improved memcpy (where improved means for 
+    // embedded systems only!):
     size_t i;
     if ( size > 0 )
     {
@@ -139,25 +142,11 @@ void *vect_memcpy(void *dst, const void *src, size_t size)
         {
             ADDR_TYPE1 * pExDst = (ADDR_TYPE1 *) dst;
             ADDR_TYPE1 const * pExSrc = (ADDR_TYPE1 const *) src;
-
-            for (i = 0; i < size/sizeof(ADDR_TYPE1); i++) {
+            size_t end = size/sizeof(ADDR_TYPE1);
+            for (i = 0; i < end; i++) {
                 // The following should be compiled as: (-O2 on x86_64)
                 //         mov     rdi, QWORD PTR [rsi+rcx]
                 //         mov     QWORD PTR [rax+rcx], rdi
-                *pExDst++ = *pExSrc++;
-            }
-        }
-        else if (((uintptr_t)dst % sizeof(ADDR_TYPE2) == 0) &&
-                 ((uintptr_t)src % sizeof(ADDR_TYPE2) == 0) &&
-                 (size % sizeof(ADDR_TYPE2) == 0))
-        {
-            ADDR_TYPE2 * pExDst = (ADDR_TYPE2 *) dst;
-            ADDR_TYPE2 const * pExSrc = (ADDR_TYPE2 const *) src;
-
-            for (i = 0; i < size/sizeof(ADDR_TYPE2); i++) {
-                // The following should be compiled as: (-O2 on x86_64)
-                //         mov     rdi, WORD PTR [rsi+rcx]
-                //         mov     WORD PTR [rax+rcx], rdi
                 *pExDst++ = *pExSrc++;
             }
         }
@@ -216,12 +205,12 @@ static inline void mutex_lock(CRITICAL_SECTION *lock)
 
 static inline void mutex_unlock(CRITICAL_SECTION *lock)
 {
-    LeaveCriticalSection(v->lock);
+    LeaveCriticalSection(lock);
 }
 
 static inline void mutex_alloc(CRITICAL_SECTION **lock)
 {
-    InitializeCriticalSection(&lock);
+    InitializeCriticalSection((CRITICAL_SECTION *)lock);
 }
 
 static inline void mutex_destroy(CRITICAL_SECTION *lock)
@@ -494,11 +483,8 @@ void vect_clear(vector v)
     {
         // Secure Wipe the vector
         zvect_index i = v->size - 1;
-        while (i)
-        {
+        while (i--)
             item_safewipe(v, v->data[i]);
-            i--;
-        }
     }
 
     v->prev_size = v->size;

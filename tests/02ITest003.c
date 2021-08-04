@@ -1,6 +1,6 @@
 /*
  *    Name: ITest003
- * Purpose: Unit Testing ZVector Library
+ * Purpose: Integration Testing ZVector Library
  *  Author: Paolo Fabio Zaino
  *  Domain: General
  * License: Copyright by Paolo Fabio Zaino, all rights reserved

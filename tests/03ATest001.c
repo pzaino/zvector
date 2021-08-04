@@ -1,6 +1,6 @@
 /*
- *    Name: ITest001
- * Purpose: Integration Testing ZVector Library
+ *    Name: ATest001
+ * Purpose: Code Analysis for ZVector Library
  *  Author: Paolo Fabio Zaino
  *  Domain: General
  * License: Copyright by Paolo Fabio Zaino, all rights reserved

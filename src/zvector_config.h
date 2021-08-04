@@ -18,6 +18,13 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+// Data alignement configuration
+#if ( ZVECT_COMPTYPE == 1 )
+#define ZVECT_DATAALIGN __attribute__((aligned))
+#else
+#define ZVECT_DATAALIGN
+#endif
+
 // Default vector Index type
 // This is set to unsigned int of 32bit
 // size (so all different architectures
@@ -45,13 +52,13 @@ typedef uint32_t zvect_index;
 // to use for your case:
 // 0 = Use Standard memcpy and memmove
 // 1 = Use Optimised memcpy and memove
-#define ZVECT_MEMX_METHOD 1
+#define ZVECT_MEMX_METHOD 0
 
 // Enable/Disable thread safe code:
 #define ZVECT_THREAD_SAFE 1
 
 // Enable/Disbale reentrant code:
-#define ZVECT_FULL_REENTRANT 1
+#define ZVECT_FULL_REENTRANT 0
 
 // Enable/Disable DMF Extensions:
 #define ZVECT_DMF_EXTENSIONS 1
