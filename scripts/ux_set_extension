@@ -22,7 +22,7 @@ readonly projname="zvector"
 readonly cpath="/usr/bin"
 readonly csbin="/usr/sbin"
 readonly cfgfile='zvector_config.h'
-readonly tmpfile="/tmp/${cfgfile}"
+readonly tmpfile="/tmp/${cfgfile}.tmp"
 
 # Check OS Type
 rval="$($cpath/uname -s)"
@@ -91,7 +91,8 @@ if [ $? -eq 0 ];
 then
     # everything seems to be ok, so let's apply the changes
     rval="0"
-    #rval=$( mv -f ${tmpfile} ${start_path}/src/${cfgfile} 2>&1 | wc -l )
+    report="$( mv -f ${tmpfile} ${start_path}/src/${cfgfile} 2>&1 | wc -l )"
+    rval=$?
     if [ "$rval" != "0" ];
     then
         echo "WARNING: There was an issue during the reconfiguration. Can't reconfigure, so proceeding with default values. rval == $rval"
