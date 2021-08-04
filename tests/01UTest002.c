@@ -7,6 +7,9 @@
  *          Distributed under MIT license
  */
 
+#define __STDC_WANT_LIB_EXT1__
+#define UNUSED(x) (void)x
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -31,11 +34,23 @@ void clear_str(char *str, uint32_t numchars)
     memset(str, 0, numchars);
 }
 
+void strCopy(char *dst, const char *src, size_t len)
+{
+#if ( OS_TYPE == 1 )
+    strncpy(dst, src, len);
+#elif ( OS_TYPE == 2 )
+    strcpy_s(dst, 18, src);
+#else
+    strcpy(dst, src);
+    UNUSED(len);
+#endif
+}
+
 void add_a_car(vector v)
 {
     car car3;
     clear_str(car3.name, 255); // Just to make sure the string is empty!
-    strcpy(car3.name, "Hennessey Venom GT");
+    strCopy(car3.name, "Hennessey Venom GT", 18);
     car3.year = 2010;
     car3.speed = 270;
 
@@ -45,7 +60,7 @@ void add_a_car(vector v)
     // Use the following globals to store
     // the car data for future comparisions
     // with the data stored in the vector:
-    strcpy(test_name, car3.name);
+    strCopy(test_name, car3.name, sizeof(car3.name));
     test_speed = car3.speed;
     test_year = car3.year;
 }
@@ -72,13 +87,13 @@ int main()
     printf("Test %s_%d: Insert 3 elements of type Car and check if they are stored correctly (for the 3rd car use an external function and data stored on the stack):\n", testGrp, testID);
     car car1;
     clear_str(car1.name, 255); // Just to make sure the string is empty!
-    strcpy(car1.name, "Daimler-Benz");
+    strCopy(car1.name, "Daimler-Benz", 12);
     car1.year = 1939;
-    car1.speed = 394.71;
+    car1.speed = (float)394.71;
 
     car car2;
     clear_str(car2.name, 255); // Just to make sure the string is empty!
-    strcpy(car2.name, "Koenigsegg One:1");
+    strCopy(car2.name, "Koenigsegg One:1", 16);
     car2.year = 2014;
     car2.speed = 273;
 

@@ -4,4 +4,8 @@ o/
 tests/bin/
 **/*.backup
 /tests/bin/.*
+Debug/**
+.vs/zvector/**
+.fuse_*
+
 

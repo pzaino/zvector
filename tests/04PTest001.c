@@ -29,6 +29,8 @@
 char *testGrp = "001";
 uint8_t testID = 1;
 
+#if ( OS_TYPE == 1 )
+
 void populate_vector(vector v)
 {
     /* 
@@ -142,3 +144,17 @@ int main()
 
     return 0;
 }
+
+#else
+int main()
+{
+    printf("=== PTest%s ===\n", testGrp);
+    printf("Testing ZVector Library PERFORMANCE:\n");
+
+    printf("Skipping test because this OS is not yet supported for perf tests, sorry!\n");
+
+    printf("================\n\n");
+
+    return 0;
+}
+#endif

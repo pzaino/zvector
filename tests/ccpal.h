@@ -24,15 +24,35 @@
 #pragma once
 #endif
 
-#if __STDC_VERSION__ >= 199901L
-#define _XOPEN_SOURCE 600
+ // Try to determine the Operating System being used:
+#if defined(__APPLE__) && defined(__MACH__)
+#   ifndef macOS
+#       define macOS
+#   endif
+#endif
+
+#if ( defined(__GNU__) || defined(__gnu_linux__) || \
+      defined(__linux__) || defined(macOS) )
+#   ifndef OS_TYPE
+#       define OS_TYPE 1
+#   endif
+#elif ( defined(__WIN32__) || defined(WIN32) || defined(_WIN32) )
+#   ifndef OS_TYPE
+#       define OS_TYPE 2
+#   endif
 #else
-#define _XOPEN_SOURCE 500
-#endif /* __STDC_VERSION__ */
+#   ifndef OS_TYPE
+#       define OS_TYPE 0
+#   endif
+#endif
+
 
 #include <stdio.h>
 #include <time.h>
+
+#if ( OS_TYPE == 1 ) && !defined(__MACH__)
 #include <sys/time.h>
+#endif
 
 #ifdef __MACH__
 #include <mach/clock.h>

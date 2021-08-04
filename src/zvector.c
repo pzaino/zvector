@@ -452,14 +452,17 @@ void vect_shrink(vector v)
 
     // shrink the vector:
     v->capacity = new_capacity;
-    v->data = (void **)realloc(v->data, sizeof(void *) * v->capacity);
-    if (v->data == NULL)
+    void** new_data = (void**)realloc(v->data, sizeof(void*) * v->capacity);
+    if ( new_data == NULL )
     {
 #   if ( ZVECT_THREAD_SAFE == 1 )
         check_mutex_unlock(v, 1);
 #   endif
         throw_error("No memory available to shrink the vector!");
     }
+
+    v->data = new_data;
+
 #   if ( ZVECT_THREAD_SAFE == 1 )
     check_mutex_unlock(v, 1);
 #   endif
