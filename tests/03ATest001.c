@@ -18,7 +18,14 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+
+#if ( ZVECT_COMPTYPE == 1 )
 #include <unistd.h>
+#elif ( ZVECT_COMPTYPE == 2 )
+#include <windows.h>
+#include <process.h>
+#include <io.h>
+#endif
 
 #include <assert.h>
 #include <string.h>
