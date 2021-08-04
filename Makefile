@@ -21,7 +21,7 @@ WDIR=$(shell pwd)
 CC=gcc
 
 # Configure additional compiler and linker flags:
-CFLAGS+=-std=c99 -Wall -Wextra -I./src
+CFLAGS+=-std=c99 -Wall -Wextra -I./src -I./tests
 LDFLAGS+=
 
 # If you want to pass some MACROS to your code you can use the following 
@@ -58,11 +58,18 @@ TESTBIN=$(TESTDIR)/bin
 # Which type of memory management functions do you want to use?
 # 0 for standard CLib memcpy and memmove
 # 1 for optimised ZVector memcpy and memmove
-MEMX_METHOD=1
+# Recommendation: Try 1 ONLY when compiling for embedded systems
+# 				  or IoT applications where you won't have Linux and the 
+#				  glibc available. Otherwise you should stick to 0.
+MEMX_METHOD=0
 
 # Do you want the library to be built to be thread safe? (and so it uses mutex 
 # etc)? If so, set the following variable to 1 to enable thread safe code or 
 # set it to 0 to disable the thread safe code within the library:
+# Recommendation: If you need to squeeze as much performance as possible out
+# 				  of ZVector and thread safety is not a requirement for you
+#				  then disable this option (set it to 0 zero). It will make
+#				  ZVector gain some extra performance.
 THREAD_SAFE_BUILD=1
 
 # Do you want ZVector code to be fully reentrant?

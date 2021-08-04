@@ -1,0 +1,20 @@
+﻿  zvector.c
+  01UTest001.c
+H:\zfpsystems\biochemestry\zvector\tests\01UTest001.c(13,10): fatal error C1083: Cannot open include file: 'zvector.h': No such file or directory
+  01UTest002.c
+H:\zfpsystems\biochemestry\zvector\tests\01UTest002.c(14,10): fatal error C1083: Cannot open include file: 'zvector.h': No such file or directory
+  01UTest003.c
+H:\zfpsystems\biochemestry\zvector\tests\01UTest003.c(14,10): fatal error C1083: Cannot open include file: 'zvector.h': No such file or directory
+  01UTest004.c
+H:\zfpsystems\biochemestry\zvector\tests\01UTest004.c(16,10): fatal error C1083: Cannot open include file: 'zvector.h': No such file or directory
+  02ITest001.c
+H:\zfpsystems\biochemestry\zvector\tests\02ITest001.c(21,10): fatal error C1083: Cannot open include file: 'unistd.h': No such file or directory
+  02ITest002.c
+H:\zfpsystems\biochemestry\zvector\tests\02ITest002.c(24,10): fatal error C1083: Cannot open include file: 'zvector.h': No such file or directory
+  02ITest003.c
+H:\zfpsystems\biochemestry\zvector\tests\02ITest003.c(24,10): fatal error C1083: Cannot open include file: 'zvector.h': No such file or directory
+  03ATest001.c
+H:\zfpsystems\biochemestry\zvector\tests\03ATest001.c(21,10): fatal error C1083: Cannot open include file: 'unistd.h': No such file or directory
+  04PTest001.c
+H:\zfpsystems\biochemestry\zvector\tests\04PTest001.c(13,10): fatal error C1083: Cannot open include file: 'zvector.h': No such file or directory
+  Generating Code...

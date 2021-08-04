@@ -66,10 +66,10 @@ int main()
     testID++;
 
     printf("Test %s_%d: Remove vector elements one by one:\n", testGrp, testID);
+
     while (!vect_is_empty(v))
-    {
         vect_delete(v);
-    }
+
     printf("done.\n");
     testID++;
 
