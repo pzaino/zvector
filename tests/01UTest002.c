@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
+
 #if (  defined(_MSC_VER) )
  // Silly stuff that needs to be added for Microsoft compilers
  // which are still at the MS-DOS age apparently...
@@ -44,7 +45,7 @@ void clear_str(char *str, uint32_t numchars)
 void strCopy(char *dst, const char *src, size_t len)
 {
 #if ( OS_TYPE == 1 )
-    strncpy(dst, src, len);
+    snprintf(dst, len, "%s", src);
 #elif ( OS_TYPE == 2 )
     strcpy_s(dst, 18, src);
 #else
