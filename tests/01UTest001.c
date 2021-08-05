@@ -25,7 +25,7 @@ int main()
 
     printf("Test %s_%d: Create a vector of 10 elements and using int for the vector data:\n", testGrp, testID);
     vector v;
-    v = vect_create(10, sizeof(int), 0);
+    v = vect_create(10, sizeof(int), ZV_NONE);
     printf("done.\n");
     testID++;
 
