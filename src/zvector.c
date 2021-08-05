@@ -385,13 +385,6 @@ static void vect_double_capacity(vector v)
 
     // Copy array of pointers to items into the new (larger) list:
     vect_memcpy(new_data, v->data, sizeof(void *) * (v->size));
-    /* zvect_index j;
-    for (j = 0; j < v->size; j++)
-    {
-        // Just move the pointers to the elements!
-        // vect_memcpy(v->data[j - 1], v->data[j], sizeof(void *));
-        new_data[j] = v->data[j];
-    }*/
 
     // Apply changes and release memory
     free(v->data);
@@ -411,7 +404,10 @@ static void vect_half_capacity(vector v)
 
     // Get actual Capacity and halve it
     zvect_index new_capacity = v->capacity / 2;
+    if (new_capacity < v->init_capacity)
+        new_capacity = v->init_capacity;
     zvect_index new_size = min(v->size, new_capacity);
+
     void **new_data = (void **)malloc(sizeof(void *) * new_capacity);
     if (new_data == NULL)
         throw_error("Not enough memory to resize the vector!");
@@ -435,7 +431,7 @@ void vect_shrink(vector v)
     vect_check(v);
 
     if (vect_is_empty(v))
-        throw_error("Empty vector can't be shrank!");
+        return;
 
     zvect_index new_capacity;
 #   if ( ZVECT_THREAD_SAFE == 1 )
@@ -444,9 +440,7 @@ void vect_shrink(vector v)
 
     // Determine the correct shrunk size:
     if (v->size < v->init_capacity)
-    {
         new_capacity = v->init_capacity;
-    }
     else
         new_capacity = v->size + 1;
 
@@ -494,9 +488,7 @@ void vect_clear(vector v)
     v->size = v->init_capacity;
 
     while (v->capacity > v->init_capacity)
-    {
         vect_half_capacity(v);
-    }
 
     v->size = 0;
 
@@ -511,7 +503,7 @@ void vect_set_wipefunct(vector v, void (*f1)(const void *, size_t))
     if (v->SfWpFunc == NULL)
         throw_error("No memory available to set safe wipe function!\n");
     
-    // Set Safe Wipe function:
+    // Set custom Safe Wipe function:
     v->SfWpFunc = f1;
     //vect_memcpy(v->SfWpFunc, f1, sizeof(void *));
 }
@@ -529,6 +521,7 @@ static inline void _vect_add_at(vector v, const void *value, zvect_index i)
 #   if ( ZVECT_THREAD_SAFE == 1 )
     check_mutex_lock(v, 1);
 #   endif
+
     // Check if we need to expand the vector:
     if (v->size >= v->capacity)
         vect_double_capacity(v);
@@ -545,10 +538,15 @@ static inline void _vect_add_at(vector v, const void *value, zvect_index i)
     }
 
     // Finally add new value in at the index
-    vect_memcpy(v->data[i], value, v->data_size);
+    if ( v->flags & ZV_BYREF )
+        v->data[i] = (void *)value;
+    else
+        vect_memcpy(v->data[i], value, v->data_size);
+
     // Increment vector size
     v->prev_size=v->size;
     v->size++;
+
 #   if ( ZVECT_THREAD_SAFE == 1 )
     check_mutex_unlock(v, 1);
 #   endif
@@ -673,6 +671,9 @@ static inline void *_vect_remove_at(vector v, zvect_index i)
     // to wipe safely the returned data.
     // void *rval = (void *)malloc(v->data_size);
     void *rval = (void *)malloc(sizeof(void *));
+    if ( rval == NULL )
+        throw_error("Not enough memory to return an element!");
+
 #   if ( ZVECT_THREAD_SAFE == 1 )
     check_mutex_lock(v, 1);
 #   endif
@@ -828,6 +829,8 @@ void vect_swap(vector v, zvect_index i1, zvect_index i2)
 
     // Let's allocate some meory for the temporary pointer:
     void *temp = (void *)malloc(sizeof(void *));
+    if ( temp == NULL )
+        throw_error("Not enough memory to swap elements!");
 
     // Let's swap items:
 #   if ( ZVECT_THREAD_SAFE == 1 )

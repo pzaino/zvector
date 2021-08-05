@@ -30,10 +30,14 @@ typedef struct _vector *vector;
 
 // Declare required enums:
 enum {
-    ZV_NOFLAGS    = 0,      // Reset all flags to 0
-    ZV_SAFE_WIPE  = 1 << 0, // Sets the bit to have a vector with automatic Safe Wipe
-    ZV_ENCRYPTED  = 1 << 1, // Sets the bit to have automatic data encryption/decryption when stored
-    ZV_AUTOSHRINK = 1 << 2  // Sets the bit to have automatic vector shrinking
+    ZV_NONE       = 0,      // Set or Reset all vector's properties to 0.
+    ZV_SAFE_WIPE  = 1 << 0, // Sets the bit to have a vector with automatic
+                            // Safe Wipe.
+    ZV_ENCRYPTED  = 1 << 1, // Sets the bit to have automatic data encryption
+                            // decryption when stored.
+    ZV_AUTOSHRINK = 1 << 2, // Sets the bit to have automatic vector shrinking.
+    ZV_BYREF      = 1 << 3  // Sets the bit to have the vector storing items by
+                            // reference and not copying them in a per default.
 };
 
 /*****************************
