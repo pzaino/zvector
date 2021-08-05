@@ -21,9 +21,16 @@
 
 #include "ccpal.h"
 
-#include "zvector.h"
+#if (  defined(_MSC_VER) )
+ // Silly stuff that needs to be added for Microsoft compilers
+ // which are still at the MS-DOS age apparently...
+#define ZVECTORH "../src/zvector.h"
+#else
+#define ZVECTORH "zvector.h"
+#endif
+#include ZVECTORH
 
-#define MAX_ITEMS 2000000
+#define MAX_ITEMS 10000000
 
 // Setup tests:
 char *testGrp = "001";
@@ -72,7 +79,7 @@ int main()
 
     printf("Test %s_%d: Create a vector of 10 elements and using int for the vector data:\n", testGrp, testID);
     vector v;
-    v = vect_create(10, sizeof(int), 0);
+    v = vect_create(10, sizeof(int), ZV_BYREF);
     printf("done.\n");
     testID++;
 

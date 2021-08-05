@@ -14,7 +14,14 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
-#include "zvector.h"
+#if (  defined(_MSC_VER) )
+ // Silly stuff that needs to be added for Microsoft compilers
+ // which are still at the MS-DOS age apparently...
+#define ZVECTORH "../src/zvector.h"
+#else
+#define ZVECTORH "zvector.h"
+#endif
+#include ZVECTORH
 
 // Some globals we'll need in
 // one of the tests later:
