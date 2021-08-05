@@ -5,8 +5,12 @@ tests/bin/
 **/*.backup
 /tests/bin/.*
 Debug/**
+.vs/zvector/*
 .vs/zvector/**
+.vs/*.sqlite
+.vs/*.db
+.vs/**/*.sqlite
+.vs/**/*.db
 .fuse_*
 **/x64/
-
 
