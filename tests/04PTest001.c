@@ -86,7 +86,13 @@ int main()
     fflush(stdout);
 
     // Populate the vector and mesure how long it takes:
+#   if ( ZVECT_THREAD_SAFE == 1 )
+    vect_lock(v);
+#   endif
     populate_vector(v);
+#   if ( ZVECT_THREAD_SAFE == 1 )
+    vect_unlock(v);
+#   endif
 
     printf("Test %s_%d: check if the size of the vector is now %d:\n", testGrp, testID, MAX_ITEMS);
     assert(vect_size(v) == MAX_ITEMS);
@@ -107,6 +113,10 @@ int main()
 
     printf("Test %s_%d: Remove vector elements one by one (from the end of the vector) and test how long it takes:\n", testGrp, testID);
 
+#   if ( ZVECT_THREAD_SAFE == 1 )
+    vect_lock(v);
+#   endif
+
 	CCPAL_START_MEASURING;
 
     while ( !vect_is_empty(v) )
@@ -114,8 +124,12 @@ int main()
     
     CCPAL_STOP_MEASURING;
 
+#   if ( ZVECT_THREAD_SAFE == 1 )
+    vect_unlock(v);
+#   endif
+
     // Returns perf analysis results:
-    CCPAL_REPORT_ANALYSIS
+    CCPAL_REPORT_ANALYSIS;
 
     printf("done.\n");
     testID++;
@@ -137,11 +151,32 @@ int main()
     fflush(stdout);
 
     // Re-populate the vector again and measure how long it takes:
+#   if ( ZVECT_THREAD_SAFE == 1 )
+    vect_lock(v);
+#   endif
     populate_vector(v);
-
+#   if ( ZVECT_THREAD_SAFE == 1 )
+    vect_unlock(v);
+#   endif
 
     printf("Test %s_%d: destroy the vector:\n", testGrp, testID);
+#   if ( ZVECT_THREAD_SAFE == 1 )
+    vect_lock(v);
+#   endif
+
+	CCPAL_START_MEASURING;
+
     vect_destroy(v);
+
+    CCPAL_STOP_MEASURING;
+
+#   if ( ZVECT_THREAD_SAFE == 1 )
+    vect_unlock(v);
+#   endif
+
+    // Returns perf analysis results:
+    CCPAL_REPORT_ANALYSIS;
+
     printf("done.\n");
     testID++;
 

@@ -384,7 +384,10 @@ static void vect_double_capacity(vector v)
         throw_error("Not enough memory to extend the vector capacity!");
 
     // Copy array of pointers to items into the new (larger) list:
-    vect_memcpy(new_data, v->data, sizeof(void *) * (v->size));
+    // vect_memcpy(new_data, v->data, sizeof(void *) * (v->size - 1));
+    zvect_index i;
+    for (i=0; i < v->size; i++)
+        new_data[i] = v->data[i];
 
     // Apply changes and release memory
     free(v->data);
@@ -413,7 +416,10 @@ static void vect_half_capacity(vector v)
         throw_error("Not enough memory to resize the vector!");
 
     // Copy old vector's storage pointers list into new one:
-    vect_memcpy(new_data, v->data, sizeof(void *) * new_size);
+    //vect_memcpy(new_data, v->data, sizeof(void *) * (new_size - 1));
+    zvect_index i;
+    for (i=0; i < new_size; i++)
+        new_data[i] = v->data[i];
 
     // Apply changes and release memory:
     free(v->data);
