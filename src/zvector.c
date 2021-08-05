@@ -259,8 +259,8 @@ static inline void check_mutex_unlock(vector v, volatile uint8_t lock_type)
 
 /*---------------------------------------------------------------------------*/
 // Vector Creation and Destruction:
-// vector vect_create(size_t init_capacity, size_t data_size, uint32_t flags)
-vector vect_create(size_t init_capacity, size_t data_size, uint32_t flags)
+
+vector vect_create(size_t init_capacity, size_t item_size, uint32_t properties)
 {
     // Create the vector first:
     vector v = (vector)malloc(sizeof(struct _vector));
@@ -270,12 +270,12 @@ vector vect_create(size_t init_capacity, size_t data_size, uint32_t flags)
     // Initialize the vector:
     v->prev_size = 0;
     v->size = 0;
-    if (data_size == 0)
+    if (item_size == 0)
     {
         v->data_size = ZVECT_DEFAULT_DATA_SIZE;
     }
     else
-        v->data_size = data_size;
+        v->data_size = item_size;
 
     if (init_capacity == 0)
     {
@@ -287,7 +287,7 @@ vector vect_create(size_t init_capacity, size_t data_size, uint32_t flags)
     }
 
     v->init_capacity = v->capacity;
-    v->flags = flags;
+    v->flags = properties;
     v->SfWpFunc = NULL;
     v->data = NULL;
 
@@ -372,7 +372,7 @@ inline void vect_unlock(vector v)
 // Vector Capacity management functions:
 
 // This function double the CAPACITY of a vector.
-static void vect_double_capacity(vector v)
+static void vect_increase_capacity(vector v)
 {
     // Check if the vector exists:
     vect_check(v);
@@ -384,7 +384,10 @@ static void vect_double_capacity(vector v)
         throw_error("Not enough memory to extend the vector capacity!");
 
     // Copy array of pointers to items into the new (larger) list:
-    vect_memcpy(new_data, v->data, sizeof(void *) * (v->size));
+    // vect_memcpy(new_data, v->data, sizeof(void *) * (v->size - 1));
+    zvect_index i;
+    for (i=0; i < v->size; i++)
+        new_data[i] = v->data[i];
 
     // Apply changes and release memory
     free(v->data);
@@ -393,7 +396,7 @@ static void vect_double_capacity(vector v)
 }
 
 // This function halves the CAPACITY of a vector.
-static void vect_half_capacity(vector v)
+static void vect_decrease_capacity(vector v)
 {
     // Check if the vector exists:
     vect_check(v);
@@ -413,7 +416,10 @@ static void vect_half_capacity(vector v)
         throw_error("Not enough memory to resize the vector!");
 
     // Copy old vector's storage pointers list into new one:
-    vect_memcpy(new_data, v->data, sizeof(void *) * new_size);
+    //vect_memcpy(new_data, v->data, sizeof(void *) * (new_size - 1));
+    zvect_index i;
+    for (i=0; i < new_size; i++)
+        new_data[i] = v->data[i];
 
     // Apply changes and release memory:
     free(v->data);
@@ -488,7 +494,7 @@ void vect_clear(vector v)
     v->size = v->init_capacity;
 
     while (v->capacity > v->init_capacity)
-        vect_half_capacity(v);
+        vect_decrease_capacity(v);
 
     v->size = 0;
 
@@ -524,7 +530,7 @@ static inline void _vect_add_at(vector v, const void *value, zvect_index i)
 
     // Check if we need to expand the vector:
     if (v->size >= v->capacity)
-        vect_double_capacity(v);
+        vect_increase_capacity(v);
 
     // Allocate memory for the new item:
     v->data[v->size] = (void *)malloc(v->data_size);
@@ -693,7 +699,16 @@ static inline void *_vect_remove_at(vector v, zvect_index i)
     {
 #   if ( ZVECT_FULL_REENTRANT == 1 )
         array_changed = 1;
-        vect_memcpy(new_data, v->data + 1, sizeof(void *) * (v->capacity));
+        if ( i > 0 )
+            vect_memcpy(new_data, v->data, sizeof(void *) * i );
+        vect_memcpy(new_data + i, v->data + (i + 1), sizeof(void *) * ( v->size - i ));
+        /* zvect_index j;
+        if ( i > 0 )
+            for (j=0; j <= i; j++)
+                new_data[j] = v->data[j];
+        for (j=i + 1; j <= v->size; j++)
+            new_data[j - 1] = v->data[j];
+        */
 #   else
         // We can't use the vect_memcpy when not in full reentrant code
         // because it's not safe to use it on the same src and dst.
@@ -721,7 +736,7 @@ static inline void *_vect_remove_at(vector v, zvect_index i)
 
     // Check if we need to shrink the vector:
     if (4 * v->size < v->capacity)
-        vect_half_capacity(v);
+        vect_decrease_capacity(v);
 
 #   if ( ZVECT_THREAD_SAFE == 1 )
     check_mutex_unlock(v, 1);
@@ -788,7 +803,7 @@ static inline void _vect_delete_at(vector v, zvect_index start, zvect_index offs
 
     // Check if we need to shrink the vector:
     if ((4 * v->size) < v->capacity)
-        vect_half_capacity(v);
+        vect_decrease_capacity(v);
 
 #   if ( ZVECT_THREAD_SAFE == 1 )
     check_mutex_unlock(v, 1);
