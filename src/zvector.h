@@ -55,7 +55,7 @@ enum {
  * afer item_size. Flags syntax is the usual C flag sets:
  * ZV_SAFE_WIPE | ZV_AUTOSHRINK etc.
  */
-vector vect_create(size_t capacity, size_t item_size, uint32_t flags);
+vector vect_create(size_t capacity, size_t item_size, uint32_t properties);
 
 /*
  * vect_destroy destrois the specified vector and, if 
