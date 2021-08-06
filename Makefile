@@ -113,11 +113,11 @@ else
     UNAME_S := $(shell uname -s)
     ifeq ($(UNAME_S),Linux)
         CCFLAGS += -D LINUX
-		RVAL0 = chmod -fR +x $(WDIR)/scripts/
+		RVAL0 = /usr/bin/chmod -f +x $(WDIR)/scripts/* 2>&1
     endif
     ifeq ($(UNAME_S),Darwin)
         CCFLAGS += -D OSX
-		RVAL0 = chmod -fR +x $(WDIR)/scripts/
+		RVAL0 = /bin/chmod -f +x $(WDIR)/scripts/* 2>&1
     endif
     UNAME_P := $(shell uname -p)
     ifeq ($(UNAME_P),x86_64)
@@ -196,11 +196,11 @@ clean:
 configure: $(SCRIPTSDIR)/ux_set_extension $(SRC)/$(LIBNAME)_config.h
 	@echo ----------------------------------------------------------------
 	$(shell "$(RVAL0)")
-	$(RVAL1)
-	$(RVAL2)
-	$(RVAL3)
-	$(RVAL4)
-	$(RVAL5)
+	$(shell "$(RVAL1)")
+	$(shell "$(RVAL2)")
+	$(shell "$(RVAL3)")
+	$(shell "$(RVAL4)")
+	$(shell "$(RVAL5)")
 	@echo ----------------------------------------------------------------
 
 core: configure $(LIBDIR) $(LIBST)
