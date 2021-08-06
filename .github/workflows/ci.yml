@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+
+  macos:
+
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build and Test
+        run: make
+
+  linux:
+
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+#    - name: configure
+#      run: ./configure
+    - name: Build and Test
+      run: make
+#    - name: make check
+#      run: make check
+#    - name: make distcheck
+#      run: make distcheck
