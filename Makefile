@@ -113,10 +113,11 @@ else
     UNAME_S := $(shell uname -s)
     ifeq ($(UNAME_S),Linux)
         CCFLAGS += -D LINUX
+		RVAL0 = chmod -fR +x $(WDIR)/scripts/
     endif
     ifeq ($(UNAME_S),Darwin)
         CCFLAGS += -D OSX
-		RVAL0 = chmod +x -R ./scripts/
+		RVAL0 = chmod -fR +x $(WDIR)/scripts/
     endif
     UNAME_P := $(shell uname -p)
     ifeq ($(UNAME_P),x86_64)
@@ -194,7 +195,7 @@ clean:
 
 configure: $(SCRIPTSDIR)/ux_set_extension $(SRC)/$(LIBNAME)_config.h
 	@echo ----------------------------------------------------------------
-	$(RVAL0)
+	$(shell "$(RVAL0)")
 	$(RVAL1)
 	$(RVAL2)
 	$(RVAL3)
