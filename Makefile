@@ -95,6 +95,42 @@ SFMD_EXTENSIONS=1
 ###############################################################################
 # Automated part of th Makefile:
 
+RVAL0 =
+
+ifeq ($(OS),Windows_NT)
+    CCFLAGS += -D WIN32
+    ifeq ($(PROCESSOR_ARCHITEW6432),AMD64)
+        CCFLAGS += -D AMD64
+    else
+        ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)
+            CCFLAGS += -D AMD64
+        endif
+        ifeq ($(PROCESSOR_ARCHITECTURE),x86)
+            CCFLAGS += -D IA32
+        endif
+    endif
+else
+    UNAME_S := $(shell uname -s)
+    ifeq ($(UNAME_S),Linux)
+        CCFLAGS += -D LINUX
+		RVAL0 = /usr/bin/chmod -f +x $(WDIR)/scripts/* 2>&1
+    endif
+    ifeq ($(UNAME_S),Darwin)
+        CCFLAGS += -D OSX
+		RVAL0 = /bin/chmod -f +x $(WDIR)/scripts/* 2>&1
+    endif
+    UNAME_P := $(shell uname -p)
+    ifeq ($(UNAME_P),x86_64)
+        CCFLAGS += -D AMD64
+    endif
+    ifneq ($(filter %86,$(UNAME_P)),)
+        CCFLAGS += -D IA32
+    endif
+    ifneq ($(filter arm%,$(UNAME_P)),)
+        CCFLAGS += -D ARM
+    endif
+endif
+
 ifeq ($(THREAD_SAFE_BUILD),1)
 LDFLAGS+= -lpthread
 #CODE_MACROS+= -DTHREAD_SAFE
@@ -159,11 +195,12 @@ clean:
 
 configure: $(SCRIPTSDIR)/ux_set_extension $(SRC)/$(LIBNAME)_config.h
 	@echo ----------------------------------------------------------------
-	$(RVAL1)
-	$(RVAL2)
-	$(RVAL3)
-	$(RVAL4)
-	$(RVAL5)
+	$(shell "$(RVAL0)")
+	$(shell "$(RVAL1)")
+	$(shell "$(RVAL2)")
+	$(shell "$(RVAL3)")
+	$(shell "$(RVAL4)")
+	$(shell "$(RVAL5)")
 	@echo ----------------------------------------------------------------
 
 core: configure $(LIBDIR) $(LIBST)
@@ -187,13 +224,15 @@ $(OBJF): $(OSRCF)
 	$(info Building $@                )
 	$(info ===========================)
 	$(CC) -c -o $@ $< $(CFLAGS) $(CODE_MACROS)
+	ls -alh ./o/*
 
 $(LIBST): $(OBJ) $(OBJF)
 	$(info  )
 	$(info ===========================)
 	$(info Building $(LIBNAME) library)
 	$(info ===========================)
-	ar rcs $@ -o $(OBJF)
+	ar rcs $@ $(OBJF)
+	ls -alh ./lib/*
 
 $(TESTBINS): $(TESTSRCS)
 	$(info  )
