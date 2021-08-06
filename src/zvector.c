@@ -167,10 +167,12 @@ void *vect_memcpy(void *dst, const void *src, size_t size)
 #endif
 }
 
+/*
 static inline void *vect_memmove(void *dst, const void *src, size_t size)
 {
     return memmove(dst, src, size);
 }
+*/
 
 #if ( ZVECT_THREAD_SAFE == 1 )
 #   if MUTEX_TYPE == 0
