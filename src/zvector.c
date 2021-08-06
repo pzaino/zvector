@@ -675,16 +675,12 @@ static inline void *_vect_remove_at(vector v, zvect_index i)
     // to copy the entire value or do safe wipe!
     // When using remove it's user responsability
     // to wipe safely the returned data.
-    // void *rval = (void *)malloc(v->data_size);
-    void *rval = (void *)malloc(sizeof(void *));
-    if ( rval == NULL )
-        throw_error("Not enough memory to return an element!");
+    void *rval = v->data[i];
 
+    // Reorganise the vector (if needed)
 #   if ( ZVECT_THREAD_SAFE == 1 )
     check_mutex_lock(v, 1);
 #   endif
-    //vect_memcpy(rval, v->data[i], v->data_size);
-    rval = v->data[i];
 
 #   if ( ZVECT_FULL_REENTRANT == 1 )
     void **new_data = (void **)malloc(sizeof(void *) * v->capacity);
@@ -843,22 +839,22 @@ void vect_swap(vector v, zvect_index i1, zvect_index i2)
     vect_check(v);
 
     // Let's allocate some meory for the temporary pointer:
-    void *temp = (void *)malloc(sizeof(void *));
-    if ( temp == NULL )
-        throw_error("Not enough memory to swap elements!");
+    // void *temp = (void *)malloc(sizeof(void *));
+    // if ( temp == NULL )
+    //    throw_error("Not enough memory to swap elements!");
 
     // Let's swap items:
 #   if ( ZVECT_THREAD_SAFE == 1 )
     check_mutex_lock(v, 1);
 #   endif
-    temp = v->data[i2];
+    void *temp  = v->data[i2];
     v->data[i2] = v->data[i1];
     v->data[i1] = temp;
 #   if ( ZVECT_THREAD_SAFE == 1 )
     check_mutex_unlock(v, 1);
 #   endif
     // We are done, let's clean up memory
-    free(temp);
+    // free(temp);
 }
 
 void vect_rotate_left(vector v, zvect_index i)
