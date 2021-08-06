@@ -231,7 +231,7 @@ $(LIBST): $(OBJ) $(OBJF)
 	$(info ===========================)
 	$(info Building $(LIBNAME) library)
 	$(info ===========================)
-	ar rcs $@ -o $(OBJF)
+	ar rcs $@ $(OBJF)
 	ls -alh ./lib/*
 
 $(TESTBINS): $(TESTSRCS)
