@@ -123,6 +123,9 @@ int main()
         // Let's retrieve the value from the vector correctly:
         // For beginners: this is how in C we convert back a void * into the original dtata_type
         QueueItem *item = (QueueItem *)malloc(sizeof(QueueItem *));
+        if (item == NULL)
+            printf("Not enough memory to allocate item for testing.");
+
         item = (QueueItem *)vect_remove_front(v);
 
         // Let's test if the value we have retrieved is correct:

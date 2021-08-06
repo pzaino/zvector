@@ -106,7 +106,7 @@ int main()
     clear_str(buffer, 10240);
     int rval;
     rval = system("$(pwd)/tests/cpp_check.sh");
-    
+    UNUSED(rval);
     printf("done.\n");
     testID++;
 
