@@ -224,6 +224,7 @@ $(OBJF): $(OSRCF)
 	$(info Building $@                )
 	$(info ===========================)
 	$(CC) -c -o $@ $< $(CFLAGS) $(CODE_MACROS)
+	ls -alh ./o/*
 
 $(LIBST): $(OBJ) $(OBJF)
 	$(info  )
@@ -231,6 +232,7 @@ $(LIBST): $(OBJ) $(OBJF)
 	$(info Building $(LIBNAME) library)
 	$(info ===========================)
 	ar rcs $@ -o $(OBJF)
+	ls -alh ./lib/*
 
 $(TESTBINS): $(TESTSRCS)
 	$(info  )

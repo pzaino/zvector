@@ -1,7 +1,7 @@
 <img align="right" width="320" height="280" src="/images/ZVectorLogo2.png">
 
 Development branch status: 
-![CodeQL](https://github.com/pzaino/vector/actions/workflows/codeql-analysis.yml/badge.svg)
+![CodeQL](https://github.com/pzaino/vector/actions/workflows/codeql-analysis.yml/badge.svg)  
 [![CI](https://github.com/pzaino/vector/workflows/CI/badge.svg)](https://github.com/pzaino/vector/actions)
 
 
