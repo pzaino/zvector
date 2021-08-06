@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+
 #if (  defined(_MSC_VER) )
  // Silly stuff that needs to be added for Microsoft compilers
  // which are still at the MS-DOS age apparently...

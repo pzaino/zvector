@@ -7,7 +7,10 @@
  *          Distributed under MIT license
  */
 
+#if (  defined(_MSC_VER) )
 #define __STDC_WANT_LIB_EXT1__
+#endif
+
 #define UNUSED(x) (void)x
 
 #include <stdio.h>
