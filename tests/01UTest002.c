@@ -48,7 +48,8 @@ void clear_str(char *str, uint32_t numchars)
 void strCopy(char *dst, const char *src, size_t len)
 {
 #if ( OS_TYPE == 1 )
-    snprintf(dst, len + 1, "%s", src);
+    //snprintf(dst, len + 1, "%s", src);
+    memcpy(dst, src, len);
 #elif ( OS_TYPE == 2 )
     strcpy_s(dst, 18, src);
 #else

@@ -42,6 +42,7 @@
 char *testGrp = "001";
 uint8_t testID = 1;
 
+/*
 void clear_str(char *str, uint32_t numchars)
 {
     memset(str, 0, numchars);
@@ -68,6 +69,7 @@ void run_cmd(char *cmd_line, char *buffer)
 
     pclose(pipe); 
 }
+*/
 
 int main()
 {
@@ -76,6 +78,7 @@ int main()
 
     fflush(stdout);
 
+    /*
     printf("Test %s_%d: Check is CPPCheck is installed on this system:\n", testGrp, testID);
  
     char buffer[10240];
@@ -99,14 +102,15 @@ int main()
     testID++;
 
     fflush(stdout);
+    */
 
     printf("Test %s_%d: Run CPPCheck analysis against the Library sources:\n", testGrp, testID);
     fflush(stdout);
 
-    clear_str(buffer, 10240);
+    //clear_str(buffer, 10240);
     int rval;
-    rval = system("$(pwd)/tests/cpp_check.sh");
-    
+    rval = system("$(pwd)/scripts/cpp_check.sh");
+    UNUSED(rval);
     printf("done.\n");
     testID++;
 

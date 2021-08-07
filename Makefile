@@ -15,7 +15,7 @@
 ###############################################################################
 # Manual part of the Makefile
 
-WDIR=$(shell pwd)
+WDIR:=$(shell pwd)
 
 # Configure desired compiler:
 CC=gcc
@@ -112,12 +112,14 @@ ifeq ($(OS),Windows_NT)
 else
     UNAME_S := $(shell uname -s)
     ifeq ($(UNAME_S),Linux)
+		SHELL := /bin/bash
         CCFLAGS += -D LINUX
-		RVAL0 = /usr/bin/chmod -f +x $(WDIR)/scripts/* 2>&1
+		RVAL0:=/usr/bin/chmod -Rf +x $(WDIR)/scripts/ 2>&1
     endif
     ifeq ($(UNAME_S),Darwin)
+		SHELL := /bin/bash
         CCFLAGS += -D OSX
-		RVAL0 = /bin/chmod -f +x $(WDIR)/scripts/* 2>&1
+		RVAL0:=/bin/chmod -Rf +x $(WDIR)/scripts/ 2>&1
     endif
     UNAME_P := $(shell uname -p)
     ifeq ($(UNAME_P),x86_64)
@@ -195,12 +197,12 @@ clean:
 
 configure: $(SCRIPTSDIR)/ux_set_extension $(SRC)/$(LIBNAME)_config.h
 	@echo ----------------------------------------------------------------
-	$(shell "$(RVAL0)")
-	$(shell "$(RVAL1)")
-	$(shell "$(RVAL2)")
-	$(shell "$(RVAL3)")
-	$(shell "$(RVAL4)")
-	$(shell "$(RVAL5)")
+	$(RVAL0) || :
+	$(RVAL1) || :
+	$(RVAL2) || :
+	$(RVAL3) || :
+	$(RVAL4) || :
+	$(RVAL5) || :
 	@echo ----------------------------------------------------------------
 
 core: configure $(LIBDIR) $(LIBST)
