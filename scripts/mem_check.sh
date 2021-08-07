@@ -1,8 +1,8 @@
 #!/bin/bash
 #################################################################
 #
-#    Name: cpp_check.sh
-# Purpose: Script to check and run CPPChecks for code quality
+#    Name: mem_check.sh
+# Purpose: Script to check and run Valgrind for code quality
 #  Author: Paolo Fabio Zaino
 #  Domain: General
 # License: Copyright by Paolo Fabio Zaino, all right reserved
