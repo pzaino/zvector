@@ -294,7 +294,11 @@ vector vect_create(size_t init_capacity, size_t item_size, uint32_t properties)
     v->data = NULL;
 
 #   if ( ZVECT_THREAD_SAFE == 1 )
+    v->lock = NULL;
+    v->lock_type = 0;
     mutex_alloc(&(v->lock));
+    if ( v->lock == NULL )
+        throw_error("Not enough memory to initialise mutexes!");
 #   endif
 
     // Allocate memory for the vector storage area
