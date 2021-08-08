@@ -15,6 +15,8 @@
  */
 
 // Include standard C libs headers
+#include <xmmintrin.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
@@ -41,10 +43,12 @@
 
 #if defined(Arch32)
 #define ADDR_TYPE1 uint32_t
-#define ADDR_TYPE2 uint16_t
-#else
-#define ADDR_TYPE1 uint64_t
 #define ADDR_TYPE2 uint32_t
+#define ADDR_TYPE3 uint16_t
+#else
+#define ADDR_TYPE1 uint64_t 
+#define ADDR_TYPE2 uint64_t
+#define ADDR_TYPE3 uint32_t
 #endif
 
 // Useful macros
@@ -107,7 +111,7 @@ static inline void vect_check(vector x)
 
 static inline void item_safewipe(vector v, const void *item)
 {
-    if ((item != NULL) && ( (ADDR_TYPE1)item >= 0x100000 ))
+    if ((item != NULL) && ( (ADDR_TYPE2)item >= 0x100000 ))
     {
         if (!v->SfWpFunc)
         {
@@ -123,7 +127,7 @@ static inline void item_safewipe(vector v, const void *item)
 #if ( ZVECT_MEMX_METHOD == 0 )
 static inline 
 #endif
-void *vect_memcpy(void *dst, const void *src, size_t size)
+void *vect_memcpy(void * __restrict dst, const void * __restrict src, size_t size)
 {
 #if ( ZVECT_MEMX_METHOD == 0 )
     // Using regular memcpy 
@@ -150,18 +154,8 @@ void *vect_memcpy(void *dst, const void *src, size_t size)
                 *pExDst++ = *pExSrc++;
             }
         }
-        else
-        {
-            char * pChDst = (char *) dst;
-            char const * pChSrc = (char const *) src;
-            for (i = 0; i < size; i++)
-            {
-                // The following should be compiled as: (-O2 on x86_64)
-                //         movzx   edi, BYTE PTR [rsi+rcx]
-                //         mov     BYTE PTR [rax+rcx], dil
-                *pChDst++ = *pChSrc++;
-            }
-        }
+        else 
+            return memcpy(dst, src, size);
     }
     return dst;
 #endif
@@ -385,18 +379,11 @@ static void vect_increase_capacity(vector v)
 
     // Get actual capacity and double it
     zvect_index new_capacity = v->capacity * 2;
-    void **new_data = (void **)malloc(sizeof(void *) * new_capacity);
+    void **new_data = (void **)realloc(v->data, sizeof(void *) * new_capacity);
     if (new_data == NULL)
         throw_error("Not enough memory to extend the vector capacity!");
 
-    // Copy array of pointers to items into the new (larger) list:
-    // vect_memcpy(new_data, v->data, sizeof(void *) * (v->size - 1));
-    zvect_index i;
-    for (i=0; i < v->size; i++)
-        new_data[i] = v->data[i];
-
     // Apply changes and release memory
-    free(v->data);
     v->data = new_data;
     v->capacity = new_capacity;
 }
@@ -417,18 +404,11 @@ static void vect_decrease_capacity(vector v)
         new_capacity = v->init_capacity;
     zvect_index new_size = min(v->size, new_capacity);
 
-    void **new_data = (void **)malloc(sizeof(void *) * new_capacity);
+    void **new_data = (void **)realloc(v->data, sizeof(void *) * new_capacity);
     if (new_data == NULL)
         throw_error("Not enough memory to resize the vector!");
 
-    // Copy old vector's storage pointers list into new one:
-    //vect_memcpy(new_data, v->data, sizeof(void *) * (new_size - 1));
-    zvect_index i;
-    for (i=0; i < new_size; i++)
-        new_data[i] = v->data[i];
-
     // Apply changes and release memory:
-    free(v->data);
     v->data = new_data;
     v->capacity = new_capacity;
     v->size = new_size;
@@ -467,6 +447,7 @@ void vect_shrink(vector v)
         throw_error("No memory available to shrink the vector!");
     }
 
+    // Apply changes:
     v->data = new_data;
 
 #   if ( ZVECT_THREAD_SAFE == 1 )
@@ -539,21 +520,92 @@ static inline void _vect_add_at(vector v, const void *value, zvect_index i)
         vect_increase_capacity(v);
 
     // Allocate memory for the new item:
-    v->data[v->size] = (void *)malloc(v->data_size);
+    if ( v->flags & ZV_BYREF )
+        v->data[v->size] = (void *)malloc(sizeof(void *));
+    else
+        v->data[v->size] = (void *)malloc(v->data_size);
+    if (v->data[v->size] == NULL )
+        throw_error("Not enough memory to add new item in the vector!");
+
+#   if ( ZVECT_FULL_REENTRANT == 1 )
+    // If we are in FULL_REENTRANT MODE prepare for potential
+    // array copy:
+    uint32_t array_changed = 0;
+    void **new_data = NULL;
+    if ((i < v->size) && (v->size > 0))
+    {
+        new_data = (void **)malloc(sizeof(void *) * v->capacity);
+        if (new_data == NULL)
+            throw_error("Not enough memory to resize the vector!");
+    } else {
+        UNUSED(new_data);
+    }
+#   endif
 
     // "Shift" right the array of one position to make space for the new item:
     if ((i < v->size) && (v->size > 0))
     {
+#   if ( ZVECT_FULL_REENTRANT == 1 )
+        array_changed = 1;
+        if ( i > 0 )
+            vect_memcpy(new_data, v->data, sizeof(void *) * i );
+        vect_memcpy(new_data + (i + 1), v->data + i, sizeof(void *) * ( v->size - i ));
+        /* zvect_index j;
+        if ( i > 0 )
+            for (j=0; j <= i; j++)
+                new_data[j] = v->data[j];
+        for (j=i + 1; j <= v->size; j++)
+            new_data[j - 1] = v->data[j];
+        */
+#   else
+        // We can't use the vect_memcpy when not in full reentrant code
+        // because it's not safe to use it on the same src and dst.
         zvect_index j;
         for (j = v->size; j > i; j--)
             vect_memcpy(v->data[j], v->data[j - 1], sizeof(void *));
+            // v->data[j] = v->data[j - 1];
+//        printf("Copied: %lu pointers, %lu Bytes\n", ( v->size - i ), ( v->size - i ) * sizeof(void *));
+//        fflush(stdout);
+#   endif
     }
 
     // Finally add new value in at the index
+#   if ( ZVECT_FULL_REENTRANT == 1 )
+    if ( array_changed == 1 )
+    {
+        if (i < v->size )
+        {
+            if ( v->flags & ZV_BYREF )
+                new_data[i] = (void *)malloc(sizeof(void *));
+            else
+                new_data[i] = (void *)malloc(v->data_size);
+            if (new_data[i] == NULL )
+                throw_error("Not enough memory to add new item in the vector!");
+        }
+        if ( v->flags & ZV_BYREF )
+            new_data[i] = (void *)value;
+        else
+            vect_memcpy(new_data[i], value, v->data_size);
+    } else {
+        if ( v->flags & ZV_BYREF )
+            v->data[i] = (void *)value;
+        else
+            vect_memcpy(v->data[i], value, v->data_size);
+    }
+#   else
     if ( v->flags & ZV_BYREF )
         v->data[i] = (void *)value;
     else
         vect_memcpy(v->data[i], value, v->data_size);
+#endif
+
+#if ( ZVECT_FULL_REENTRANT == 1 )
+    if (array_changed == 1)
+    {
+        free(v->data);
+        v->data = new_data;
+    }
+#endif
 
     // Increment vector size
     v->prev_size=v->size;

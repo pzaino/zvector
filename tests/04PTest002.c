@@ -30,10 +30,10 @@
 #endif
 #include ZVECTORH
 
-#define MAX_ITEMS 10000000
+#define MAX_ITEMS 100000
 
 // Setup tests:
-char *testGrp = "001";
+char *testGrp = "002";
 uint8_t testID = 1;
 
 #if ( OS_TYPE == 1 )
@@ -46,13 +46,20 @@ void populate_vector(vector v)
 	*/
     CCPAL_INIT_LIB;
 
-    printf("Test %s_%d: Insert %d elements (one by one) at the end of the vector and check how long this takes:\n", testGrp, testID, MAX_ITEMS);
+    printf("Test %s_%d: Insert %d elements (one by one) at the BEGINING of the vector and check how long this takes:\n", testGrp, testID, MAX_ITEMS);
     int i = 0;
 	CCPAL_START_MEASURING;
 
-    while ( i++ < MAX_ITEMS )
-        vect_add(v, &i);
-    
+    for ( i = 0; i < MAX_ITEMS; i++ )
+    {
+        vect_add_front(v, &i);
+/*        if ( i % 10000 )
+        {
+            printf("Stored %i integers\n", i);
+            fflush(stdout);
+        }*/
+    }
+
     CCPAL_STOP_MEASURING;
 
     // Returns perf analysis results:
@@ -73,11 +80,11 @@ int main()
 	CCPAL_INIT_LIB;
 
     printf("=== PTest%s ===\n", testGrp);
-    printf("Testing basic vector PERFORMANCE (BEST POSSIBLE SCENARIO)\n");
+    printf("Testing basic vector PERFORMANCE (WORST POSSIBLE SCENARIO)\n");
 
     fflush(stdout);
 
-    printf("Test %s_%d: Create a vector of 10 elements and using int for the vector data:\n", testGrp, testID);
+    printf("Test %s_%d: Create a vector of 1000 elements and using int for the vector data:\n", testGrp, testID);
     vector v;
     v = vect_create(10, sizeof(int), ZV_BYREF);
     printf("done.\n");
@@ -111,7 +118,7 @@ int main()
     testID++;
     */
 
-    printf("Test %s_%d: Remove vector elements one by one (from the end of the vector) and test how long it takes:\n", testGrp, testID);
+    printf("Test %s_%d: Remove vector elements one by one (from the BEGINING of the vector) and test how long it takes:\n", testGrp, testID);
 
 #   if ( ZVECT_THREAD_SAFE == 1 )
     vect_lock(v);
@@ -120,7 +127,7 @@ int main()
 	CCPAL_START_MEASURING;
 
     while ( !vect_is_empty(v) )
-        vect_delete(v);
+        vect_delete_front(v);
     
     CCPAL_STOP_MEASURING;
 

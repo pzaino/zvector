@@ -21,7 +21,7 @@ WDIR:=$(shell pwd)
 CC=gcc
 
 # Configure additional compiler and linker flags:
-CFLAGS+=-std=c99 -Wall -Wextra -I./src -I./tests
+CFLAGS+=-std=c99 -Wall -Wextra -I./src -I./tests -msse
 LDFLAGS+=
 
 # If you want to pass some MACROS to your code you can use the following 
@@ -75,7 +75,7 @@ THREAD_SAFE_BUILD=1
 # Do you want ZVector code to be fully reentrant?
 # 0 for no full reentrant code
 # 1 for yes full reentrant code
-FULL_REENTRANT=1
+FULL_REENTRANT=0
 
 # Do you want the DMF (Data Manipulation Functions) extensions enabled?
 # This extension enables functions like vect_swap that allows you to swap
@@ -189,7 +189,7 @@ LIBST=$(LIBDIR)/lib$(LIBNAME).a
 # Targets:
 
 .PHONY: all
-all: CFLAGS+=-O3
+all: CFLAGS+=-O3 
 all: core test tests
 
 clean:
@@ -225,6 +225,7 @@ $(OBJF): $(OSRCF)
 	$(info ===========================)
 	$(info Building $@                )
 	$(info ===========================)
+	. /opt/rh/devtoolset-10/enable
 	$(CC) -c -o $@ $< $(CFLAGS) $(CODE_MACROS)
 	ls -alh ./o/*
 
@@ -233,6 +234,7 @@ $(LIBST): $(OBJ) $(OBJF)
 	$(info ===========================)
 	$(info Building $(LIBNAME) library)
 	$(info ===========================)
+	. /opt/rh/devtoolset-10/enable
 	ar rcs $@ $(OBJF)
 	ls -alh ./lib/*
 
