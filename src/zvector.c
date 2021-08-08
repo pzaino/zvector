@@ -68,22 +68,22 @@ struct _vector
                                         // every time the vector is extended
                                         // or shrunk, left over values will be
                                         // properly erased.
+#if ( ZVECT_THREAD_SAFE == 1 )
+#   if MUTEX_TYPE == 0
+    volatile uint8_t lock_type;         // This field contains the lock used for this Vector.
+                void *lock;             // Vector's mutex for thread safe micro-transactions 
+#   elif MUTEX_TYPE == 1
+    volatile uint8_t lock_type;         // This field contains the lock used for this Vector.
+     pthread_mutex_t *lock;             // Vector's mutex for thread safe micro-transactions
+#   elif MUTEX_TYPE == 2
+    volatile uint8_t lock_type;         // This field contains the lock used for this Vector.
+    CRITICAL_SECTION *lock;             // Vector's mutex for thread safe micro-transactions
+#   endif
+#endif
                 void (*SfWpFunc)(const void *item, size_t size);     
                                         // Pointer to a CUSTOM Safe Wipe 
                                         // function (optional) needed only for 
                                         // safe wiping special structures.
-#if ( ZVECT_THREAD_SAFE == 1 )
-#   if MUTEX_TYPE == 0
-                void *lock;             // Vector's mutex for thread safe micro-transactions 
-    volatile uint8_t lock_type;         // This field contains the lock used for this Vector.
-#   elif MUTEX_TYPE == 1
-     pthread_mutex_t *lock;             // Vector's mutex for thread safe micro-transactions
-    volatile uint8_t lock_type;         // This field contains the lock used for this Vector.
-#   elif MUTEX_TYPE == 2
-    CRITICAL_SECTION *lock;             // Vector's mutex for thread safe micro-transactions
-    volatile uint8_t lock_type;         // This field contains the lock used for this Vector.
-#   endif
-#endif
                 void **data ZVECT_DATAALIGN;
                                         // Vector's storage.
 }ZVECT_DATAALIGN;
