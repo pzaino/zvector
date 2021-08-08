@@ -225,7 +225,7 @@ $(OBJF): $(OSRCF)
 	$(info ===========================)
 	$(info Building $@                )
 	$(info ===========================)
-	. /opt/rh/devtoolset-10/enable
+#	. /opt/rh/devtoolset-10/enable
 	$(CC) -c -o $@ $< $(CFLAGS) $(CODE_MACROS)
 	ls -alh ./o/*
 
@@ -234,7 +234,7 @@ $(LIBST): $(OBJ) $(OBJF)
 	$(info ===========================)
 	$(info Building $(LIBNAME) library)
 	$(info ===========================)
-	. /opt/rh/devtoolset-10/enable
+#	. /opt/rh/devtoolset-10/enable
 	ar rcs $@ $(OBJF)
 	ls -alh ./lib/*
 
