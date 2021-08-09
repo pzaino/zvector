@@ -162,7 +162,7 @@ int main()
     // Setup
     srand((time(NULL) * max_strLen) + (++mySeed));
 
-    printf("=== UTest%s ===\n", testGrp);
+    printf("=== ITest%s ===\n", testGrp);
     printf("Testing Dynamic STACKS (MULTI thread)\n");
 
     fflush(stdout);
