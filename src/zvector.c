@@ -58,34 +58,44 @@
 // Define the vector data structure:
 struct _vector
 {
-         zvect_index prev_size;         // Used when clearing a vector.
-         zvect_index size;              // Current Array size.
-         zvect_index init_capacity;     // Initial Capacity (this is set at cre
-                                        // ation time).
-         zvect_index capacity;          // Max capacity allocated.
-              size_t data_size;         // User DataType size.
-            uint32_t flags;             // If this flag is set to true then
-                                        // every time the vector is extended
-                                        // or shrunk, left over values will be
-                                        // properly erased.
+         zvect_index prev_size;         // - Used when clearing a vector.
+         zvect_index size;              // - Current Array size. size - 1 gives 
+                                        //   us the pointer to the last element 
+                                        //   in the vector.
+         zvect_index fep;               // - First vector's Element Pointer
+         zvect_index init_capacity;     // - Initial Capacity (this is set at 
+                                        //   creation time).
+         zvect_index capacity;          // - Max capacity allocated.
+              size_t data_size;         // - User DataType size.
+            uint32_t flags;             // - If this flag set is used to
+                                        //   represent ALL Vector's properties.
+                                        //   It contains bits that set Secure
+                                        //   Wipe, Auto Shrink, Pass Items By 
+                                        //   Ref etc.
 #if ( ZVECT_THREAD_SAFE == 1 )
 #   if MUTEX_TYPE == 0
-    volatile uint8_t lock_type;         // This field contains the lock used for this Vector.
-                void *lock;             // Vector's mutex for thread safe micro-transactions 
+    volatile uint8_t lock_type;         // - This field contains the lock used
+                                        //   for this Vector.
+                void *lock;             // - Vector's mutex for thread safe 
+                                        //   micro-transactions or user locks.
 #   elif MUTEX_TYPE == 1
-    volatile uint8_t lock_type;         // This field contains the lock used for this Vector.
-     pthread_mutex_t *lock;             // Vector's mutex for thread safe micro-transactions
+    volatile uint8_t lock_type;         // - This field contains the lock used 
+                                        //   for this Vector.
+     pthread_mutex_t *lock;             // - Vector's mutex for thread safe 
+                                        //   micro-transactions or user locks.
 #   elif MUTEX_TYPE == 2
-    volatile uint8_t lock_type;         // This field contains the lock used for this Vector.
-    CRITICAL_SECTION *lock;             // Vector's mutex for thread safe micro-transactions
+    volatile uint8_t lock_type;         // - This field contains the lock used 
+                                        //   for this Vector.
+    CRITICAL_SECTION *lock;             // - Vector's mutex for thread safe 
+                                        //   micro-transactions or user locks.
 #   endif
 #endif
                 void (*SfWpFunc)(const void *item, size_t size);     
-                                        // Pointer to a CUSTOM Safe Wipe 
-                                        // function (optional) needed only for 
-                                        // safe wiping special structures.
+                                        // - Pointer to a CUSTOM Safe Wipe 
+                                        //   function (optional) needed only 
+                                        //   for Secure Wiping special structures.
                 void **data ZVECT_DATAALIGN;
-                                        // Vector's storage.
+                                        // - Vector's storage.
 }ZVECT_DATAALIGN;
 
 /***********************
@@ -161,12 +171,10 @@ void *vect_memcpy(void * __restrict dst, const void * __restrict src, size_t siz
 #endif
 }
 
-/*
-static inline void *vect_memmove(void *dst, const void *src, size_t size)
+static inline void *vect_memmove(void * __restrict dst, const void * __restrict src, size_t size)
 {
     return memmove(dst, src, size);
 }
-*/
 
 #if ( ZVECT_THREAD_SAFE == 1 )
 #   if MUTEX_TYPE == 0
@@ -267,20 +275,16 @@ vector vect_create(size_t init_capacity, size_t item_size, uint32_t properties)
     v->prev_size = 0;
     v->size = 0;
     if (item_size == 0)
-    {
         v->data_size = ZVECT_DEFAULT_DATA_SIZE;
-    }
     else
         v->data_size = item_size;
 
     if (init_capacity == 0)
-    {
         v->capacity = ZVECT_INITIAL_CAPACITY;
-    }
     else
-    {
         v->capacity = init_capacity;
-    }
+
+    v->fep = v->capacity / 2;
 
     v->init_capacity = v->capacity;
     v->flags = properties;
@@ -313,12 +317,21 @@ void vect_destroy(vector v)
     check_mutex_lock(v, 1);
 #   endif
 
-    if (v->flags & ZV_SAFE_WIPE)
+   if ((v->flags & ZV_SAFE_WIPE) && (v->size > 0))
     {
-        // Safely clear up the old array (security measure)
-        zvect_index i;
-        for (i = 0; i < v->size; i++)
+        // Secure Wipe the vector
+        zvect_index i = v->size - 1;
+        while (i--)
+        {
             item_safewipe(v, v->data[i]);
+            if (!( v->flags & ZV_BYREF ) && !(v->data[i] == NULL))
+                free(v->data[i]);
+        }
+    } else if (v->size > 0) {
+        zvect_index i = v->size - 1;
+        while (i--)
+            if (!( v->flags & ZV_BYREF ) && !(v->data[i] == NULL))
+                free(v->data[i]);
     }
 
     // Destroy it:
@@ -474,7 +487,16 @@ void vect_clear(vector v)
         // Secure Wipe the vector
         zvect_index i = v->size - 1;
         while (i--)
+        {
             item_safewipe(v, v->data[i]);
+            if (!( v->flags & ZV_BYREF ) && !(v->data[i] == NULL))
+                free(v->data[i]);
+        }
+    } else if (v->size > 0) {
+        zvect_index i = v->size - 1;
+        while (i--)
+            if (!( v->flags & ZV_BYREF ) && !(v->data[i] == NULL))
+                free(v->data[i]);
     }
 
     v->prev_size = v->size;
@@ -537,9 +559,9 @@ static inline void _vect_add_at(vector v, const void *value, zvect_index i)
         new_data = (void **)malloc(sizeof(void *) * v->capacity);
         if (new_data == NULL)
             throw_error("Not enough memory to resize the vector!");
-    } else {
+    } 
+    else
         UNUSED(new_data);
-    }
 #   endif
 
     // "Shift" right the array of one position to make space for the new item:
@@ -560,12 +582,7 @@ static inline void _vect_add_at(vector v, const void *value, zvect_index i)
 #   else
         // We can't use the vect_memcpy when not in full reentrant code
         // because it's not safe to use it on the same src and dst.
-        zvect_index j;
-        for (j = v->size; j > i; j--)
-            vect_memcpy(v->data[j], v->data[j - 1], sizeof(void *));
-            // v->data[j] = v->data[j - 1];
-//        printf("Copied: %lu pointers, %lu Bytes\n", ( v->size - i ), ( v->size - i ) * sizeof(void *));
-//        fflush(stdout);
+        vect_memmove(v->data + (i + 1), v->data + i, sizeof(void *) * ( v->size - i ));
 #   endif
     }
 
@@ -593,19 +610,31 @@ static inline void _vect_add_at(vector v, const void *value, zvect_index i)
             vect_memcpy(v->data[i], value, v->data_size);
     }
 #   else
+    if ( i < v->size )
+    {
+        // We moved chunks of memory so we need to 
+        // allocate new memory for the item in position i:
+        if ( v->flags & ZV_BYREF )
+            v->data[i] = (void *)malloc(sizeof(void *));
+        else
+            v->data[i] = (void *)malloc(v->data_size);
+        if (v->data[i] == NULL )
+            throw_error("Not enough memory to add new item in the vector!");
+    }
     if ( v->flags & ZV_BYREF )
         v->data[i] = (void *)value;
     else
         vect_memcpy(v->data[i], value, v->data_size);
-#endif
+#   endif
 
-#if ( ZVECT_FULL_REENTRANT == 1 )
+    // Apply changes:
+#   if ( ZVECT_FULL_REENTRANT == 1 )
     if (array_changed == 1)
     {
         free(v->data);
         v->data = new_data;
     }
-#endif
+#   endif
 
     // Increment vector size
     v->prev_size=v->size;
@@ -728,17 +757,23 @@ static inline void *_vect_remove_at(vector v, zvect_index i)
     if ( v->size == 0 )
         return NULL;
 
-    // Get the value we are about to remove:
-    // Remove returns a pointer to it, so no need
-    // to copy the entire value or do safe wipe!
-    // When using remove it's user responsability
-    // to wipe safely the returned data.
-    void *rval = v->data[i];
-
     // Reorganise the vector (if needed)
 #   if ( ZVECT_THREAD_SAFE == 1 )
     check_mutex_lock(v, 1);
 #   endif
+
+    // Get the value we are about to remove:
+    void *rval;
+    if ( v->flags & ZV_BYREF )
+    {
+        rval = (void *)malloc(sizeof(void *));
+        rval = v->data[i];
+    } else {
+        rval = (void *)malloc(v->data_size);
+        vect_memcpy(rval, v->data[i], v->data_size );
+        if ( v->flags & ZV_SAFE_WIPE )
+            item_safewipe(v, v->data[i]);
+    }
 
 #   if ( ZVECT_FULL_REENTRANT == 1 )
     void **new_data = (void **)malloc(sizeof(void *) * v->capacity);
@@ -766,13 +801,14 @@ static inline void *_vect_remove_at(vector v, zvect_index i)
 #   else
         // We can't use the vect_memcpy when not in full reentrant code
         // because it's not safe to use it on the same src and dst.
-        zvect_index j;
+        /* zvect_index j;
         for (j = i + 1; j <= v->size; j++)
         {
             // Just move the pointers to the elements!
             // vect_memcpy(v->data[j - 1], v->data[j], sizeof(void *));
             v->data[j - 1] = v->data[j];
-        }
+        } */
+        vect_memmove(v->data + i, v->data + ( i + 1 ), sizeof(void *) * ( v->size - i ));
 #   endif
     }
 
@@ -785,6 +821,8 @@ static inline void *_vect_remove_at(vector v, zvect_index i)
 #endif
     
     // Reduce vector size:
+    //if ( !(v->flags & ZV_BYREF)  && !(v->data[v->size - 1] == NULL))
+    //    free(v->data[v->size - 1]);
     v->prev_size=v->size;
     v->size--;
 
@@ -852,6 +890,8 @@ static inline void _vect_delete_at(vector v, zvect_index start, zvect_index offs
     }
 
     // Reduce vector size:
+    if ( ! (v->flags & ZV_BYREF) )
+        free(v->data[v->size - 1]);
     v->prev_size=v->size;
     v->size = v->size - (offset + 1);
 
