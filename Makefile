@@ -70,7 +70,7 @@ MEMX_METHOD=0
 # 				  of ZVector and thread safety is not a requirement for you
 #				  then disable this option (set it to 0 zero). It will make
 #				  ZVector gain some extra performance.
-THREAD_SAFE_BUILD=1
+THREAD_SAFE_BUILD=0
 
 # Do you want ZVector code to be fully reentrant?
 # 0 for no full reentrant code
