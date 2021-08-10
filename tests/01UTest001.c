@@ -31,6 +31,10 @@ int main()
 
     fflush(stdout);
 
+#if ( ZVECT_THREAD_SAFE == 1 )
+vect_lock_disable();
+#endif
+
     printf("Test %s_%d: Create a vector of 10 elements and using int for the vector data:\n", testGrp, testID);
     vector v;
     v = vect_create(10, sizeof(int), ZV_NONE);
@@ -77,7 +81,7 @@ int main()
 
     printf("Test %s_%d: Remove an element from the middle of the vector:\n", testGrp, testID);
     printf("At index 5001 now we have: %d\n", *((int *)vect_get_at(v, 5001)));
-    vect_remove_at(v, 5001);
+    vect_delete_at(v, 5001);
     int value = *((int *)vect_get_at(v, 5001));
     printf("At index 5001 now we have: %d\n", value);
     fflush(stdout);

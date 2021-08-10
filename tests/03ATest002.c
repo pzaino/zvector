@@ -88,10 +88,6 @@ int main()
 
     fflush(stdout);
 
-#if ( ZVECT_THREAD_SAFE == 1 )
-vect_lock_disable();
-#endif
-
     printf("Test %s_%d: Create a vector of 2 elements and using Car for the vector data:\n", testGrp, testID);
     vector v;
     v = vect_create(2, sizeof(car), ZV_SAFE_WIPE);

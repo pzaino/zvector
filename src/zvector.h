@@ -101,6 +101,9 @@ void vect_clear(vector);
 
 #if ( ZVECT_THREAD_SAFE == 1 )
 // Vector Thread Safe functions:
+void vect_lock_enable(void);
+
+void vect_lock_disable(void);
 
 void vect_lock(vector v);
 
