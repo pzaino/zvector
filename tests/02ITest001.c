@@ -105,6 +105,7 @@ void * doSomething1(void *arg)
     printf("Test %s_%d:  -  All items incremented.\n", testGrp, testID);
 #endif  // ZVECT_SFMD_EXTENSIONS
 
+    pthread_exit(NULL);
     return NULL;
 }
 
@@ -135,6 +136,7 @@ void * doSomething2(void *arg)
     printf("Test %s_%d:  -  All items multiplied.\n", testGrp, testID);
 #endif
 
+    pthread_exit(NULL);
     return NULL;
 }
 

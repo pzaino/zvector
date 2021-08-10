@@ -116,6 +116,7 @@ void *producer(void *arg)
 
     fflush(stdout);
 
+    pthread_exit(NULL);
     return NULL;
 }
 
@@ -154,6 +155,7 @@ void *consumer(void *arg)
 
     fflush(stdout);
 
+    pthread_exit(NULL);
     return NULL;
 }
 

@@ -15,7 +15,6 @@
  */
 
 // Include standard C libs headers
-#include <xmmintrin.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -25,9 +24,17 @@
 // Include vector.h header
 #include "zvector.h"
 
+#if ( OS_TYPE == 1 )
+#define _POSIX_C_SOURCE 200112L
+#define __USE_UNIX98
+#endif
+
 // Include non-ANSI Libraries
 // only if the user has requested
 // special extensions:
+#if ( OS_TYPE == 1 )
+#   include <xmmintrin.h>
+#endif
 #if ( ZVECT_THREAD_SAFE == 1 )
 #   if MUTEX_TYPE == 1
 #       include <pthread.h>
@@ -193,6 +200,12 @@ static inline void mutex_unlock(pthread_mutex_t *lock)
 
 static inline void mutex_alloc(pthread_mutex_t **lock)
 {
+    pthread_mutexattr_t Attr;
+    pthread_mutexattr_init(&Attr);
+    pthread_mutexattr_settype(&Attr, PTHREAD_MUTEX_RECURSIVE_NP);
+    pthread_mutex_t *set_type = (pthread_mutex_t *)lock;
+    pthread_mutex_init(set_type, &Attr);
+    
     *lock = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
     if (lock == NULL)
         throw_error("Not enough memory to allocate the vector!");
@@ -201,6 +214,7 @@ static inline void mutex_alloc(pthread_mutex_t **lock)
 static inline void mutex_destroy(pthread_mutex_t *lock)
 {
     pthread_mutex_destroy(lock);
+    free(lock);
 }
 #   elif MUTEX_TYPE == 2
 static inline void mutex_lock(CRITICAL_SECTION *lock)
@@ -297,8 +311,6 @@ vector vect_create(size_t init_capacity, size_t item_size, uint32_t properties)
     v->lock = NULL;
     v->lock_type = 0;
     mutex_alloc(&(v->lock));
-    if ( v->lock == NULL )
-       throw_error("Not enough memory to initialise mutexes!");
 #   endif
 
     // Allocate memory for the vector storage area
@@ -345,7 +357,6 @@ void vect_destroy(vector v)
 #   if ( ZVECT_THREAD_SAFE == 1 )
     check_mutex_unlock(v, 1);
     mutex_destroy(v->lock);
-    free(v->lock);
 #   endif
     free(v);
 }
