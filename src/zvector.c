@@ -296,7 +296,7 @@ vector vect_create(size_t init_capacity, size_t item_size, uint32_t properties)
     v->lock_type = 0;
     mutex_alloc(&(v->lock));
     if ( v->lock == NULL )
-        throw_error("Not enough memory to initialise mutexes!");
+       throw_error("Not enough memory to initialise mutexes!");
 #   endif
 
     // Allocate memory for the vector storage area
@@ -871,7 +871,6 @@ static inline void _vect_delete_at(vector v, zvect_index start, zvect_index offs
     if ( v->size == 0 )
         return;
 
-    zvect_index j;
 #   if ( ZVECT_THREAD_SAFE == 1 )
     check_mutex_lock(v, 1);
 #   endif
@@ -879,18 +878,23 @@ static inline void _vect_delete_at(vector v, zvect_index start, zvect_index offs
     // "shift" left the data of one position:
     if ( ((start + offset) < (v->size - 1)) && (v->size > 0))
     {
-        for ( j = (start + offset) + 1; j < v->size; j++)
-            vect_memcpy(v->data[(j - offset) - 1], v->data[j], sizeof(void *));
         if ( v->flags & ZV_SAFE_WIPE )
         {
             zvect_index j2;
             for ( j2 = (v->size - 1); j2 >= ((v->size - 1) - offset); j2--)
+            {
                 item_safewipe(v, v->data[j2]);
+                //if ( (!(v->flags & ZV_BYREF)) && (!(v->data[j2] == NULL)) )
+                //    free(v->data[j2]);
+            }
         }
+        zvect_index j;
+        for ( j = (start + offset) + 1; j < v->size; j++)
+            vect_memmove(v->data[(j - offset) - 1], v->data[j], sizeof(void *));
     }
 
     // Reduce vector size:
-    if ( ! (v->flags & ZV_BYREF) )
+    if ( (!(v->flags & ZV_BYREF)) && (!(v->data[v->size - 1] == NULL)) )
         free(v->data[v->size - 1]);
     v->prev_size=v->size;
     v->size = v->size - (offset + 1);
