@@ -31,6 +31,10 @@ int main()
 
     fflush(stdout);
 
+#if ( ZVECT_THREAD_SAFE == 1 )
+vect_lock_disable();
+#endif
+
     printf("Test %s_%d: Create a vector of 10 elements and using int for the vector data:\n", testGrp, testID);
     vector v;
     v = vect_create(10, sizeof(int), ZV_NONE);

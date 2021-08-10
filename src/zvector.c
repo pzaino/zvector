@@ -188,6 +188,8 @@ static inline void *vect_memmove(void * __restrict dst, const void * __restrict 
 #   if MUTEX_TYPE == 0
 #   define ZVECT_THREAD_SAFE 0
 #   elif MUTEX_TYPE == 1
+static volatile bool lock_enabled = true;
+
 static inline void mutex_lock(pthread_mutex_t *lock)
 {
     pthread_mutex_lock(lock);
@@ -205,7 +207,7 @@ static inline void mutex_alloc(pthread_mutex_t **lock)
     pthread_mutexattr_settype(&Attr, PTHREAD_MUTEX_RECURSIVE_NP);
     pthread_mutex_t *set_type = (pthread_mutex_t *)lock;
     pthread_mutex_init(set_type, &Attr);
-    
+
     *lock = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
     if (lock == NULL)
         throw_error("Not enough memory to allocate the vector!");
@@ -217,6 +219,8 @@ static inline void mutex_destroy(pthread_mutex_t *lock)
     free(lock);
 }
 #   elif MUTEX_TYPE == 2
+static volatile bool lock_enabled = true;
+
 static inline void mutex_lock(CRITICAL_SECTION *lock)
 {
     EnterCriticalSection(lock);
@@ -257,7 +261,8 @@ static inline void check_mutex_lock(vector v, volatile uint8_t lock_type)
 {
     if ( lock_type >= v->lock_type )
     {
-        mutex_lock(v->lock);
+        if ( lock_enabled )
+            mutex_lock(v->lock);
         v->lock_type = lock_type;
     }
 }
@@ -267,7 +272,8 @@ static inline void check_mutex_unlock(vector v, volatile uint8_t lock_type)
     if ( lock_type == v->lock_type )
     {
         v->lock_type = 0;
-        mutex_unlock(v->lock);
+        if ( lock_enabled )
+            mutex_unlock(v->lock);
     }
 }
 #endif
@@ -386,6 +392,16 @@ zvect_index vect_size(vector v)
 /*---------------------------------------------------------------------------*/
 // Vector Thread Safe user functions:
 #if ( ZVECT_THREAD_SAFE == 1 )
+void vect_lock_enable(void)
+{
+    lock_enabled = true;
+}
+
+void vect_lock_disable(void)
+{
+   lock_enabled = false; 
+}
+
 inline void vect_lock(vector v)
 {
     check_mutex_lock(v, 3);  
