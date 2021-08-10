@@ -53,6 +53,7 @@
 
 // Useful macros
 #define min(x, y) (((x) < (y)) ? (x) : (y))
+#define max(x, y) (((x) > (y)) ? (x) : (y))
 #define UNUSED(x) (void)x
 
 // Define the vector data structure:
@@ -123,7 +124,7 @@ static inline void item_safewipe(vector v, const void *item)
 {
     if ((item != NULL) && ( (ADDR_TYPE2)item >= 0x100000 ))
     {
-        if (!v->SfWpFunc)
+        if ( v->SfWpFunc == NULL )
         {
             memset((void *)item, 0, v->data_size);
         }
@@ -289,6 +290,7 @@ vector vect_create(size_t init_capacity, size_t item_size, uint32_t properties)
     v->init_capacity = v->capacity;
     v->flags = properties;
     v->SfWpFunc = NULL;
+    
     v->data = NULL;
 
 #   if ( ZVECT_THREAD_SAFE == 1 )
@@ -320,7 +322,7 @@ void vect_destroy(vector v)
    if ((v->flags & ZV_SAFE_WIPE) && (v->size > 0))
     {
         // Secure Wipe the vector
-        zvect_index i = v->size - 1;
+        zvect_index i = v->size;
         while (i--)
         {
             item_safewipe(v, v->data[i]);
@@ -328,18 +330,22 @@ void vect_destroy(vector v)
                 free(v->data[i]);
         }
     } else if (v->size > 0) {
-        zvect_index i = v->size - 1;
+        zvect_index i = v->size;
         while (i--)
             if (!( v->flags & ZV_BYREF ) && !(v->data[i] == NULL))
                 free(v->data[i]);
     }
 
     // Destroy it:
-    if (!v->data)
+    if ( v->SfWpFunc != NULL )
+        free(v->SfWpFunc);
+
+    if ( v->data != NULL )
         free(v->data);
 #   if ( ZVECT_THREAD_SAFE == 1 )
     check_mutex_unlock(v, 1);
     mutex_destroy(v->lock);
+    free(v->lock);
 #   endif
     free(v);
 }
@@ -415,6 +421,7 @@ static void vect_decrease_capacity(vector v)
     zvect_index new_capacity = v->capacity / 2;
     if (new_capacity < v->init_capacity)
         new_capacity = v->init_capacity;
+    new_capacity = max(v->size, new_capacity);
     zvect_index new_size = min(v->size, new_capacity);
 
     void **new_data = (void **)realloc(v->data, sizeof(void *) * new_capacity);
@@ -485,7 +492,7 @@ void vect_clear(vector v)
     if ((v->flags & ZV_SAFE_WIPE) && (v->size > 0))
     {
         // Secure Wipe the vector
-        zvect_index i = v->size - 1;
+        zvect_index i = v->size;
         while (i--)
         {
             item_safewipe(v, v->data[i]);
@@ -493,7 +500,7 @@ void vect_clear(vector v)
                 free(v->data[i]);
         }
     } else if (v->size > 0) {
-        zvect_index i = v->size - 1;
+        zvect_index i = v->size;
         while (i--)
             if (!( v->flags & ZV_BYREF ) && !(v->data[i] == NULL))
                 free(v->data[i]);
@@ -517,7 +524,7 @@ void vect_set_wipefunct(vector v, void (*f1)(const void *, size_t))
     v->SfWpFunc = (void *)malloc(sizeof(void *));
     if (v->SfWpFunc == NULL)
         throw_error("No memory available to set safe wipe function!\n");
-    
+
     // Set custom Safe Wipe function:
     v->SfWpFunc = f1;
     //vect_memcpy(v->SfWpFunc, f1, sizeof(void *));
@@ -881,11 +888,11 @@ static inline void _vect_delete_at(vector v, zvect_index start, zvect_index offs
         if ( v->flags & ZV_SAFE_WIPE )
         {
             zvect_index j2;
-            for ( j2 = (v->size - 1); j2 >= ((v->size - 1) - offset); j2--)
+            for ( j2 = v->size; j2 >= (v->size - offset); j2--)
             {
                 item_safewipe(v, v->data[j2]);
-                //if ( (!(v->flags & ZV_BYREF)) && (!(v->data[j2] == NULL)) )
-                //    free(v->data[j2]);
+                if ( (!(v->flags & ZV_BYREF)) && (v->data[j2] != NULL) )
+                    free(v->data[j2]);
             }
         }
         zvect_index j;
@@ -894,7 +901,7 @@ static inline void _vect_delete_at(vector v, zvect_index start, zvect_index offs
     }
 
     // Reduce vector size:
-    if ( (!(v->flags & ZV_BYREF)) && (!(v->data[v->size - 1] == NULL)) )
+    if ( (!(v->flags & ZV_BYREF)) && ( v->data[v->size - 1] != NULL ) )
         free(v->data[v->size - 1]);
     v->prev_size=v->size;
     v->size = v->size - (offset + 1);
