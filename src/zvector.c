@@ -433,9 +433,19 @@ void vect_destroy(vector v)
     // Check if the vector exists:
     vect_check(v);
 
+    printf("Checked vector...\n");
+    fflush(stdout);
+
 #   if ( ZVECT_THREAD_SAFE == 1 )
     check_mutex_lock(v, 1);
 #   endif
+
+    printf("Got lock for vector...\n");
+    fflush(stdout);
+
+
+    printf("About to clear the vector...\n");
+    fflush(stdout);
 
     // Clear the vector:
     if (v->size > 0)
@@ -451,29 +461,47 @@ void vect_destroy(vector v)
         }
     }
 
+    printf("Vector cleared...\n");
+    fflush(stdout);
+
+    printf("About to reset 1st part of vector's descriptors...\n");
+    fflush(stdout);
     // Reset interested descriptors:
     v->prev_size = v->size;
     v->size = 0;
 
+    printf("About to shrink the vector...\n");
+    fflush(stdout);
     // Shrink Vector's capacity:
-    _vect_shrink(v);
+    if ( v->capacity > (v->size + 1))
+        _vect_shrink(v);
 
+    printf("About to clear 2nd part of vector's descriptors...\n");
+    fflush(stdout);
     v->prev_size = 0;
     v->init_capacity = 0;
     v->capacity = 0;
 
+    printf("About to free custom secure wipe function pointer...\n");
+    fflush(stdout);
     // Destroy it:
     if ( v->SfWpFunc != NULL )
         free(v->SfWpFunc);
 
+    printf("About to free vector's data...\n");
+    fflush(stdout);
     if ( v->data != NULL )
         free(v->data);
 
+    printf("About to unlock and destory vector's mutex...\n");
+    fflush(stdout);
 #   if ( ZVECT_THREAD_SAFE == 1 )
     check_mutex_unlock(v, 1);
     mutex_destroy(v->lock);
 #   endif
 
+    printf("About to free the vector...\n");
+    fflush(stdout);
     // All done and freed, so we can safely
     // free the vector itself:
     free(v);
