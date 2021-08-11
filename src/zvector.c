@@ -921,7 +921,7 @@ static inline void _vect_delete_at(vector v, zvect_index start, zvect_index offs
                 if ( (!(v->flags & ZV_BYREF)) && (v->data[j2] != NULL) )
                     free(v->data[j2]);
             }
-        vect_memmove(v->data + start, v->data + ((start + offset) + 1), sizeof(void *) * (v->size - (start + offset)));
+        vect_memmove(v->data + start, v->data + ( (start + offset) + 1), sizeof(void *) * ( v->size - (start + offset) ));
     }
 
     // Reduce vector size:

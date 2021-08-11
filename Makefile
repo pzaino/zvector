@@ -243,6 +243,7 @@ $(TESTBINS): $(TESTSRCS)
 	$(info ===========================)
 	$(info Building test: $@          )
 	$(info ===========================)
+#	. /opt/rh/devtoolset-10/enable
 	$(CC) $(CFLAGS) $(CODE_MACROS) $(TESTDIR)$@.c -I$(WDIR)/src -L$(WDIR)/$(LIBDIR) -l$(LIBNAME) $(LDFLAGS)  -o $(TESTBIN)$@
 
 $(LIBDIR):
