@@ -236,8 +236,10 @@ static inline void mutex_alloc(pthread_mutex_t **lock)
 static inline void mutex_destroy(pthread_mutex_t *lock)
 {
     pthread_mutex_destroy(lock);
+#   if ( !defined(macOS) )
     if ( lock != NULL )
         free(lock);
+#   endif
 }
 #   elif MUTEX_TYPE == 2
 static volatile bool lock_enabled = true;
@@ -488,7 +490,7 @@ void vect_destroy(vector v)
     printf("About to free custom secure wipe function pointer...\n");
     fflush(stdout);
     // Destroy it:
-    if ( v->status & ZVS_CUST_WIPE)
+    if ( (v->status & ZVS_CUST_WIPE) )
         free(v->SfWpFunc);
 
     printf("About to free vector's data...\n");
@@ -505,7 +507,7 @@ void vect_destroy(vector v)
 
     // Clear vector status flags:
     v->status = 0;
-    
+
     printf("About to free the vector...\n");
     fflush(stdout);
     // All done and freed, so we can safely
