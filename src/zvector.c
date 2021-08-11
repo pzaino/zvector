@@ -233,7 +233,8 @@ static inline void mutex_alloc(pthread_mutex_t **lock)
 static inline void mutex_destroy(pthread_mutex_t *lock)
 {
     pthread_mutex_destroy(lock);
-    free(lock);
+    if ( lock != NULL )
+        free(lock);
 }
 #   elif MUTEX_TYPE == 2
 static volatile bool lock_enabled = true;
