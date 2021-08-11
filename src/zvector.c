@@ -135,7 +135,8 @@ static inline void vect_check(vector x)
 
 static inline void item_safewipe(vector v, const void *item)
 {
-    if ((item != NULL) && ( (ADDR_TYPE2)item >= 0x100000 ))
+    // && ( (ADDR_TYPE2)item >= 0x100000 )
+    if ((item != NULL))
     {
         if ( v->SfWpFunc == NULL )
         {
@@ -474,35 +475,35 @@ static void vect_decrease_capacity(vector v)
 // Thi sfunction shrinks the CAPACITY of a vector
 // not its size. To reduce the size of a vector we
 // need to remove items from it.
-void vect_shrink(vector v)
+void _vect_shrink(vector v)
 {
     // Check if the vector exists:
     vect_check(v);
 
     zvect_index new_capacity;
-#   if ( ZVECT_THREAD_SAFE == 1 )
-    check_mutex_lock(v, 1);
-#   endif
-
     // Determine the correct shrunk size:
     if (v->size < v->init_capacity)
         new_capacity = v->init_capacity;
     else
         new_capacity = v->size + 1;
-
+    
     // shrink the vector:
-    v->capacity = new_capacity;
-    void** new_data = (void**)realloc(v->data, sizeof(void*) * v->capacity);
+    void** new_data = (void**)realloc(v->data, sizeof(void*) * new_capacity);
     if ( new_data == NULL )
-    {
-#   if ( ZVECT_THREAD_SAFE == 1 )
-        check_mutex_unlock(v, 1);
-#   endif
         throw_error("No memory available to shrink the vector!");
-    }
 
     // Apply changes:
     v->data = new_data;
+    v->capacity = new_capacity;
+}
+
+void vect_shrink(vector v)
+{    
+#   if ( ZVECT_THREAD_SAFE == 1 )
+    check_mutex_lock(v, 1);
+#   endif
+
+    _vect_shrink(v);
 
 #   if ( ZVECT_THREAD_SAFE == 1 )
     check_mutex_unlock(v, 1);
@@ -539,7 +540,7 @@ void vect_clear(vector v)
     v->prev_size = v->size;
     v->size = 0;
 
-    vect_shrink(v);
+    _vect_shrink(v);
 
 #   if ( ZVECT_THREAD_SAFE == 1 )
     check_mutex_unlock(v, 1);
@@ -921,7 +922,7 @@ static inline void _vect_delete_at(vector v, zvect_index start, zvect_index offs
                 if ( (!(v->flags & ZV_BYREF)) && (v->data[j2] != NULL) )
                     free(v->data[j2]);
             }
-        vect_memmove(v->data + start, v->data + ( (start + offset) + 1), sizeof(void *) * ( v->size - (start + offset) ));
+        vect_memmove(v->data + start, v->data + ((start + offset) + 1), sizeof(void *) * ( v->size - (start + offset) ));
     }
 
     // Reduce vector size:
