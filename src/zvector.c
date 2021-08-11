@@ -523,7 +523,8 @@ void vect_clear(vector v)
 #   if ( ZVECT_THREAD_SAFE == 1 )
     check_mutex_lock(v, 1);
 #   endif
-
+    printf("About to wipe the vector...\n");
+    fflush(stdout);
     if (v->size > 0)
     {
         // Secure Wipe the vector (or just free)
@@ -537,9 +538,12 @@ void vect_clear(vector v)
         }
     }
 
+    printf("About to reset vector's descriptors...\n");
+    fflush(stdout);
     v->prev_size = v->size;
     v->size = 0;
-
+    printf("About to shrink the vector...\n");
+    fflush(stdout);
     _vect_shrink(v);
 
 #   if ( ZVECT_THREAD_SAFE == 1 )
