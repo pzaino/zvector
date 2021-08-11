@@ -516,21 +516,17 @@ void vect_clear(vector v)
     check_mutex_lock(v, 1);
 #   endif
 
-    if ((v->flags & ZV_SAFE_WIPE) && (v->size > 0))
+    if (v->size > 0)
     {
         // Secure Wipe the vector
-        zvect_index i = v->size;
+        zvect_index i = v->size - 1;
         while (i--)
         {
-            item_safewipe(v, v->data[i]);
+            if (v->flags & ZV_SAFE_WIPE)
+                item_safewipe(v, v->data[i]);
             if (!( v->flags & ZV_BYREF ) && !(v->data[i] == NULL))
                 free(v->data[i]);
         }
-    } else if (v->size > 0) {
-        zvect_index i = v->size;
-        while (i--)
-            if (!( v->flags & ZV_BYREF ) && !(v->data[i] == NULL))
-                free(v->data[i]);
     }
 
     v->prev_size = v->size;
