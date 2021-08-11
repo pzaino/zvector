@@ -86,31 +86,34 @@ void *producer(void *arg)
     int evt_counter = 0;
     // Simulating Producer:
     printf("Test %s_%d: Produce %d events, store them in the queue and check if they are stored correctly:\n", testGrp, testID, MAX_ITEMS);
-    uint32_t i;
-    for (i = 0; i < MAX_ITEMS; i++)
-    {
-        StackItem qi;
-        qi.eventID = i;
-        // qi.msg = malloc(sizeof(char) * max_strLen);
-        clear_str(qi.msg, MAX_MSG_SIZE);
-        mk_rndstr(qi.msg, max_strLen - 1);
-        qi.priority = 0;
+    fflush(stdout);
 
-        //printf("produced event message: %s\n", qi.msg);
+        uint32_t i;
+        for (i = 0; i < MAX_ITEMS; i++)
+        {
+            StackItem qi;
+            qi.eventID = i;
+            // qi.msg = malloc(sizeof(char) * max_strLen);
+            clear_str(qi.msg, MAX_MSG_SIZE);
+            mk_rndstr(qi.msg, max_strLen - 1);
+            qi.priority = 0;
 
-        vect_lock(v);
-        // Let's add a new item in the queue:
-        vect_add(v, &qi);
+            //printf("produced event message: %s\n", qi.msg);
 
-        StackItem item = *((StackItem *)vect_get(v));
+            vect_lock(v);
+            // Let's add a new item in the queue:
+            vect_add(v, &qi);
 
-        vect_unlock(v);
+            StackItem item = *((StackItem *)vect_get(v));
 
-        // Let's test if the value we have retrieved is correct:
-        printf("Produced Event %*d: ID (%*d) - Message: %s\n", 2, i, 2, item.eventID, item.msg);
-        evt_counter++;
-        fflush(stdout);
-    }
+            vect_unlock(v);
+
+            // Let's test if the value we have retrieved is correct:
+            printf("Produced Event %*d: ID (%*d) - Message: %s\n", 2, i, 2, item.eventID, item.msg);
+            evt_counter++;
+            fflush(stdout);
+        }
+
     printf("Producer done. Produced %d events.\n", evt_counter);
     testID++;
 
@@ -126,29 +129,31 @@ void *consumer(void *arg)
     int evt_counter = 0;
     // Simulating Consumer:
     printf("Test %s_%d: Consume %d events from the queue in LIFO order:\n", testGrp, testID, MAX_ITEMS);
-    uint32_t i;
-    for (i = 0; i < MAX_ITEMS; i++)
-    {
-        while (vect_is_empty(v));
-        vect_lock(v);
+    fflush(stdout);
 
-        // Let's retrieve the value from the vector correctly:
-        // For beginners: this is how in C we convert back a void * into the original dtata_type
-        StackItem *item = (StackItem *)malloc(sizeof(StackItem *));
-        if (!vect_is_empty(v))
-            item = (StackItem *)vect_remove(v);
-
-        vect_unlock(v);
-
-        if ( item != NULL )
+        uint32_t i;
+        for (i = 0; i < MAX_ITEMS; i++)
         {
-            // Let's test if the value we have retrieved is correct:
-            printf("Consumed Event %*d: ID (%*d) - Message: %s\n", 2, i, 2, item->eventID, item->msg);
-            evt_counter++;
-            fflush(stdout);
+            while (vect_is_empty(v));
+            vect_lock(v);
+
+            // Let's retrieve the value from the vector correctly:
+            // For beginners: this is how in C we convert back a void * into the original dtata_type
+            StackItem *item = (StackItem *)malloc(sizeof(StackItem *));
+            if (!vect_is_empty(v))
+                item = (StackItem *)vect_remove(v);
+
+            vect_unlock(v);
+
+            if ( item != NULL )
+            {
+                // Let's test if the value we have retrieved is correct:
+                printf("Consumed Event %*d: ID (%*d) - Message: %s\n", 2, i, 2, item->eventID, item->msg);
+                evt_counter++;
+                fflush(stdout);
+            }
+            free(item);
         }
-        free(item);
-    }
 
     printf("Consumer done. Consumed %d events.\n", evt_counter);
     testID++;
@@ -170,30 +175,34 @@ int main()
     fflush(stdout);
 
     printf("Test %s_%d: Create a dynamic stack of 2 initial elements capacity:\n", testGrp, testID);
-    vector v;
-    v = vect_create(2, sizeof(struct StackItem), ZV_SAFE_WIPE);
+    fflush(stdout);
+
+        vector v;
+        v = vect_create(2, sizeof(struct StackItem), ZV_SAFE_WIPE);
+
     printf("done.\n");
     testID++;
 
     fflush(stdout);
 
     printf("Test %s_%d: Spin 2 threads and use them to manipoulate the stack created above.\n", testGrp, testID);
+    fflush(stdout);
 
-    int err = 0;
-    int i = 0;
-    err = pthread_create(&(tid[i]), NULL, &producer, v);
-    if (err != 0)
-        printf("Can't create thread :[%s]\n", strerror(err));
-    i++;
+        int err = 0;
+        int i = 0;
+        err = pthread_create(&(tid[i]), NULL, &producer, v);
+        if (err != 0)
+            printf("Can't create thread :[%s]\n", strerror(err));
+        i++;
 
-    err = pthread_create(&(tid[i]), NULL, &consumer, v);
-    if (err != 0)
-        printf("Can't create thread :[%s]\n", strerror(err));
-    i++;
+        err = pthread_create(&(tid[i]), NULL, &consumer, v);
+        if (err != 0)
+            printf("Can't create thread :[%s]\n", strerror(err));
+        i++;
 
-    // Let's start the threads:
-    pthread_join(tid[0], NULL);
-    pthread_join(tid[1], NULL);
+        // Let's start the threads:
+        pthread_join(tid[0], NULL);
+        pthread_join(tid[1], NULL);
 
     printf("done.\n");
     testID++;
@@ -208,31 +217,41 @@ int main()
     while(!vect_is_empty(v));
 
     printf("Test %s_%d: Dellete all left over events (if any):\n", testGrp, testID);
-    while (!vect_is_empty(v))
-    {
-        vect_delete(v);
-    }
+    fflush(stdout);
+
+        while (!vect_is_empty(v))
+            vect_delete(v);
+ 
     printf("done.\n");
     testID++;
 
     fflush(stdout);
 
     printf("Test %s_%d: Clear stack:\n", testGrp, testID);
-    vect_clear(v);
+    fflush(stdout);
+
+        vect_clear(v);
+
     printf("done.\n");
     testID++;
 
     fflush(stdout);
 
     printf("Test %s_%d: Check if stack size is now 0 (zero):\n", testGrp, testID);
-    assert(vect_size(v) == 0);
+    fflush(stdout);
+
+        assert(vect_size(v) == 0);
+ 
     printf("done.\n");
     testID++;
 
     fflush(stdout);
 
     printf("Test %s_%d: destroy the stack:\n", testGrp, testID);
-    vect_destroy(v);
+    fflush(stdout);
+
+        vect_destroy(v);
+
     printf("done.\n");
     testID++;
 

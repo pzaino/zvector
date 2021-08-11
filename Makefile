@@ -21,7 +21,7 @@ WDIR:=$(shell pwd)
 CC=gcc
 
 # Configure additional compiler and linker flags:
-CFLAGS+=-std=c99 -Wall -Wextra -I./src -I./tests -msse
+CFLAGS+=-std=c99 -Wall -Wextra -I./src -I./tests
 LDFLAGS+=
 
 # If you want to pass some MACROS to your code you can use the following 
@@ -190,7 +190,7 @@ LIBST=$(LIBDIR)/lib$(LIBNAME).a
 
 .PHONY: all
 all: CFLAGS+=-O3 
-all: core test tests
+all: core test
 
 clean:
 	$(RM) -r $(LIBDIR) $(OBJ) $(TESTDIR)/bin ./*.o
@@ -207,9 +207,9 @@ configure: $(SCRIPTSDIR)/ux_set_extension $(SRC)/$(LIBNAME)_config.h
 
 core: configure $(LIBDIR) $(LIBST)
 
-test: $(TESTDIR)/bin
+test: $(TESTDIR)/bin $(TESTBINS)
 
-tests: $(TESTBINS)
+tests: test
 	$(info   )
 	$(info ===========================)
 	$(info Running all found tests... )
@@ -218,7 +218,7 @@ tests: $(TESTBINS)
 
 debug: CFLAGS+= -ggdb3
 debug: CODE_MACROS+= -DDEBUG
-debug: core test tests
+debug: core tests
 
 $(OBJF): $(OSRCF)
 	$(info  )
@@ -243,6 +243,7 @@ $(TESTBINS): $(TESTSRCS)
 	$(info ===========================)
 	$(info Building test: $@          )
 	$(info ===========================)
+#	. /opt/rh/devtoolset-10/enable
 	$(CC) $(CFLAGS) $(CODE_MACROS) $(TESTDIR)$@.c -I$(WDIR)/src -L$(WDIR)/$(LIBDIR) -l$(LIBNAME) $(LDFLAGS)  -o $(TESTBIN)$@
 
 $(LIBDIR):
@@ -252,7 +253,6 @@ $(OBJ):
 	[ ! -d $@ ] && mkdir -p $@
 
 $(TESTDIR)/bin:
-	$(info  )
 	[ ! -d $@ ] && mkdir -p $@
 
 #

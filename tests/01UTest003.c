@@ -123,7 +123,7 @@ vect_lock_disable();
 
     fflush(stdout);
 
-    printf("Test %s_%d: Dellete a range of elements in the vector:\n", testGrp, testID);
+    printf("Test %s_%d: Delete a range of elements in the vector (from 10 to 20):\n", testGrp, testID);
     fflush(stdout);
 
         vect_delete_range(v, 10, 20);
