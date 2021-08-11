@@ -36,6 +36,7 @@ vect_lock_disable();
 #endif
 
     printf("Test %s_%d: Create a vector of 10 elements and using int for the vector data:\n", testGrp, testID);
+    fflush(stdout);
 
         vector v;
         v = vect_create(10, sizeof(int), ZV_NONE);
@@ -46,6 +47,7 @@ vect_lock_disable();
     fflush(stdout);
 
     printf("Test %s_%d: Insert 10000 elements and check if they are stored correctly:\n", testGrp, testID);
+    fflush(stdout);
 
         int i;
         for (i = 0; i < 1000000; i++)
@@ -67,6 +69,7 @@ vect_lock_disable();
     fflush(stdout);
 
     printf("Test %s_%d: check if the size of the vector is now 10000:\n", testGrp, testID);
+    fflush(stdout);
 
         assert(vect_size(v) == 1000000);
 
@@ -76,6 +79,7 @@ vect_lock_disable();
     fflush(stdout);
 
     printf("Test %s_%d: Add elements in the middle of the vector:\n", testGrp, testID);
+    fflush(stdout);
 
         i=555555;
         vect_add_at(v, &i, 100);
@@ -88,7 +92,9 @@ vect_lock_disable();
     fflush(stdout);
 
     printf("Test %s_%d: Remove an element from the middle of the vector:\n", testGrp, testID);
-    printf("At index 5001 now we have: %d\n", *((int *)vect_get_at(v, 5001)));
+    fflush(stdout);
+
+        printf("At index 5001 now we have: %d\n", *((int *)vect_get_at(v, 5001)));
 
         vect_delete_at(v, 5001);
         int value = *((int *)vect_get_at(v, 5001));
@@ -102,6 +108,7 @@ vect_lock_disable();
     fflush(stdout);
 
     printf("Test %s_%d: Remove vector elements one by one:\n", testGrp, testID);
+    fflush(stdout);
 
         while (!vect_is_empty(v))
             vect_delete(v);
@@ -112,6 +119,7 @@ vect_lock_disable();
     fflush(stdout);
 
     printf("Test %s_%d: check if vector is empty:\n", testGrp, testID);
+    fflush(stdout);
 
         assert(vect_is_empty(v));
 
@@ -121,6 +129,7 @@ vect_lock_disable();
     fflush(stdout);
 
     printf("Test %s_%d: Check if vector size is now 0 (zero):\n", testGrp, testID);
+    fflush(stdout);
 
         assert(vect_size(v) == 0);
 
@@ -130,7 +139,8 @@ vect_lock_disable();
     fflush(stdout);
 
     printf("Test %s_%d: destroy the vector:\n", testGrp, testID);
-
+    fflush(stdout);
+    
         vect_destroy(v);
 
     printf("done.\n");
