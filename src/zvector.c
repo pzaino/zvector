@@ -25,8 +25,15 @@
 #include "zvector.h"
 
 #if ( OS_TYPE == 1 )
-#define _POSIX_C_SOURCE 200112L
-#define __USE_UNIX98
+#   if ( !defined(macOS))
+/*  Improve PThreads on Linux.
+ *  macOS seems to be handling pthreads
+ *  sligthely differently than Linux so
+ * avoid using the same trick on macOS.
+ */
+#       define _POSIX_C_SOURCE 200112L
+#       define __USE_UNIX98
+#   endif
 #endif
 
 // Include non-ANSI Libraries
@@ -292,141 +299,9 @@ static inline void check_mutex_unlock(vector v, volatile uint8_t lock_type)
 }
 #endif
 
-/***********************
- **    ZVector API    **
- ***********************/
-
-/*---------------------------------------------------------------------------*/
-// Vector Creation and Destruction:
-
-vector vect_create(size_t init_capacity, size_t item_size, uint32_t properties)
-{
-    // Create the vector first:
-    vector v = (vector)malloc(sizeof(struct _vector));
-    if (v == NULL)
-        throw_error("Not enough memory to allocate the vector!");
-
-    // Initialize the vector:
-    v->prev_size = 0;
-    v->size = 0;
-    if (item_size == 0)
-        v->data_size = ZVECT_DEFAULT_DATA_SIZE;
-    else
-        v->data_size = item_size;
-
-    if (init_capacity == 0)
-        v->capacity = ZVECT_INITIAL_CAPACITY;
-    else
-        v->capacity = init_capacity;
-
-    v->fep = v->capacity / 2;
-
-    v->init_capacity = v->capacity;
-    v->flags = properties;
-    v->SfWpFunc = NULL;
-    
-    v->data = NULL;
-
-#   if ( ZVECT_THREAD_SAFE == 1 )
-    v->lock = NULL;
-    v->lock_type = 0;
-    mutex_alloc(&(v->lock));
-#   endif
-
-    // Allocate memory for the vector storage area
-    v->data = (void **)malloc(sizeof(void *) * v->capacity);
-    if (v->data == NULL)
-        throw_error("Not enough memory to allocate the vector storage area!");
-
-    // Return the vector to the user:
-    return v;
-}
-
-void vect_destroy(vector v)
-{
-    // Check if the vector exists:
-    vect_check(v);
-
-#   if ( ZVECT_THREAD_SAFE == 1 )
-    check_mutex_lock(v, 1);
-#   endif
-
-   if ((v->flags & ZV_SAFE_WIPE) && (v->size > 0))
-    {
-        // Secure Wipe the vector
-        zvect_index i = v->size;
-        while (i--)
-        {
-            item_safewipe(v, v->data[i]);
-            if (!( v->flags & ZV_BYREF ) && !(v->data[i] == NULL))
-                free(v->data[i]);
-        }
-    } else if (v->size > 0) {
-        zvect_index i = v->size;
-        while (i--)
-            if (!( v->flags & ZV_BYREF ) && !(v->data[i] == NULL))
-                free(v->data[i]);
-    }
-
-    // Destroy it:
-    if ( v->SfWpFunc != NULL )
-        free(v->SfWpFunc);
-
-    if ( v->data != NULL )
-        free(v->data);
-#   if ( ZVECT_THREAD_SAFE == 1 )
-    check_mutex_unlock(v, 1);
-    mutex_destroy(v->lock);
-#   endif
-    free(v);
-}
-/*---------------------------------------------------------------------------*/
-
-/*---------------------------------------------------------------------------*/
-// Vector Structural Information report:
-
-bool vect_is_empty(vector v)
-{
-    // Check if the vector exists
-    vect_check(v);
-
-    return v->size == 0;
-}
-
-zvect_index vect_size(vector v)
-{
-    // Check if the vector exists
-    vect_check(v);
-
-    return v->size;
-}
-
-/*---------------------------------------------------------------------------*/
-
-/*---------------------------------------------------------------------------*/
-// Vector Thread Safe user functions:
-#if ( ZVECT_THREAD_SAFE == 1 )
-void vect_lock_enable(void)
-{
-    lock_enabled = true;
-}
-
-void vect_lock_disable(void)
-{
-   lock_enabled = false; 
-}
-
-inline void vect_lock(vector v)
-{
-    check_mutex_lock(v, 3);  
-}
-
-inline void vect_unlock(vector v)
-{
-    check_mutex_unlock(v, 3);
-}
-#endif
-/*---------------------------------------------------------------------------*/
+/******************************
+ **    ZVector Primitives    **
+ ******************************/
 
 /*---------------------------------------------------------------------------*/
 // Vector Capacity management functions:
@@ -500,6 +375,109 @@ void _vect_shrink(vector v)
     v->capacity = new_capacity;
 }
 
+/*---------------------------------------------------------------------------*/
+
+/***********************
+ **    ZVector API    **
+ ***********************/
+
+/*---------------------------------------------------------------------------*/
+// Vector Creation and Destruction:
+
+vector vect_create(size_t init_capacity, size_t item_size, uint32_t properties)
+{
+    // Create the vector first:
+    vector v = (vector)malloc(sizeof(struct _vector));
+    if (v == NULL)
+        throw_error("Not enough memory to allocate the vector!");
+
+    // Initialize the vector:
+    v->prev_size = 0;
+    v->size = 0;
+    if (item_size == 0)
+        v->data_size = ZVECT_DEFAULT_DATA_SIZE;
+    else
+        v->data_size = item_size;
+
+    if (init_capacity == 0)
+        v->capacity = ZVECT_INITIAL_CAPACITY;
+    else
+        v->capacity = init_capacity;
+
+    v->fep = v->capacity / 2;
+
+    v->init_capacity = v->capacity;
+    v->flags = properties;
+    v->SfWpFunc = NULL;
+    
+    v->data = NULL;
+
+#   if ( ZVECT_THREAD_SAFE == 1 )
+    v->lock = NULL;
+    v->lock_type = 0;
+    mutex_alloc(&(v->lock));
+#   endif
+
+    // Allocate memory for the vector storage area
+    v->data = (void **)malloc(sizeof(void *) * v->capacity);
+    if (v->data == NULL)
+        throw_error("Not enough memory to allocate the vector storage area!");
+
+    // Return the vector to the user:
+    return v;
+}
+
+void vect_destroy(vector v)
+{
+    // Check if the vector exists:
+    vect_check(v);
+
+#   if ( ZVECT_THREAD_SAFE == 1 )
+    check_mutex_lock(v, 1);
+#   endif
+
+    // Clear the vector:
+    if (v->size > 0)
+    {
+        // Secure Wipe the vector (or just free) depending on vector properties:
+        zvect_index i = v->size; // if v->size is 200, then the first i below will be 199
+        while ( i-- )
+        {
+            if ((v->flags & ZV_SAFE_WIPE) && (v->data[i] != NULL))
+                item_safewipe(v, v->data[i]);
+            if ((!( v->flags & ZV_BYREF )) && (v->data[i] != NULL))
+                free(v->data[i]);
+        }
+    }
+
+    // Reset interested descriptors:
+    v->prev_size = v->size;
+    v->size = 0;
+
+    // Shrink Vector's capacity:
+    _vect_shrink(v);
+
+    v->prev_size = 0;
+    v->init_capacity = 0;
+    v->capacity = 0;
+
+    // Destroy it:
+    if ( v->SfWpFunc != NULL )
+        free(v->SfWpFunc);
+
+    if ( v->data != NULL )
+        free(v->data);
+
+#   if ( ZVECT_THREAD_SAFE == 1 )
+    check_mutex_unlock(v, 1);
+    mutex_destroy(v->lock);
+#   endif
+
+    // All done and freed, so we can safely
+    // free the vector itself:
+    free(v);
+}
+
 void vect_shrink(vector v)
 {    
 #   if ( ZVECT_THREAD_SAFE == 1 )
@@ -513,6 +491,52 @@ void vect_shrink(vector v)
 #   endif
 }
 
+/*---------------------------------------------------------------------------*/
+
+/*---------------------------------------------------------------------------*/
+// Vector Structural Information report:
+
+bool vect_is_empty(vector v)
+{
+    // Check if the vector exists
+    vect_check(v);
+
+    return v->size == 0;
+}
+
+zvect_index vect_size(vector v)
+{
+    // Check if the vector exists
+    vect_check(v);
+
+    return v->size;
+}
+
+/*---------------------------------------------------------------------------*/
+
+/*---------------------------------------------------------------------------*/
+// Vector Thread Safe user functions:
+#if ( ZVECT_THREAD_SAFE == 1 )
+void vect_lock_enable(void)
+{
+    lock_enabled = true;
+}
+
+void vect_lock_disable(void)
+{
+   lock_enabled = false; 
+}
+
+inline void vect_lock(vector v)
+{
+    check_mutex_lock(v, 3);  
+}
+
+inline void vect_unlock(vector v)
+{
+    check_mutex_unlock(v, 3);
+}
+#endif
 /*---------------------------------------------------------------------------*/
 
 /*---------------------------------------------------------------------------*/
@@ -547,8 +571,6 @@ void vect_clear(vector v)
 
     // Shrink Vector's capacity:
     _vect_shrink(v);
-    printf("all done.\n");
-    fflush(stdout);
 
     // Done.
 #   if ( ZVECT_THREAD_SAFE == 1 )
