@@ -519,18 +519,18 @@ void vect_clear(vector v)
     if (v->size > 0)
     {
         // Secure Wipe the vector
-        zvect_index i = v->size - 1;
-        while (i--)
+        zvect_index i;
+        for ( i = 0; i < v->size; i++ )
         {
             if (v->flags & ZV_SAFE_WIPE)
                 item_safewipe(v, v->data[i]);
-            if (!( v->flags & ZV_BYREF ) && !(v->data[i] == NULL))
+            if ((!( v->flags & ZV_BYREF )) && (!(v->data[i] == NULL)))
                 free(v->data[i]);
         }
     }
 
     v->prev_size = v->size;
-    v->size = v->init_capacity;
+    v->size = 0;
 
     while (v->capacity > v->init_capacity)
         vect_decrease_capacity(v);
