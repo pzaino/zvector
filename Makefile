@@ -21,7 +21,7 @@ WDIR:=$(shell pwd)
 CC=gcc
 
 # Configure additional compiler and linker flags:
-CFLAGS+=-std=c99 -Wall -Wextra -I./src -I./tests -msse
+CFLAGS+=-std=c99 -Wall -Wextra -I./src -I./tests
 LDFLAGS+=
 
 # If you want to pass some MACROS to your code you can use the following 
