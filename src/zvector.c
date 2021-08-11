@@ -235,8 +235,6 @@ static inline void mutex_alloc(pthread_mutex_t **lock)
 
 static inline void mutex_destroy(pthread_mutex_t *lock)
 {
-printf("Ensure unlocking...\n");
-fflush(stdout);
     //pthread_mutex_lock(lock);
     pthread_mutex_unlock(lock);
 
@@ -244,8 +242,6 @@ fflush(stdout);
     pthread_mutex_destroy(lock);
 #endif
 
-printf("freeing memory...\n");
-fflush(stdout);
     if ( lock != NULL )
         free(lock);
 
