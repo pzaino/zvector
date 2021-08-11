@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
+#include <mcheck.h>
 
 #if (  defined(_MSC_VER) )
  // Silly stuff that needs to be added for Microsoft compilers
@@ -87,6 +88,14 @@ int main()
     printf("Testing vectors with complex data structures\n");
 
     fflush(stdout);
+
+#if ( ZVECT_THREAD_SAFE == 1 )
+vect_lock_disable();
+#endif
+
+    //Enable memory leak trace.
+    //Must be called before calling malloc() etc.
+    mtrace();
 
     printf("Test %s_%d: Create a vector of 2 elements and using Car for the vector data:\n", testGrp, testID);
     vector v;
@@ -184,6 +193,9 @@ int main()
     vect_destroy(v);
     printf("done.\n");
     testID++;
+
+    //Disable memory tracing before exit
+    muntrace();
 
     fflush(stdout);
 

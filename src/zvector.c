@@ -912,24 +912,26 @@ static inline void _vect_delete_at(vector v, zvect_index start, zvect_index offs
     // "shift" left the data of one position:
     if ( ((start + offset) < (v->size - 1)) && (v->size > 0))
     {
-        if ( v->flags & ZV_SAFE_WIPE )
-        {
-            zvect_index j2;
-            for ( j2 = v->size; j2 >= (v->size - offset); j2--)
+        zvect_index j2;
+        if ( start + offset > 0)
+            for ( j2 = (start + offset); j2 >= start; j2--)
             {
-                item_safewipe(v, v->data[j2]);
+                if ( v->flags & ZV_SAFE_WIPE )
+                    item_safewipe(v, v->data[j2]);
                 if ( (!(v->flags & ZV_BYREF)) && (v->data[j2] != NULL) )
                     free(v->data[j2]);
             }
-        }
-        zvect_index j;
-        for ( j = (start + offset) + 1; j < v->size; j++)
-            vect_memmove(v->data[(j - offset) - 1], v->data[j], sizeof(void *));
+        vect_memmove(v->data + start, v->data + ((start + offset) + 1), sizeof(void *) * (v->size - (start + offset)));
     }
 
     // Reduce vector size:
-    if ( (!(v->flags & ZV_BYREF)) && ( v->data[v->size - 1] != NULL ) )
-        free(v->data[v->size - 1]);
+    if (!(v->flags & ZV_BYREF))
+    {
+        zvect_index j;
+        for ( j = v->size; j >= (v->size - offset); j-- )
+            if ( v->data[j] != NULL ) 
+                free(v->data[j]);
+    }
     v->prev_size=v->size;
     v->size = v->size - (offset + 1);
 

@@ -77,7 +77,7 @@ echo ""
 
 # select code to test:
 #code_to_check="${start_path}/tests/bin/02ITest003"
-code_to_check="${start_path}/tests/bin/01UTest002"
+code_to_check="${start_path}/tests/bin/01UTest001"
 
 ###############
 # Run Analysis:
