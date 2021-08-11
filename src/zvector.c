@@ -480,18 +480,22 @@ void _vect_shrink(vector v)
     // Check if the vector exists:
     vect_check(v);
 
+    printf("About to determine new size...\n");
+    fflush(stdout);
     // Determine the correct shrunk size:
     zvect_index new_capacity;
     if (v->size < v->init_capacity)
         new_capacity = v->init_capacity;
     else
         new_capacity = v->size + 1;
-    
+    printf("About to resize the vector...\n");
+    fflush(stdout);
     // shrink the vector:
     void** new_data = (void**)realloc(v->data, sizeof(void*) * new_capacity);
     if ( new_data == NULL )
         throw_error("No memory available to shrink the vector!");
-
+    printf("About to update vector's descriptors for capacity...\n");
+    fflush(stdout);
     // Apply changes:
     v->data = new_data;
     v->capacity = new_capacity;
@@ -545,7 +549,8 @@ void vect_clear(vector v)
     printf("About to shrink the vector...\n");
     fflush(stdout);
     _vect_shrink(v);
-
+    printf("all done.\n");
+    fflush(stdout);
 #   if ( ZVECT_THREAD_SAFE == 1 )
     check_mutex_unlock(v, 1);
 #   endif
