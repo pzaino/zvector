@@ -47,16 +47,18 @@ void populate_vector(vector v)
     CCPAL_INIT_LIB;
 
     printf("Test %s_%d: Insert %d elements (one by one) at the end of the vector and check how long this takes:\n", testGrp, testID, MAX_ITEMS);
-    int i = 0;
-	CCPAL_START_MEASURING;
+    fflush(stdout);
 
-    while ( i++ < MAX_ITEMS )
-        vect_add(v, &i);
-    
-    CCPAL_STOP_MEASURING;
+        int i = 0;
+        CCPAL_START_MEASURING;
 
-    // Returns perf analysis results:
-    CCPAL_REPORT_ANALYSIS
+        while ( i++ < MAX_ITEMS )
+            vect_add(v, &i);
+        
+        CCPAL_STOP_MEASURING;
+
+        // Returns perf analysis results:
+        CCPAL_REPORT_ANALYSIS
 
     printf("done.\n");
     testID++;
@@ -78,8 +80,11 @@ int main()
     fflush(stdout);
 
     printf("Test %s_%d: Create a vector of 10 elements and using int for the vector data:\n", testGrp, testID);
-    vector v;
-    v = vect_create(10, sizeof(int), ZV_BYREF);
+    fflush(stdout);
+    
+        vector v;
+        v = vect_create(10, sizeof(int), ZV_BYREF);
+
     printf("done.\n");
     testID++;
 
@@ -95,7 +100,10 @@ int main()
 #   endif
 
     printf("Test %s_%d: check if the size of the vector is now %d:\n", testGrp, testID, MAX_ITEMS);
-    assert(vect_size(v) == MAX_ITEMS);
+    fflush(stdout);
+
+        assert(vect_size(v) == MAX_ITEMS);
+
     printf("done.\n");
     testID++;
 
@@ -112,17 +120,18 @@ int main()
     */
 
     printf("Test %s_%d: Remove vector elements one by one (from the end of the vector) and test how long it takes:\n", testGrp, testID);
+    fflush(stdout);
 
 #   if ( ZVECT_THREAD_SAFE == 1 )
     vect_lock(v);
 #   endif
 
-	CCPAL_START_MEASURING;
+        CCPAL_START_MEASURING;
 
-    while ( !vect_is_empty(v) )
-        vect_delete(v);
-    
-    CCPAL_STOP_MEASURING;
+        while ( !vect_is_empty(v) )
+            vect_delete(v);
+        
+        CCPAL_STOP_MEASURING;
 
 #   if ( ZVECT_THREAD_SAFE == 1 )
     vect_unlock(v);
@@ -137,14 +146,20 @@ int main()
     fflush(stdout);
 
     printf("Test %s_%d: check if vector is empty:\n", testGrp, testID);
-    assert(vect_is_empty(v));
+    fflush(stdout);
+
+        assert(vect_is_empty(v));
+
     printf("done.\n");
     testID++;
 
     fflush(stdout);
 
     printf("Test %s_%d: Check if vector size is now 0 (zero):\n", testGrp, testID);
-    assert(vect_size(v) == 0);
+    fflush(stdout);
+
+        assert(vect_size(v) == 0);
+
     printf("done.\n");
     testID++;
 
@@ -160,22 +175,16 @@ int main()
 #   endif
 
     printf("Test %s_%d: destroy the vector:\n", testGrp, testID);
-#   if ( ZVECT_THREAD_SAFE == 1 )
-    vect_lock(v);
-#   endif
+    fflush(stdout);
 
-	CCPAL_START_MEASURING;
+        CCPAL_START_MEASURING;
 
-    vect_destroy(v);
+        vect_destroy(v);
 
-    CCPAL_STOP_MEASURING;
+        CCPAL_STOP_MEASURING;
 
-#   if ( ZVECT_THREAD_SAFE == 1 )
-    vect_unlock(v);
-#   endif
-
-    // Returns perf analysis results:
-    CCPAL_REPORT_ANALYSIS;
+        // Returns perf analysis results:
+        CCPAL_REPORT_ANALYSIS;
 
     printf("done.\n");
     testID++;
