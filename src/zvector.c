@@ -101,7 +101,13 @@ struct _vector
                 void (*SfWpFunc)(const void *item, size_t size);     
                                         // - Pointer to a CUSTOM Safe Wipe 
                                         //   function (optional) needed only 
-                                        //   for Secure Wiping special structures.
+                                        //   for Secure Wiping special 
+                                        //   structures.
+                uint32_t  ep_filed;     // - This is a safety field to separate
+                                        //   the storage from the rest of the 
+                                        //   vector structure, to protect the
+                                        //   descriptors from acidental writes
+                                        //   from memcpy/memmove with hw acell.
                 void **data ZVECT_DATAALIGN;
                                         // - Vector's storage.
 }ZVECT_DATAALIGN;
@@ -259,21 +265,25 @@ static inline void mutex_destroy(CRITICAL_SECTION *lock)
  */
 static inline void check_mutex_lock(vector v, volatile uint8_t lock_type)
 {
-    if ( lock_type >= v->lock_type )
+    if ( lock_enabled )
     {
-        if ( lock_enabled )
+        if ( lock_type >= v->lock_type )
+        {
             mutex_lock(v->lock);
-        v->lock_type = lock_type;
+            v->lock_type = lock_type;
+        }
     }
 }
 
 static inline void check_mutex_unlock(vector v, volatile uint8_t lock_type)
 {
-    if ( lock_type == v->lock_type )
+    if ( lock_enabled )
     {
-        v->lock_type = 0;
-        if ( lock_enabled )
+        if ( lock_type == v->lock_type )
+        {
+            v->lock_type = 0;
             mutex_unlock(v->lock);
+        }
     }
 }
 #endif
@@ -469,9 +479,6 @@ void vect_shrink(vector v)
     // Check if the vector exists:
     vect_check(v);
 
-    if (vect_is_empty(v))
-        return;
-
     zvect_index new_capacity;
 #   if ( ZVECT_THREAD_SAFE == 1 )
     check_mutex_lock(v, 1);
@@ -518,9 +525,9 @@ void vect_clear(vector v)
 
     if (v->size > 0)
     {
-        // Secure Wipe the vector
-        zvect_index i;
-        for ( i = 0; i < v->size; i++ )
+        // Secure Wipe the vector (or just free)
+        zvect_index i = v->size; // if v->size is 200, then the first i below will be 199
+        while ( i-- )
         {
             if (v->flags & ZV_SAFE_WIPE)
                 item_safewipe(v, v->data[i]);
@@ -532,10 +539,7 @@ void vect_clear(vector v)
     v->prev_size = v->size;
     v->size = 0;
 
-    while (v->capacity > v->init_capacity)
-        vect_decrease_capacity(v);
-
-    v->size = 0;
+    vect_shrink(v);
 
 #   if ( ZVECT_THREAD_SAFE == 1 )
     check_mutex_unlock(v, 1);
