@@ -480,8 +480,8 @@ void _vect_shrink(vector v)
     // Check if the vector exists:
     vect_check(v);
 
-    zvect_index new_capacity;
     // Determine the correct shrunk size:
+    zvect_index new_capacity;
     if (v->size < v->init_capacity)
         new_capacity = v->init_capacity;
     else
@@ -530,9 +530,9 @@ void vect_clear(vector v)
         zvect_index i = v->size; // if v->size is 200, then the first i below will be 199
         while ( i-- )
         {
-            if (v->flags & ZV_SAFE_WIPE)
+            if ((v->flags & ZV_SAFE_WIPE) && (v->data[i] != NULL))
                 item_safewipe(v, v->data[i]);
-            if ((!( v->flags & ZV_BYREF )) && (!(v->data[i] == NULL)))
+            if ((!( v->flags & ZV_BYREF )) && (v->data[i] != NULL))
                 free(v->data[i]);
         }
     }
