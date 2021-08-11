@@ -209,12 +209,15 @@ static inline void mutex_unlock(pthread_mutex_t *lock)
 
 static inline void mutex_alloc(pthread_mutex_t **lock)
 {
+    pthread_mutex_t *set_type = (pthread_mutex_t *)lock;
+#if ( !defined(macOS))
     pthread_mutexattr_t Attr;
     pthread_mutexattr_init(&Attr);
     pthread_mutexattr_settype(&Attr, PTHREAD_MUTEX_RECURSIVE_NP);
-    pthread_mutex_t *set_type = (pthread_mutex_t *)lock;
     pthread_mutex_init(set_type, &Attr);
-
+#else
+    pthread_mutex_init(set_type, NULL);
+#endif
     *lock = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
     if (lock == NULL)
         throw_error("Not enough memory to allocate the vector!");
