@@ -24,6 +24,13 @@
 // Include vector.h header
 #include "zvector.h"
 
+// Declare Vector status flags:
+enum {
+    ZVS_NONE       = 0,      // Set or Reset vector's status register.
+    ZVS_CUST_WIPE  = 1 << 0, // Sets the bit to indicate a custom secure wipe
+                             // function has been set.
+};
+
 #if ( OS_TYPE == 1 )
 #   if ( !defined(macOS))
 /*  Improve PThreads on Linux.
@@ -110,11 +117,7 @@ struct _vector
                                         //   function (optional) needed only 
                                         //   for Secure Wiping special 
                                         //   structures.
-                uint32_t  ep_filed;     // - This is a safety field to separate
-                                        //   the storage from the rest of the 
-                                        //   vector structure, to protect the
-                                        //   descriptors from acidental writes
-                                        //   from memcpy/memmove with hw acell.
+            uint32_t status;            // - Internal vector Status Flags
                 void **data ZVECT_DATAALIGN;
                                         // - Vector's storage.
 }ZVECT_DATAALIGN;
@@ -145,7 +148,7 @@ static inline void item_safewipe(vector v, const void *item)
     // && ( (ADDR_TYPE2)item >= 0x100000 )
     if ((item != NULL))
     {
-        if ( v->SfWpFunc == NULL )
+        if ( !(v->status & ZVS_CUST_WIPE) )
         {
             memset((void *)item, 0, v->data_size);
         }
@@ -485,7 +488,7 @@ void vect_destroy(vector v)
     printf("About to free custom secure wipe function pointer...\n");
     fflush(stdout);
     // Destroy it:
-    if ( v->SfWpFunc != NULL )
+    if ( v->status & ZVS_CUST_WIPE)
         free(v->SfWpFunc);
 
     printf("About to free vector's data...\n");
@@ -500,6 +503,9 @@ void vect_destroy(vector v)
     mutex_destroy(v->lock);
 #   endif
 
+    // Clear vector status flags:
+    v->status = 0;
+    
     printf("About to free the vector...\n");
     fflush(stdout);
     // All done and freed, so we can safely
@@ -616,6 +622,7 @@ void vect_set_wipefunct(vector v, void (*f1)(const void *, size_t))
     // Set custom Safe Wipe function:
     v->SfWpFunc = f1;
     //vect_memcpy(v->SfWpFunc, f1, sizeof(void *));
+    v->status += ZVS_CUST_WIPE;
 }
 
 // inline implementation for all add(s):
