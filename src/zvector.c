@@ -94,6 +94,7 @@ struct _vector
                                         //   It contains bits that set Secure
                                         //   Wipe, Auto Shrink, Pass Items By 
                                         //   Ref etc.
+            uint32_t status;            // - Internal vector Status Flags
 #if ( ZVECT_THREAD_SAFE == 1 )
 #   if MUTEX_TYPE == 0
     volatile uint8_t lock_type;         // - This field contains the lock used
@@ -103,12 +104,12 @@ struct _vector
 #   elif MUTEX_TYPE == 1
     volatile uint8_t lock_type;         // - This field contains the lock used 
                                         //   for this Vector.
-     pthread_mutex_t *lock;             // - Vector's mutex for thread safe 
+     pthread_mutex_t lock;             // - Vector's mutex for thread safe 
                                         //   micro-transactions or user locks.
 #   elif MUTEX_TYPE == 2
     volatile uint8_t lock_type;         // - This field contains the lock used 
                                         //   for this Vector.
-    CRITICAL_SECTION *lock;             // - Vector's mutex for thread safe 
+    CRITICAL_SECTION lock;             // - Vector's mutex for thread safe 
                                         //   micro-transactions or user locks.
 #   endif
 #endif
@@ -116,8 +117,7 @@ struct _vector
                                         // - Pointer to a CUSTOM Safe Wipe 
                                         //   function (optional) needed only 
                                         //   for Secure Wiping special 
-                                        //   structures.
-            uint32_t status;            // - Internal vector Status Flags
+                                        //   structures. 
                 void **data ZVECT_DATAALIGN;
                                         // - Vector's storage.
 }ZVECT_DATAALIGN;
@@ -217,34 +217,25 @@ static inline void mutex_unlock(pthread_mutex_t *lock)
     pthread_mutex_unlock(lock);
 }
 
-static inline void mutex_alloc(pthread_mutex_t **lock)
+static inline void mutex_alloc(pthread_mutex_t *lock)
 {
-    pthread_mutex_t *mylock = (pthread_mutex_t *)lock;
 #if ( !defined(macOS))
     pthread_mutexattr_t Attr;
     pthread_mutexattr_init(&Attr);
     pthread_mutexattr_settype(&Attr, PTHREAD_MUTEX_RECURSIVE_NP);
-    pthread_mutex_init(mylock, &Attr);
+    pthread_mutex_init(lock, &Attr);
 #else
-    pthread_mutex_init(mylock, NULL);
+    pthread_mutex_init(lock, NULL);
 #endif
-    *lock = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
-    if (lock == NULL)
-        throw_error("Not enough memory to allocate the vector!");
 }
 
 static inline void mutex_destroy(pthread_mutex_t *lock)
 {
     //pthread_mutex_lock(lock);
     pthread_mutex_unlock(lock);
-
-#if ( !defined(macOS) )
+//#if ( !defined(macOS) )
     pthread_mutex_destroy(lock);
-#endif
-
-    if ( lock != NULL )
-        free(lock);
-
+//#endif
 }
 #   elif MUTEX_TYPE == 2
 static volatile bool lock_enabled = true;
@@ -291,7 +282,7 @@ static inline void check_mutex_lock(vector v, volatile uint8_t lock_type)
     {
         if ( lock_type >= v->lock_type )
         {
-            mutex_lock(v->lock);
+            mutex_lock(&(v->lock));
             v->lock_type = lock_type;
         }
     }
@@ -304,7 +295,7 @@ static inline void check_mutex_unlock(vector v, volatile uint8_t lock_type)
         if ( lock_type == v->lock_type )
         {
             v->lock_type = 0;
-            mutex_unlock(v->lock);
+            mutex_unlock(&(v->lock));
         }
     }
 }
@@ -420,11 +411,11 @@ vector vect_create(size_t init_capacity, size_t item_size, uint32_t properties)
     v->init_capacity = v->capacity;
     v->flags = properties;
     v->SfWpFunc = NULL;
+    v->status = 0;
     
     v->data = NULL;
 
 #   if ( ZVECT_THREAD_SAFE == 1 )
-    v->lock = NULL;
     v->lock_type = 0;
     mutex_alloc(&(v->lock));
 #   endif
@@ -443,19 +434,9 @@ void vect_destroy(vector v)
     // Check if the vector exists:
     vect_check(v);
 
-    printf("Checked vector...\n");
-    fflush(stdout);
-
 #   if ( ZVECT_THREAD_SAFE == 1 )
     check_mutex_lock(v, 1);
 #   endif
-
-    printf("Got lock for vector...\n");
-    fflush(stdout);
-
-
-    printf("About to clear the vector...\n");
-    fflush(stdout);
 
     // Clear the vector:
     if (v->size > 0)
@@ -471,50 +452,33 @@ void vect_destroy(vector v)
         }
     }
 
-    printf("Vector cleared...\n");
-    fflush(stdout);
-
-    printf("About to reset 1st part of vector's descriptors...\n");
-    fflush(stdout);
     // Reset interested descriptors:
     v->prev_size = v->size;
     v->size = 0;
 
-    printf("About to shrink the vector...\n");
-    fflush(stdout);
     // Shrink Vector's capacity:
     if ( v->capacity > (v->size + 1))
         _vect_shrink(v);
 
-    printf("About to clear 2nd part of vector's descriptors...\n");
-    fflush(stdout);
     v->prev_size = 0;
     v->init_capacity = 0;
     v->capacity = 0;
 
-    printf("About to free custom secure wipe function pointer...\n");
-    fflush(stdout);
     // Destroy it:
     if ( (v->status & ZVS_CUST_WIPE) )
         free(v->SfWpFunc);
 
-    printf("About to free vector's data...\n");
-    fflush(stdout);
     if ( v->data != NULL )
         free(v->data);
 
-    printf("About to unlock and destory vector's mutex...\n");
-    fflush(stdout);
 #   if ( ZVECT_THREAD_SAFE == 1 )
     check_mutex_unlock(v, 1);
-    mutex_destroy(v->lock);
+    mutex_destroy(&(v->lock));
 #   endif
 
     // Clear vector status flags:
     v->status = 0;
 
-    printf("About to free the vector...\n");
-    fflush(stdout);
     // All done and freed, so we can safely
     // free the vector itself:
     free(v);
@@ -651,37 +615,42 @@ static inline void _vect_add_at(vector v, const void *value, zvect_index i)
         vect_increase_capacity(v);
 
     // Allocate memory for the new item:
-    if ( v->flags & ZV_BYREF )
-        v->data[v->size] = (void *)malloc(sizeof(void *));
-    else
-        v->data[v->size] = (void *)malloc(v->data_size);
-    if (v->data[v->size] == NULL )
-        throw_error("Not enough memory to add new item in the vector!");
+    if (i == v->size )
+    {
+        if ( v->flags & ZV_BYREF )
+            v->data[v->size] = (void *)malloc(sizeof(void *));
+        else
+            v->data[v->size] = (void *)malloc(v->data_size);
+        if (v->data[v->size] == NULL )
+            throw_error("Not enough memory to add new item in the vector!");
+    }
+
+    int16_t array_changed = 0;
 
 #   if ( ZVECT_FULL_REENTRANT == 1 )
     // If we are in FULL_REENTRANT MODE prepare for potential
     // array copy:
-    uint32_t array_changed = 0;
     void **new_data = NULL;
     if ((i < v->size) && (v->size > 0))
     {
         new_data = (void **)malloc(sizeof(void *) * v->capacity);
         if (new_data == NULL)
             throw_error("Not enough memory to resize the vector!");
-    } 
-    else
-        UNUSED(new_data);
+    }     
 #   endif
 
     // "Shift" right the array of one position to make space for the new item:
-    if ((i < v->size) && (v->size > 0))
+    if ( i < v->size )
     {
-#   if ( ZVECT_FULL_REENTRANT == 1 )
         array_changed = 1;
+#   if ( ZVECT_FULL_REENTRANT == 1 )
+        // Algorithm to try to copy an array of pointers as fast as possible:
         if ( i > 0 )
             vect_memcpy(new_data, v->data, sizeof(void *) * i );
         vect_memcpy(new_data + (i + 1), v->data + i, sizeof(void *) * ( v->size - i ));
-        /* zvect_index j;
+
+        /* Paolo's note: the code below is left just for performance comparisons! 
+        zvect_index j;
         if ( i > 0 )
             for (j=0; j <= i; j++)
                 new_data[j] = v->data[j];
@@ -692,26 +661,31 @@ static inline void _vect_add_at(vector v, const void *value, zvect_index i)
         // We can't use the vect_memcpy when not in full reentrant code
         // because it's not safe to use it on the same src and dst.
         vect_memmove(v->data + (i + 1), v->data + i, sizeof(void *) * ( v->size - i ));
+
+        /* Paolo's note: the code below is left just for performance comparisons!
+        zvect_index j;
+        for (j=(i + 1); j <= v->size; j++)
+            v->data[j - 1] = v->data[j];
+        */
 #   endif
     }
 
     // Finally add new value in at the index
 #   if ( ZVECT_FULL_REENTRANT == 1 )
-    if ( array_changed == 1 )
+    if ( array_changed )
     {
-        if (i < v->size )
+        if ( v->flags & ZV_BYREF )
         {
-            if ( v->flags & ZV_BYREF )
-                new_data[i] = (void *)malloc(sizeof(void *));
-            else
-                new_data[i] = (void *)malloc(v->data_size);
+            new_data[i] = (void *)malloc(sizeof(void *));
+            new_data[i] = (void *)value;
+        }
+        else
+        {
+            new_data[i] = (void *)malloc(v->data_size);
             if (new_data[i] == NULL )
                 throw_error("Not enough memory to add new item in the vector!");
-        }
-        if ( v->flags & ZV_BYREF )
-            new_data[i] = (void *)value;
-        else
             vect_memcpy(new_data[i], value, v->data_size);
+        }
     } else {
         if ( v->flags & ZV_BYREF )
             v->data[i] = (void *)value;
@@ -719,7 +693,7 @@ static inline void _vect_add_at(vector v, const void *value, zvect_index i)
             vect_memcpy(v->data[i], value, v->data_size);
     }
 #   else
-    if ( i < v->size )
+    if ( array_changed )
     {
         // We moved chunks of memory so we need to 
         // allocate new memory for the item in position i:
@@ -738,7 +712,7 @@ static inline void _vect_add_at(vector v, const void *value, zvect_index i)
 
     // Apply changes:
 #   if ( ZVECT_FULL_REENTRANT == 1 )
-    if (array_changed == 1)
+    if ( array_changed )
     {
         free(v->data);
         v->data = new_data;
@@ -751,6 +725,11 @@ static inline void _vect_add_at(vector v, const void *value, zvect_index i)
 
 #   if ( ZVECT_THREAD_SAFE == 1 )
     check_mutex_unlock(v, 1);
+#   endif
+    return;
+
+#   if ( ZVECT_FULL_REENTRANT == 1 )
+    UNUSED(new_data);
 #   endif
 }
 
@@ -922,7 +901,7 @@ static inline void *_vect_remove_at(vector v, zvect_index i)
     }
 
 #if ( ZVECT_FULL_REENTRANT == 1 )
-    if (array_changed == 1)
+    if ( array_changed )
     {
         free(v->data);
         v->data = new_data;
@@ -989,6 +968,7 @@ static inline void _vect_delete_at(vector v, zvect_index start, zvect_index offs
     {
         zvect_index j2;
         if ( start + offset > 0)
+        {
             for ( j2 = (start + offset); j2 >= start; j2--)
             {
                 if ( v->flags & ZV_SAFE_WIPE )
@@ -996,6 +976,7 @@ static inline void _vect_delete_at(vector v, zvect_index start, zvect_index offs
                 if ( (!(v->flags & ZV_BYREF)) && (v->data[j2] != NULL) )
                     free(v->data[j2]);
             }
+        }
         vect_memmove(v->data + start, v->data + ((start + offset) + 1), sizeof(void *) * ( v->size - (start + offset) ));
     }
 

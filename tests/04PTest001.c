@@ -30,7 +30,7 @@
 #endif
 #include ZVECTORH
 
-#define MAX_ITEMS 10000
+#define MAX_ITEMS 10000000
 
 // Setup tests:
 char *testGrp = "001";
