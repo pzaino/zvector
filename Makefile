@@ -189,7 +189,7 @@ LIBST=$(LIBDIR)/lib$(LIBNAME).a
 # Targets:
 
 .PHONY: all
-all: CFLAGS+=-O3 
+all: CFLAGS+=-O3
 all: core test
 
 clean:

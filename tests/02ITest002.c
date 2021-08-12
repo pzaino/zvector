@@ -102,7 +102,7 @@ void *producer(void *arg)
 
             vect_lock(v);
             // Let's add a new item in the queue:
-            vect_add(v, &qi);
+            vect_push(v, &qi);
 
             StackItem item = *((StackItem *)vect_get(v));
 
@@ -141,7 +141,7 @@ void *consumer(void *arg)
             // For beginners: this is how in C we convert back a void * into the original dtata_type
             StackItem *item = (StackItem *)malloc(sizeof(StackItem *));
             if (!vect_is_empty(v))
-                item = (StackItem *)vect_remove(v);
+                item = (StackItem *)vect_pop(v);
 
             vect_unlock(v);
 
