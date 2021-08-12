@@ -146,7 +146,7 @@ static inline void vect_check(vector x)
 static inline void item_safewipe(vector v, const void *item)
 {
     // && ( (ADDR_TYPE2)item >= 0x100000 )
-    if ((item != NULL))
+    if ( item != NULL )
     {
         if ( !(v->status & ZVS_CUST_WIPE) )
         {
@@ -231,11 +231,8 @@ static inline void mutex_alloc(pthread_mutex_t *lock)
 
 static inline void mutex_destroy(pthread_mutex_t *lock)
 {
-    //pthread_mutex_lock(lock);
     pthread_mutex_unlock(lock);
-//#if ( !defined(macOS) )
     pthread_mutex_destroy(lock);
-//#endif
 }
 #   elif MUTEX_TYPE == 2
 static volatile bool lock_enabled = true;
@@ -250,9 +247,9 @@ static inline void mutex_unlock(CRITICAL_SECTION *lock)
     LeaveCriticalSection(lock);
 }
 
-static inline void mutex_alloc(CRITICAL_SECTION **lock)
+static inline void mutex_alloc(CRITICAL_SECTION *lock)
 {
-    InitializeCriticalSection((CRITICAL_SECTION *)lock);
+    InitializeCriticalSection(lock);
 }
 
 static inline void mutex_destroy(CRITICAL_SECTION *lock)
@@ -445,10 +442,13 @@ void vect_destroy(vector v)
         zvect_index i = v->size; // if v->size is 200, then the first i below will be 199
         while ( i-- )
         {
-            if ((v->flags & ZV_SAFE_WIPE) && (v->data[i] != NULL))
-                item_safewipe(v, v->data[i]);
-            if ((!( v->flags & ZV_BYREF )) && (v->data[i] != NULL))
-                free(v->data[i]);
+            if (v->data[i] != NULL)
+            {
+                if ( v->flags & ZV_SAFE_WIPE )
+                    item_safewipe(v, v->data[i]);
+                if ( !( v->flags & ZV_BYREF ) )
+                    free(v->data[i]);
+            }
         }
     }
 
@@ -564,10 +564,13 @@ void vect_clear(vector v)
         zvect_index i = v->size; // if v->size is 200, then the first i below will be 199
         while ( i-- )
         {
-            if ((v->flags & ZV_SAFE_WIPE) && (v->data[i] != NULL))
-                item_safewipe(v, v->data[i]);
-            if ((!( v->flags & ZV_BYREF )) && (v->data[i] != NULL))
-                free(v->data[i]);
+            if (v->data[i] != NULL)
+            {
+                if ( v->flags & ZV_SAFE_WIPE )
+                    item_safewipe(v, v->data[i]);
+                if ( !( v->flags & ZV_BYREF ) )
+                    free(v->data[i]);
+            }
         }
     }
 
@@ -648,25 +651,10 @@ static inline void _vect_add_at(vector v, const void *value, zvect_index i)
         if ( i > 0 )
             vect_memcpy(new_data, v->data, sizeof(void *) * i );
         vect_memcpy(new_data + (i + 1), v->data + i, sizeof(void *) * ( v->size - i ));
-
-        /* Paolo's note: the code below is left just for performance comparisons! 
-        zvect_index j;
-        if ( i > 0 )
-            for (j=0; j <= i; j++)
-                new_data[j] = v->data[j];
-        for (j=i + 1; j <= v->size; j++)
-            new_data[j - 1] = v->data[j];
-        */
 #   else
         // We can't use the vect_memcpy when not in full reentrant code
         // because it's not safe to use it on the same src and dst.
         vect_memmove(v->data + (i + 1), v->data + i, sizeof(void *) * ( v->size - i ));
-
-        /* Paolo's note: the code below is left just for performance comparisons!
-        zvect_index j;
-        for (j=(i + 1); j <= v->size; j++)
-            v->data[j - 1] = v->data[j];
-        */
 #   endif
     }
 
@@ -693,7 +681,7 @@ static inline void _vect_add_at(vector v, const void *value, zvect_index i)
             vect_memcpy(v->data[i], value, v->data_size);
     }
 #   else
-    if ( array_changed )
+    if ( array_changed == 1 )
     {
         // We moved chunks of memory so we need to 
         // allocate new memory for the item in position i:
@@ -712,7 +700,7 @@ static inline void _vect_add_at(vector v, const void *value, zvect_index i)
 
     // Apply changes:
 #   if ( ZVECT_FULL_REENTRANT == 1 )
-    if ( array_changed )
+    if ( array_changed == 1)
     {
         free(v->data);
         v->data = new_data;
@@ -964,20 +952,24 @@ static inline void _vect_delete_at(vector v, zvect_index start, zvect_index offs
 #   endif
 
     // "shift" left the data of one position:
-    if ( ((start + offset) < (v->size - 1)) && (v->size > 0))
+    zvect_index tot_items = start + offset;
+    if ( (tot_items < (v->size - 1)) && (v->size > 0))
     {
-        zvect_index j2;
-        if ( start + offset > 0)
+        if ( tot_items > 0 )
         {
-            for ( j2 = (start + offset); j2 >= start; j2--)
+            zvect_index j2;
+            for ( j2 = tot_items; j2 >= start; j2--)
             {
-                if ( v->flags & ZV_SAFE_WIPE )
-                    item_safewipe(v, v->data[j2]);
-                if ( (!(v->flags & ZV_BYREF)) && (v->data[j2] != NULL) )
-                    free(v->data[j2]);
+                if ( v->data[j2] != NULL )
+                {
+                    if ( v->flags & ZV_SAFE_WIPE )
+                        item_safewipe(v, v->data[j2]);
+                    if ( !(v->flags & ZV_BYREF) )
+                        free(v->data[j2]);
+                }
             }
         }
-        vect_memmove(v->data + start, v->data + ((start + offset) + 1), sizeof(void *) * ( v->size - (start + offset) ));
+        vect_memmove(v->data + start, v->data + (tot_items + 1), sizeof(void *) * (v->size - tot_items));
     }
 
     // Reduce vector size:
@@ -1032,11 +1024,6 @@ void vect_swap(vector v, zvect_index i1, zvect_index i2)
     // check if the vector exists:
     vect_check(v);
 
-    // Let's allocate some meory for the temporary pointer:
-    // void *temp = (void *)malloc(sizeof(void *));
-    // if ( temp == NULL )
-    //    throw_error("Not enough memory to swap elements!");
-
     // Let's swap items:
 #   if ( ZVECT_THREAD_SAFE == 1 )
     check_mutex_lock(v, 1);
@@ -1047,8 +1034,6 @@ void vect_swap(vector v, zvect_index i1, zvect_index i2)
 #   if ( ZVECT_THREAD_SAFE == 1 )
     check_mutex_unlock(v, 1);
 #   endif
-    // We are done, let's clean up memory
-    // free(temp);
 }
 
 void vect_rotate_left(vector v, zvect_index i)
