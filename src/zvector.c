@@ -548,6 +548,43 @@ inline void vect_unlock(vector v)
 /*---------------------------------------------------------------------------*/
 // Vector Data Storage functions:
 
+static void _free_items(vector v, zvect_index first, zvect_index offset)
+{
+    if ( v->size == 0 )
+        return;
+
+    zvect_index j;
+    if ( (first + offset) > 0 )
+    {
+        for (j = (first + offset); j >= first; j--)
+        {
+            if ( v->data[j] != NULL )
+            {
+                if ( v->flags & ZV_SAFE_WIPE )
+                    item_safewipe(v, v->data[j]);
+                if ( !(v->flags & ZV_BYREF) )
+                    free(v->data[j]);
+                if ( j == first )
+                    break; // this is required if we are using
+                           // uint and the first element is elemnt
+                           // 0, because on GCC a uint will fail
+                           // then check in the for ( j >= first )
+                           // in this particoular case!
+            }
+        }
+    } 
+    else
+    {
+        if ( v->data[0] != NULL )
+        {
+            if ( v->flags & ZV_SAFE_WIPE )
+                item_safewipe(v, v->data[0]);
+            if ( !(v->flags & ZV_BYREF) )
+                free(v->data[0]);
+        }
+    }
+}
+
 void vect_clear(vector v)
 {
     // check if the vector exists:
@@ -558,21 +595,7 @@ void vect_clear(vector v)
 #   endif
 
     // Clear the vector:
-    if (v->size > 0)
-    {
-        // Secure Wipe the vector (or just free) depending on vector properties:
-        zvect_index i = v->size; // if v->size is 200, then the first i below will be 199
-        while ( i-- )
-        {
-            if (v->data[i] != NULL)
-            {
-                if ( v->flags & ZV_SAFE_WIPE )
-                    item_safewipe(v, v->data[i]);
-                if ( !( v->flags & ZV_BYREF ) )
-                    free(v->data[i]);
-            }
-        }
-    }
+    _free_items(v, 0, (v->size - 1));
 
     // Reset interested descriptors:
     v->prev_size = v->size;
@@ -867,23 +890,9 @@ static inline void *_vect_remove_at(vector v, zvect_index i)
         if ( i > 0 )
             vect_memcpy(new_data, v->data, sizeof(void *) * i );
         vect_memcpy(new_data + i, v->data + (i + 1), sizeof(void *) * ( v->size - i ));
-        /* zvect_index j;
-        if ( i > 0 )
-            for (j=0; j <= i; j++)
-                new_data[j] = v->data[j];
-        for (j=i + 1; j <= v->size; j++)
-            new_data[j - 1] = v->data[j];
-        */
 #   else
         // We can't use the vect_memcpy when not in full reentrant code
         // because it's not safe to use it on the same src and dst.
-        /* zvect_index j;
-        for (j = i + 1; j <= v->size; j++)
-        {
-            // Just move the pointers to the elements!
-            // vect_memcpy(v->data[j - 1], v->data[j], sizeof(void *));
-            v->data[j - 1] = v->data[j];
-        } */
         vect_memmove(v->data + i, v->data + ( i + 1 ), sizeof(void *) * ( v->size - i ));
 #   endif
     }
@@ -953,22 +962,9 @@ static inline void _vect_delete_at(vector v, zvect_index start, zvect_index offs
 
     // "shift" left the data of one position:
     zvect_index tot_items = start + offset;
-    if ( (tot_items < (v->size - 1)) && (v->size > 0))
+    if ( ((start + offset) < (v->size - 1)) && (v->size > 0))
     {
-        if ( tot_items > 0 )
-        {
-            zvect_index j2;
-            for ( j2 = tot_items; j2 >= start; j2--)
-            {
-                if ( v->data[j2] != NULL )
-                {
-                    if ( v->flags & ZV_SAFE_WIPE )
-                        item_safewipe(v, v->data[j2]);
-                    if ( !(v->flags & ZV_BYREF) )
-                        free(v->data[j2]);
-                }
-            }
-        }
+        _free_items(v, start, offset);
         vect_memmove(v->data + start, v->data + (tot_items + 1), sizeof(void *) * (v->size - tot_items));
     }
 

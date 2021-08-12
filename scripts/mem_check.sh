@@ -51,6 +51,8 @@ done
 # Initialization
 readonly cmd_name="$($cpath/basename "$0")"
 
+readonly test_name="$1"
+
 # Detect path from where we are launching this script:
 curpath=$(pwd)
 bdir="$(basename "$curpath")"
@@ -76,8 +78,13 @@ echo "Using valgrindrelease: $(${valgrind_cmd} --version)"
 echo ""
 
 # select code to test:
-#code_to_check="${start_path}/tests/bin/02ITest003"
-code_to_check="${start_path}/tests/bin/01UTest001"
+if ( "$test_name" != "" );
+then
+    code_to_check="$test_name"
+else
+    #code_to_check="${start_path}/tests/bin/02ITest003"
+    code_to_check="${start_path}/tests/bin/01UTest001"
+fi
 
 ###############
 # Run Analysis:
