@@ -641,7 +641,7 @@ static inline void _vect_add_at(vector v, const void *value, zvect_index i)
         vect_increase_capacity(v);
 
     // Allocate memory for the new item:
-    if (i == v->size )
+    if ( i == v->size )
     {
         if ( v->flags & ZV_BYREF )
             v->data[v->size] = (void *)malloc(sizeof(void *));
@@ -657,7 +657,7 @@ static inline void _vect_add_at(vector v, const void *value, zvect_index i)
     // If we are in FULL_REENTRANT MODE prepare for potential
     // array copy:
     void **new_data = NULL;
-    if ((i < v->size) && (v->size > 0))
+    if ( i < v->size )
     {
         new_data = (void **)malloc(sizeof(void *) * v->capacity);
         if (new_data == NULL)
@@ -704,7 +704,7 @@ static inline void _vect_add_at(vector v, const void *value, zvect_index i)
             vect_memcpy(v->data[i], value, v->data_size);
     }
 #   else
-    if ( array_changed == 1 )
+    if ( array_changed )
     {
         // We moved chunks of memory so we need to 
         // allocate new memory for the item in position i:
@@ -723,7 +723,7 @@ static inline void _vect_add_at(vector v, const void *value, zvect_index i)
 
     // Apply changes:
 #   if ( ZVECT_FULL_REENTRANT == 1 )
-    if ( array_changed == 1)
+    if ( array_changed )
     {
         free(v->data);
         v->data = new_data;
