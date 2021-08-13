@@ -643,12 +643,12 @@ static inline void _vect_add_at(vector v, const void *value, zvect_index i)
     // Allocate memory for the new item:
     if ( i == v->size )
     {
-        if ( v->flags & ZV_BYREF )
-            v->data[v->size] = (void *)malloc(sizeof(void *));
-        else
+        if ( !( v->flags & ZV_BYREF) )
+        {
             v->data[v->size] = (void *)malloc(v->data_size);
-        if (v->data[v->size] == NULL )
-            throw_error("Not enough memory to add new item in the vector!");
+            if (v->data[v->size] == NULL )
+                throw_error("Not enough memory to add new item in the vector!");
+        }
     }
 
     int16_t array_changed = 0;
@@ -687,7 +687,7 @@ static inline void _vect_add_at(vector v, const void *value, zvect_index i)
     {
         if ( v->flags & ZV_BYREF )
         {
-            new_data[i] = (void *)malloc(sizeof(void *));
+          //  new_data[i] = (void *)malloc(sizeof(void *));
             new_data[i] = (void *)value;
         }
         else
@@ -708,12 +708,12 @@ static inline void _vect_add_at(vector v, const void *value, zvect_index i)
     {
         // We moved chunks of memory so we need to 
         // allocate new memory for the item in position i:
-        if ( v->flags & ZV_BYREF )
-            v->data[i] = (void *)malloc(sizeof(void *));
-        else
+        if ( !( v->flags & ZV_BYREF ) )
+        {
             v->data[i] = (void *)malloc(v->data_size);
-        if (v->data[i] == NULL )
-            throw_error("Not enough memory to add new item in the vector!");
+            if (v->data[i] == NULL )
+                throw_error("Not enough memory to add new item in the vector!");
+        }
     }
     if ( v->flags & ZV_BYREF )
         v->data[i] = (void *)value;
@@ -953,7 +953,7 @@ static inline void _vect_delete_at(vector v, zvect_index start, zvect_index offs
         throw_error("Index out of bounds!");
 
     // If the vector is empty just return null
-    if ( v->size == 0 )
+    if ( v->size <= 0 )
         return;
 
 #   if ( ZVECT_THREAD_SAFE == 1 )
@@ -962,7 +962,7 @@ static inline void _vect_delete_at(vector v, zvect_index start, zvect_index offs
 
     // "shift" left the data of one position:
     zvect_index tot_items = start + offset;
-    if ( ((start + offset) < (v->size - 1)) && (v->size > 0))
+    if ( tot_items < (v->size - 1) )
     {
         _free_items(v, start, offset);
         vect_memmove(v->data + start, v->data + (tot_items + 1), sizeof(void *) * (v->size - tot_items));
@@ -973,7 +973,7 @@ static inline void _vect_delete_at(vector v, zvect_index start, zvect_index offs
     {
         zvect_index j;
         for ( j = v->size; j >= (v->size - offset); j-- )
-            if ( v->data[j] != NULL ) 
+            if ( v->data[j] != NULL )
                 free(v->data[j]);
     }
     v->prev_size=v->size;
