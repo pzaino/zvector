@@ -189,7 +189,7 @@ LIBST=$(LIBDIR)/lib$(LIBNAME).a
 # Targets:
 
 .PHONY: all
-all: CFLAGS+=-O3
+all: CFLAGS+=-O3 -fstack-protector-strong
 all: core test
 
 clean:
