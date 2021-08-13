@@ -457,7 +457,7 @@ void vect_destroy(vector v)
     v->size = 0;
 
     // Shrink Vector's capacity:
-    if ( v->capacity > (v->size + 1))
+    if ( v->capacity > v->init_capacity )
         _vect_shrink(v);
 
     v->prev_size = 0;
@@ -854,26 +854,29 @@ static inline void *_vect_remove_at(vector v, zvect_index i)
     {
         rval = (void *)malloc(sizeof(void *));
         rval = v->data[i];
+        free(v->data[i]);
     } else {
         rval = (void *)malloc(v->data_size);
         vect_memcpy(rval, v->data[i], v->data_size );
         if ( v->flags & ZV_SAFE_WIPE )
             item_safewipe(v, v->data[i]);
+        else
+           free(v->data[i]); 
     }
 
 #   if ( ZVECT_FULL_REENTRANT == 1 )
     void **new_data = (void **)malloc(sizeof(void *) * v->capacity);
     if (new_data == NULL)
         throw_error("Not enough memory to resize the vector!");
-
-    uint32_t array_changed = 0;
 #   endif
+
+    uint16_t array_changed = 0;
 
     // "shift" left the array of one position:
     if ( (i < (v->size - 1)) && (v->size > 0))
     {
-#   if ( ZVECT_FULL_REENTRANT == 1 )
         array_changed = 1;
+#   if ( ZVECT_FULL_REENTRANT == 1 )
         if ( i > 0 )
             vect_memcpy(new_data, v->data, sizeof(void *) * i );
         vect_memcpy(new_data + i, v->data + (i + 1), sizeof(void *) * ( v->size - i ));
@@ -883,6 +886,17 @@ static inline void *_vect_remove_at(vector v, zvect_index i)
         vect_memmove(v->data + i, v->data + ( i + 1 ), sizeof(void *) * ( v->size - i ));
 #   endif
     }
+
+#   if ( ZVECT_FULL_REENTRANT == 0 )
+    // Reduce vector size:
+    if (!(v->flags & ZV_BYREF))
+    {
+        if ( array_changed )
+            free(v->data[v->size - 1]);
+        else
+            _free_items(v, v->size - 1, 0);
+    }
+#   endif
 
 #if ( ZVECT_FULL_REENTRANT == 1 )
     if ( array_changed )
@@ -955,7 +969,7 @@ static inline void _vect_delete_at(vector v, zvect_index start, zvect_index offs
     {
         array_changed = 1;
         _free_items(v, start, offset);
-        vect_memmove(v->data + start, v->data + (tot_items + 1), sizeof(void *) * (v->size - tot_items));
+        vect_memmove(v->data + start, v->data + (tot_items + 1), sizeof(void *) * ( v->size - start ));
     }
 
     // Reduce vector size:
