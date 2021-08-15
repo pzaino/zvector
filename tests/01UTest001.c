@@ -20,11 +20,19 @@
 #endif
 #include ZVECTORH
 
+#define MAX_ITEMS 10000
+
+// Setup tests:
+char *testGrp = "001";
+uint8_t testID = 1;
+
+int compare_func(const void* a, const void* b)
+{
+    return ( *(int*)a - *(int*)b );
+}
+
 int main()
 {
-    // Setup tests:
-    char *testGrp = "001";
-    uint8_t testID = 1;
 
     printf("=== UTest%s ===\n", testGrp);
     printf("Testing basic vector functionalities\n");
@@ -46,11 +54,11 @@ vect_lock_disable();
 
     fflush(stdout);
 
-    printf("Test %s_%d: Insert 10000 elements and check if they are stored correctly:\n", testGrp, testID);
+    printf("Test %s_%d: Insert %d elements and check if they are stored correctly:\n", testGrp, testID, MAX_ITEMS);
     fflush(stdout);
 
         int i;
-        for (i = 0; i < 1000000; i++)
+        for (i = 0; i < MAX_ITEMS; i++)
         {
             // Let's add a new value in the vector:
             vect_add(v, &i);
@@ -71,7 +79,7 @@ vect_lock_disable();
     printf("Test %s_%d: check if the size of the vector is now 10000:\n", testGrp, testID);
     fflush(stdout);
 
-        assert(vect_size(v) == 1000000);
+        assert(vect_size(v) == MAX_ITEMS);
 
     printf("done.\n");
     testID++;
@@ -81,10 +89,10 @@ vect_lock_disable();
     printf("Test %s_%d: Add elements in the middle of the vector:\n", testGrp, testID);
     fflush(stdout);
 
-        i=555555;
-        vect_add_at(v, &i, 100);
-        assert(*((int *)vect_get_at(v, 100)) == i);
-        assert(*((int *)vect_get_at(v, 101)) == 100);
+        int x=555555;
+        vect_add_at(v, &x, MAX_ITEMS / 2);
+        assert(*((int *)vect_get_at(v, MAX_ITEMS / 2)) == x);
+        assert(*((int *)vect_get_at(v, (MAX_ITEMS / 2)+1)) == (MAX_ITEMS / 2));
 
     printf("done.\n");
     testID++;
@@ -106,6 +114,18 @@ vect_lock_disable();
     testID++;
 
     fflush(stdout);
+
+    printf("Test %s_%d: Sort the vector:\n", testGrp, testID);
+    fflush(stdout);
+
+        vect_sort(v, compare_func);
+        printf("Last element in the vector should now be %d: %d\n", x, *((int *)vect_get(v)));
+        assert( *((int *)vect_get(v)) == x);
+
+    printf("done.\n");
+    testID++;
+
+    fflush(stdout);   
 
     printf("Test %s_%d: Remove vector elements one by one:\n", testGrp, testID);
     fflush(stdout);

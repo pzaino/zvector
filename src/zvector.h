@@ -253,9 +253,26 @@ void vect_delete_front(vector);
  * vect_swap is a function that allows you to swap two
  * items in the same vector.
  * You just pass the vector and the index of both the 
- * two items.
+ * two items to swap.
+ * 
+ * Fo rexample to swap item 3 with item 22 on vector v
+ * use:
+ * vect_swap(v, 3, 22);
  */
-void vect_swap(vector, zvect_index, zvect_index);
+void vect_swap(vector v, zvect_index s, zvect_index e);
+
+/*
+ * vect_swap_range is a function that allows you to swap
+ * a range of items in the same vector.
+ * You just pass the vector, the index of the first item 
+ * to swap, the index of the last item to swap and the
+ * index of the first item to swap with.
+ * 
+ * For example to swap items from 10 to 20 with items
+ * from 30 to 40 on vector v, use:
+ * vect_swap_range(v, 10, 20, 30);
+ */
+void vect_swap_range(vector v, zvect_index s1, zvect_index e1, zvect_index s2);
 
 #endif
 
@@ -307,6 +324,13 @@ void vect_apply(vector, void (*f1)(void *));
  * }
  */
 void vect_apply_if(vector v1, vector v2, void (*f1)(void *), bool (*f2)(void *, void *));
+
+
+/*
+ * vect_sort
+ *
+ */
+void vect_sort(vector v, int (*compare_func)(const void *, const void*));
 
 // Operations with multiple vectors:
 
