@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#if (  defined(_MSC_VER) )
+#if ( defined(_MSC_VER) )
  // Silly stuff that needs to be added for Microsoft compilers
  // which are still at the MS-DOS age apparently...
 #define ZVECTORH "../src/zvector.h"
@@ -115,6 +115,7 @@ vect_lock_disable();
 
     fflush(stdout);
 
+#ifdef ZVECT_SFMD_EXTENSIONS
     printf("Test %s_%d: Sort the vector:\n", testGrp, testID);
     fflush(stdout);
 
@@ -126,6 +127,7 @@ vect_lock_disable();
     testID++;
 
     fflush(stdout);   
+#endif
 
     printf("Test %s_%d: Remove vector elements one by one:\n", testGrp, testID);
     fflush(stdout);

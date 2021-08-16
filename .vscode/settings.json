@@ -1,0 +1,34 @@
+{
+    "cpplint.filters": [
+        "-whitespace"
+    ],
+    "c-cpp-flylint.flexelint.enable": false,
+    "c-cpp-flylint.clang.standard": [
+        ""
+    ],
+    "c-cpp-flylint.cppcheck.force": true,
+    "c-cpp-flylint.cppcheck.includePaths": [
+        "${workspaceFolder}",        
+        "${workspaceFolder}/src"
+    ],
+    "c-cpp-flylint.clang.includePaths": [
+        "${workspaceFolder}",        
+        "${workspaceFolder}/src"
+    ],
+    "c-cpp-flylint.clang.language": "C",
+    "c-cpp-flylint.cppcheck.extraArgs": [
+        "--bug-hunting",
+        "--enable=all",
+        "--suppress=missingIncludeSystem"
+    ],
+    "c-cpp-flylint.cppcheck.language": "C",
+    "c-cpp-flylint.cppcheck.standard": [
+        "c99"
+    ],
+    "c-cpp-flylint.cppcheck.verbose": true,
+    "c-cpp-flylint.includePaths": [
+        "${workspaceFolder}",        
+        "${workspaceFolder}/src"
+    ],
+    "c-cpp-flylint.language": "c"
+}

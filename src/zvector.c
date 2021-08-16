@@ -337,7 +337,7 @@ static void vect_increase_capacity(vector v)
     // Get actual capacity and double it
     zvect_index new_capacity = v->capacity * 2;
     void **new_data = (void **)realloc(v->data, sizeof(void *) * new_capacity);
-    if (new_data == NULL)
+    if ( new_data == NULL )
         throw_error("Not enough memory to extend the vector capacity!");
 
     // Apply changes and release memory
@@ -363,7 +363,7 @@ static void vect_decrease_capacity(vector v)
     zvect_index new_size = min(v->size, new_capacity);
 
     void **new_data = (void **)realloc(v->data, sizeof(void *) * new_capacity);
-    if (new_data == NULL)
+    if ( new_data == NULL )
         throw_error("Not enough memory to resize the vector!");
 
     // Apply changes and release memory:
@@ -884,16 +884,8 @@ static inline void *_vect_remove_at(vector v, zvect_index i)
 #   if ( ZVECT_FULL_REENTRANT == 0 )
     if (!(v->flags & ZV_BYREF))
     {
-        if ( array_changed )
-        {
-            if ( v->data[v->size - 1] != NULL )
-                free(v->data[v->size - 1]);
-        }
-        else
-        {
-            if ( v->data[v->size - 1] != NULL )
-                _free_items(v, v->size - 1, 0);
-        }
+        if ( ! array_changed )
+            _free_items(v, v->size - 1, 0);
     }
 #   else
     // Apply changes
@@ -970,21 +962,8 @@ static inline void _vect_delete_at(vector v, zvect_index start, zvect_index offs
     // Reduce vector size:
     if (!(v->flags & ZV_BYREF))
     {
-        zvect_index j;
-        if ( array_changed )
-        {
-            for ( j = ( v->size - 1 ); j >= (( v->size - 1 ) - offset ); j-- )
-            {
-                if ( v->data[j] != NULL )
-                    free(v->data[j]);
-                if ( j == (( v->size - 1 ) - offset ) )
-                    break;
-            }
-        } 
-        else
-        {
+        if ( ! array_changed )
             _free_items(v, (( v->size - 1 ) - offset ), offset);
-        }
     }
     v->prev_size = v->size;
     v->size -= (offset + 1);

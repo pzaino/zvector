@@ -16,6 +16,7 @@
 
 // Requires standard C libraries:
 #include <stdarg.h>
+#include <stdlib.h>
 
 // First library included is zvector_checks,
 // so we know on which platform and which features
