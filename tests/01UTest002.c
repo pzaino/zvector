@@ -96,7 +96,7 @@ vect_lock_disable();
     fflush(stdout);
 
         vector v;
-        v = vect_create(2, sizeof(car), ZV_SAFE_WIPE);
+        v = vect_create(2, sizeof(car), ZV_SEC_WIPE);
 
     printf("done.\n");
     testID++;

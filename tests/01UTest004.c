@@ -76,7 +76,7 @@ vect_lock_disable();
 
     printf("Test %s_%d: Create a vector of 2 elements and using int for the vector data:\n", testGrp, testID);
     vector v;
-    v = vect_create(2, sizeof(struct QueueItem), ZV_SAFE_WIPE); 
+    v = vect_create(2, sizeof(struct QueueItem), ZV_SEC_WIPE); 
     printf("done.\n");
     testID++;
 

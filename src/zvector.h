@@ -46,15 +46,12 @@ typedef struct _vector *vector;
  * having Secure Wipe enabled, so that when an element is deleted
  * its reference will also be fully zeroed out before freeing it.
  */ 
-enum {
-    ZV_NONE       = 0,      // Set or Reset all vector's properties to 0.
-    ZV_SAFE_WIPE  = 1 << 0, // Sets the bit to have a vector with automatic
-                            // Safe Wipe.
-    ZV_ENCRYPTED  = 1 << 1, // Sets the bit to have automatic data encryption
-                            // decryption when stored.
-    ZV_AUTOSHRINK = 1 << 2, // Sets the bit to have automatic vector shrinking.
-    ZV_BYREF      = 1 << 3  // Sets the bit to have the vector storing items by
-                            // reference and not copying them in a per default.
+enum ZVECT_PROPERTIES {
+    ZV_NONE       = 0,      // Sets or Resets all vector's properties to 0.
+    ZV_SEC_WIPE   = 1 << 0, // Sets the vector for automatic Secure Wipe of items.
+    ZV_ENCRYPTED  = 1 << 1, // Sets the vector for automatic encryption and decryption of data when stored.
+    ZV_AUTOSHRINK = 1 << 2, // Sets the vector to have automatic capacity shrinking.
+    ZV_BYREF      = 1 << 3  // Sets the vector to store items by reference instead of copying them as per default.
 };
 
 /*****************************
@@ -423,7 +420,7 @@ void vect_apply_if(vector v1, vector v2, void (*f1)(void *), bool (*f2)(void *, 
  * pointers to your datastructure stored in the vector.
  *
  */
-void vect_sort(vector v, int (*compare_func)(const void *, const void*));
+void vect_qsort(vector v, int (*compare_func)(const void *, const void*));
 
 // Operations with multiple vectors:
 

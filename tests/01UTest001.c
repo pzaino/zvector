@@ -125,7 +125,7 @@ vect_lock_disable();
     printf("Test %s_%d: Sort the vector:\n", testGrp, testID);
     fflush(stdout);
 
-        vect_sort(v, compare_func);
+        vect_qsort(v, compare_func);
         printf("Last element in the vector should now be %d: %d\n", x, *((int *)vect_get(v)));
         assert( *((int *)vect_get(v)) == x);
 

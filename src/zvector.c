@@ -169,7 +169,7 @@ static void _free_items(vector v, zvect_index first, zvect_index offset)
     {
         if (v->data[j] != NULL)
         {
-            if (v->flags & ZV_SAFE_WIPE)
+            if (v->flags & ZV_SEC_WIPE)
                 item_safewipe(v, v->data[j]);
             if (!(v->flags & ZV_BYREF))
                 free(v->data[j]);
@@ -486,7 +486,7 @@ void vect_destroy(vector v)
         {
             if (v->data[i] != NULL)
             {
-                if (v->flags & ZV_SAFE_WIPE)
+                if (v->flags & ZV_SEC_WIPE)
                     item_safewipe(v, v->data[i]);
                 if (!(v->flags & ZV_BYREF))
                     free(v->data[i]);
@@ -866,7 +866,7 @@ static inline void *_vect_remove_at(vector v, zvect_index i)
     {
         rval = (void *)malloc(v->data_size);
         vect_memcpy(rval, v->data[i], v->data_size);
-        if (v->flags & ZV_SAFE_WIPE)
+        if (v->flags & ZV_SEC_WIPE)
             item_safewipe(v, v->data[i]);
     }
 
@@ -1213,7 +1213,7 @@ void vect_apply_if(vector v1, vector v2, void (*f1)(void *), bool (*f2)(void *, 
 #endif
 }
 
-void vect_sort(vector v, int (*compare_func)(const void *, const void *))
+void vect_qsort(vector v, int (*compare_func)(const void *, const void *))
 {
     // check if the vector v1 exists:
     vect_check(v);

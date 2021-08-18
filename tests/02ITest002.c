@@ -181,7 +181,7 @@ int main()
     fflush(stdout);
 
     vector v;
-    v = vect_create(2, sizeof(struct StackItem), ZV_SAFE_WIPE);
+    v = vect_create(2, sizeof(struct StackItem), ZV_SEC_WIPE);
 
     printf("done.\n");
     testID++;
