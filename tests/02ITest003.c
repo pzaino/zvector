@@ -178,7 +178,7 @@ int main()
     fflush(stdout);
 
         vector v;
-        v = vect_create(2, sizeof(struct QueueItem), ZV_SAFE_WIPE);
+        v = vect_create(2, sizeof(struct QueueItem), ZV_SEC_WIPE);
 
     printf("done.\n");
     testID++;

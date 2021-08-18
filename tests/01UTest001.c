@@ -62,11 +62,14 @@ vect_lock_disable();
         {
             // Let's add a new value in the vector:
             vect_add(v, &i);
+
             // Let's check if the vector size has grown correctly:
             assert(vect_size(v) == (zvect_index)i + 1);
+
             // Let's retrieve the value from the vector correctly:
             // For beginners: this is how in C we convert back a void * into the original dtata_type
             int value = *((int *)vect_get_at(v, i));
+
             // Let's test if the value we have retrieved is correct:
             assert(value == i);
         }
@@ -91,7 +94,9 @@ vect_lock_disable();
 
         int x=555555;
         vect_add_at(v, &x, MAX_ITEMS / 2);
+
         assert(*((int *)vect_get_at(v, MAX_ITEMS / 2)) == x);
+
         assert(*((int *)vect_get_at(v, (MAX_ITEMS / 2)+1)) == (MAX_ITEMS / 2));
 
     printf("done.\n");
@@ -105,6 +110,7 @@ vect_lock_disable();
         printf("At index 5001 now we have: %d\n", *((int *)vect_get_at(v, 5001)));
 
         vect_delete_at(v, 5001);
+
         int value = *((int *)vect_get_at(v, 5001));
         printf("At index 5001 now we have: %d\n", value);
         fflush(stdout);
@@ -119,7 +125,7 @@ vect_lock_disable();
     printf("Test %s_%d: Sort the vector:\n", testGrp, testID);
     fflush(stdout);
 
-        vect_sort(v, compare_func);
+        vect_qsort(v, compare_func);
         printf("Last element in the vector should now be %d: %d\n", x, *((int *)vect_get(v)));
         assert( *((int *)vect_get(v)) == x);
 

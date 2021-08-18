@@ -155,7 +155,7 @@ int main()
     fflush(stdout);
 
         vector v;
-        v = vect_create(2, sizeof(int), ZV_SAFE_WIPE);
+        v = vect_create(2, sizeof(int), ZV_SEC_WIPE);
 
     printf("done.\n");
     testID++;
