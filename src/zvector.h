@@ -30,6 +30,22 @@
 typedef struct _vector *vector;
 
 // Declare required enums:
+
+/*
+ * Vector Properties Flags can be used to tell ZVector
+ * which types of properties we want to enable for each
+ * given vector we are creating.
+ * Each vector can have multiple properties enabled at the
+ * same time, you can use the typical C form to specify multiple
+ * properties for the same vector:
+ * 
+ * ZV_SEC_WIPE | ZV_BYREF
+ * 
+ * The above will create a vector that supports passing items to
+ * it by reference (instead of copying them into the vector) and
+ * having Secure Wipe enabled, so that when an element is deleted
+ * its reference will also be fully zeroed out before freeing it.
+ */ 
 enum {
     ZV_NONE       = 0,      // Set or Reset all vector's properties to 0.
     ZV_SAFE_WIPE  = 1 << 0, // Sets the bit to have a vector with automatic
@@ -102,12 +118,48 @@ void vect_clear(vector);
 
 #if ( ZVECT_THREAD_SAFE == 1 )
 // Vector Thread Safe functions:
+
+/*
+ * vect_lock_enable allows you to enable thread safe
+ * code at runtime. It doesn't lock anything, it just
+ * enables globally ZVector thread safe code at 
+ * runtime.
+ * 
+ * Example of use:
+ * vect_lock_enable;
+ */
 void vect_lock_enable(void);
 
+/*
+ * vect_lock_disable allows you to disable thread safe
+ * code at runtime. It doesn't lock anything, it just
+ * disables globally ZVector thread safe code at 
+ * runtime.
+ * 
+ * Example of use:
+ * vect_lock_disable;
+ */
 void vect_lock_disable(void);
 
+/*
+ * vect_lock allows you to lock the given vector to 
+ * have exclusive write access from your own thread.
+ * When you lock a vector directly then ZVector will 
+ * NOT use its internal locking mechanism for that 
+ * specific vector.
+ * 
+ * Example of use: To lock a vector called v
+ * vect_lock(v);
+ */
 void vect_lock(vector v);
 
+/*
+ * vect_lock allows you to unlock the given vector that 
+ * you have previously locked with vect_lock.
+ * 
+ * Example of use: To unlock a vector called v
+ * vect_unlock(v);
+ */
 void vect_unlock(vector v);
 #endif
 
@@ -144,7 +196,10 @@ void *vect_pop(vector);
  * vect_add(v, &i)       will add the new item 3
  *                       into the vector at the end
  *                       of the v vector.
- * 
+ */
+void vect_add(vector, const void *);
+
+/*
  * int i = 4;
  * vect_add_at(v, &i, 2) will add the new item 4
  *                       at position 2 in the v
@@ -152,7 +207,10 @@ void *vect_pop(vector);
  *                       items from the original 2nd
  *                       onward of a position to make 
  *                       space for the new item 4.
- * 
+ */
+void vect_add_at(vector, const void *, zvect_index);
+
+/*
  * int i = 5;
  * vect_add_front(v, &i) will add the new item 5
  *                       at the beginning of the vector 
@@ -161,9 +219,7 @@ void *vect_pop(vector);
  *                       position in the vector to make
  *                       space for the new item 5 at the
  *                       beginning of v.
- */
-void vect_add(vector, const void *);
-void vect_add_at(vector, const void *, zvect_index);
+ */ 
 void vect_add_front(vector, const void *);
 
 /*
@@ -173,15 +229,20 @@ void vect_add_front(vector, const void *);
  *                      the v vector (but will not touch
  *                      the element as it happens in
  *                       vect_pop(v)).
+ */
+void *vect_get(vector);
+
+/*
  * 
  * vect_get_at(v, 3)    will return the element at location
  *                      3 in the vector v.
- * 
+ */
+void *vect_get_at(vector, zvect_index);
+
+/*
  * vect_get_front(v)    will return the first element in
  *                      the vector v. 
  */
-void *vect_get(vector);
-void *vect_get_at(vector, zvect_index);
 void *vect_get_front(vector);
 
 /* 
@@ -191,20 +252,26 @@ void *vect_get_front(vector);
  * int i = 3;
  * vect_put(v, &i)       will replace the last element
  *                       in the vector with 3.
+ */
+void vect_put(vector, const void *);
+
+/*
  * 
  * int i = 4;
  * vect_put_at(v, &i, 2) will replace the 3rd element
  *                       (2 + 1, as vector's 1st item
  *                       starts at v[0]) with the
  *                       item 4.
+ */
+void vect_put_at(vector, const void *, zvect_index);
+
+/*
  * 
  * int i = 5;
  * vect_put_front(v, &i) will replace the 1st element
  *                       of the vector with the item 
  *                       5.
- */
-void vect_put(vector, const void *);
-void vect_put_at(vector, const void *, zvect_index);
+ */ 
 void vect_put_front(vector, const void *);
 
 /* 
@@ -215,15 +282,19 @@ void vect_put_front(vector, const void *);
  * 
  * vect_remove(v)       will remove and return the
  *                      last item in the vector.
- * 
+ */
+void *vect_remove(vector);
+
+/*
  * vect_remove_at(v, 3) will remove the 3rd item in
  *                      the vector and return it.
- *
+ */
+void *vect_remove_at(vector, zvect_index);
+
+/*
  * vect_remove_front(v) will remove the 1st item in
  *                      the vector and return it.
  */
-void *vect_remove(vector);
-void *vect_remove_at(vector, zvect_index);
 void *vect_remove_front(vector);
 
 /* 
@@ -233,19 +304,33 @@ void *vect_remove_front(vector);
  * 
  * vect_delete(v)       will delete and the last 
  *                      item in the vector.
- * 
+ */
+void vect_delete(vector);
+
+/*
  * vect_delete_at(v, 3) will delete the 3rd item in
  *                      the vector.
+ */
+void vect_delete_at(vector, zvect_index);
+
+/*
+ * vect_delete_range(v, 20, 30) 
+ *                      will delete items from item
+ *                      20 to item 30 in the vector
+ *                      v.
+ */
+void vect_delete_range(vector v, zvect_index first_elemeny, zvect_index last_element);
+
+/*
  *
  * vect_delete_front(v) will delete the 1st item in
  *                      the vector.
  */
-void vect_delete(vector);
-void vect_delete_at(vector, zvect_index);
-void vect_delete_range(vector v, zvect_index first_elemeny, zvect_index last_element);
 void vect_delete_front(vector);
 
+////////////
 // Vector Data manipoulation functions:
+////////////
 
 #ifdef ZVECT_DMF_EXTENSIONS
 // Data Manipoulation Functions extensions:
@@ -328,7 +413,14 @@ void vect_apply_if(vector v1, vector v2, void (*f1)(void *), bool (*f2)(void *, 
 
 
 /*
- * vect_sort
+ * vect_sort allows you to sort a given vector.
+ *
+ * To sort a vector you need to provide a custom function
+ * that allows vect_sort to determine the order and which 
+ * elements of a vector are used to order it in the way
+ * you desire. It pretty much works as a regular C qsort
+ * function. It quite fast given that it only reorders
+ * pointers to your datastructure stored in the vector.
  *
  */
 void vect_sort(vector v, int (*compare_func)(const void *, const void*));
