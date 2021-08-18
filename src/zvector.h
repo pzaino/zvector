@@ -377,7 +377,7 @@ void vect_rotate_left(vector v, zvect_index i);
  * to the right, use:
  * vect_rotate_right(v, 5);
  */
-void vect_rotate_right(vector v, zvect_index i)
+void vect_rotate_right(vector v, zvect_index i);
 
 #endif
 
