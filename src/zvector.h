@@ -345,7 +345,7 @@ void vect_delete_front(vector);
 void vect_swap(vector v, zvect_index s, zvect_index e);
 
 /*
- * vect_swap_range is a function that allows you to swap
+ * vect_swap_range is a function that allows to swap
  * a range of items in the same vector.
  * You just pass the vector, the index of the first item 
  * to swap, the index of the last item to swap and the
@@ -356,6 +356,28 @@ void vect_swap(vector v, zvect_index s, zvect_index e);
  * vect_swap_range(v, 10, 20, 30);
  */
 void vect_swap_range(vector v, zvect_index s1, zvect_index e1, zvect_index s2);
+
+/*
+ * vect_rotate_left is a function that allows to rotate
+ * a vector of "i" positions to the left (or from the
+ * "front" to the "end").
+ * 
+ * For example to rotate a vector called v of 5 positions
+ * to the left, use:
+ * vect_rotate_left(v, 5);
+ */
+void vect_rotate_left(vector v, zvect_index i);
+
+/*
+ * vect_rotate_right is a function that allows to rotate
+ * a vector of "i" positions to the right (or from the
+ * "end" to the "front").
+ * 
+ * For example to rotate a vector called v of 5 positions
+ * to the right, use:
+ * vect_rotate_right(v, 5);
+ */
+void vect_rotate_right(vector v, zvect_index i)
 
 #endif
 
