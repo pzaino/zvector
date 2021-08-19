@@ -64,10 +64,10 @@ enum ZVECT_PROPERTIES {
  * vect_create creates and returns a new vector
  * of the specified "capacity", with a storage area that
  * can store items of "item_size" size and, if we want to 
- * have an automatic secure erasing enabled (ZV_SAFE_WIPE
+ * have an automatic secure erasing enabled (ZV_SEC_WIPE
  * ), we can simply pass ZV_SAFE_WIPE (or other flags too)
  * afer item_size. Flags syntax is the usual C flag sets:
- * ZV_SAFE_WIPE | ZV_AUTOSHRINK etc.
+ * ZV_SEC_WIPE | ZV_BYREF etc.
  */
 vector vect_create(size_t capacity, size_t item_size, uint32_t properties);
 
@@ -227,20 +227,20 @@ void vect_add_front(vector, const void *);
  *                      the element as it happens in
  *                       vect_pop(v)).
  */
-void *vect_get(vector);
+void *vect_get(vector v);
 
 /*
  * 
  * vect_get_at(v, 3)    will return the element at location
  *                      3 in the vector v.
  */
-void *vect_get_at(vector, zvect_index);
+void *vect_get_at(vector v, const zvect_index i);
 
 /*
  * vect_get_front(v)    will return the first element in
  *                      the vector v. 
  */
-void *vect_get_front(vector);
+void *vect_get_front(vector v);
 
 /* 
  *vect_put allows you to REPLACE an item
@@ -260,7 +260,7 @@ void vect_put(vector, const void *);
  *                       starts at v[0]) with the
  *                       item 4.
  */
-void vect_put_at(vector, const void *, zvect_index);
+void vect_put_at(vector v, const void *item, const zvect_index i);
 
 /*
  * 
@@ -269,7 +269,7 @@ void vect_put_at(vector, const void *, zvect_index);
  *                       of the vector with the item 
  *                       5.
  */ 
-void vect_put_front(vector, const void *);
+void vect_put_front(vector v, const void *item);
 
 /* 
  * vect_remove removes an item from the vector
@@ -280,19 +280,19 @@ void vect_put_front(vector, const void *);
  * vect_remove(v)       will remove and return the
  *                      last item in the vector.
  */
-void *vect_remove(vector);
+void *vect_remove(vector v);
 
 /*
  * vect_remove_at(v, 3) will remove the 3rd item in
  *                      the vector and return it.
  */
-void *vect_remove_at(vector, zvect_index);
+void *vect_remove_at(vector v, const zvect_index i);
 
 /*
  * vect_remove_front(v) will remove the 1st item in
  *                      the vector and return it.
  */
-void *vect_remove_front(vector);
+void *vect_remove_front(vector v);
 
 /* 
  * vect_delete deletes an item from the vector
@@ -302,13 +302,13 @@ void *vect_remove_front(vector);
  * vect_delete(v)       will delete and the last 
  *                      item in the vector.
  */
-void vect_delete(vector);
+void vect_delete(vector v);
 
 /*
  * vect_delete_at(v, 3) will delete the 3rd item in
  *                      the vector.
  */
-void vect_delete_at(vector, zvect_index);
+void vect_delete_at(vector v, const zvect_index i);
 
 /*
  * vect_delete_range(v, 20, 30) 
@@ -316,14 +316,14 @@ void vect_delete_at(vector, zvect_index);
  *                      20 to item 30 in the vector
  *                      v.
  */
-void vect_delete_range(vector v, zvect_index first_elemeny, zvect_index last_element);
+void vect_delete_range(vector v, const zvect_index first_elemeny, const zvect_index last_element);
 
 /*
  *
  * vect_delete_front(v) will delete the 1st item in
  *                      the vector.
  */
-void vect_delete_front(vector);
+void vect_delete_front(vector v);
 
 ////////////
 // Vector Data manipoulation functions:
@@ -342,7 +342,7 @@ void vect_delete_front(vector);
  * use:
  * vect_swap(v, 3, 22);
  */
-void vect_swap(vector v, zvect_index s, zvect_index e);
+void vect_swap(vector v, const zvect_index s, const zvect_index e);
 
 /*
  * vect_swap_range is a function that allows to swap
@@ -355,7 +355,7 @@ void vect_swap(vector v, zvect_index s, zvect_index e);
  * from 30 to 40 on vector v, use:
  * vect_swap_range(v, 10, 20, 30);
  */
-void vect_swap_range(vector v, zvect_index s1, zvect_index e1, zvect_index s2);
+void vect_swap_range(vector v, const zvect_index s1, const zvect_index e1, const zvect_index s2);
 
 /*
  * vect_rotate_left is a function that allows to rotate
@@ -366,7 +366,7 @@ void vect_swap_range(vector v, zvect_index s1, zvect_index e1, zvect_index s2);
  * to the left, use:
  * vect_rotate_left(v, 5);
  */
-void vect_rotate_left(vector v, zvect_index i);
+void vect_rotate_left(vector v, const zvect_index i);
 
 /*
  * vect_rotate_right is a function that allows to rotate
@@ -377,7 +377,7 @@ void vect_rotate_left(vector v, zvect_index i);
  * to the right, use:
  * vect_rotate_right(v, 5);
  */
-void vect_rotate_right(vector v, zvect_index i);
+void vect_rotate_right(vector v, const zvect_index i);
 
 #endif
 

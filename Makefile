@@ -13,15 +13,34 @@
 ###############################################################################
 
 ###############################################################################
-# Manual part of the Makefile
+# Initialisation (please check next section for configurable options!)
+
+# Make sure that OS macro is always set on every platform:
+# (if you are porting ZVector to a platform that does not
+# support uname, then simply set OS from the command line)
+ifeq ($(OS),)
+OS:=$(shell uname -s)
+endif
+$(info Building on: $(OS))
+
+#
+###############################################################################
+
+###############################################################################
+# Manual Configuration part of the Makefile
+
+# Work directory, usually you do not
+# need to change this one:
+
 
 WDIR:=$(shell pwd)
+DESTDIR?=
 
 # Configure desired compiler:
-CC=gcc
+CC:=gcc
 
 # Configure additional compiler and linker flags:
-CFLAGS+=-std=c99 -Wall -Wextra -I./src -I./tests
+CFLAGS+=
 LDFLAGS+=
 
 # If you want to pass some MACROS to your code you can use the following 
@@ -29,22 +48,22 @@ LDFLAGS+=
 CODE_MACROS+=
 
 # Configure Library name:
-LIBNAME=zvector
+LIBNAME:=zvector
 # Configure desired directory where to store the compiled library:
-LIBDIR=lib
+LIBDIR:=lib
 
 # Configure Library source directory and temporary object directory:
-SRC=src
-OBJ=o
+SRC:=src
+OBJ:=o
 
 # Configure Library build scripts dir (scripts required to build the library)
-SCRIPTSDIR=scripts
+SCRIPTSDIR:=scripts
 
 # Configure directory containing source Unit Test Files and Integration Test 
 # files and configure desired directory where to store compiled tests ready 
 # for execution:
-TESTDIR=tests
-TESTBIN=$(TESTDIR)/bin
+TESTDIR:=tests
+TESTBIN:=$(TESTDIR)/bin
 #
 ##############################################################################
 ##############################################################################
@@ -61,7 +80,7 @@ TESTBIN=$(TESTDIR)/bin
 # Recommendation: Try 1 ONLY when compiling for embedded systems
 # 				  or IoT applications where you won't have Linux and the 
 #				  glibc available. Otherwise you should stick to 0.
-MEMX_METHOD=0
+MEMX_METHOD:=0
 
 # Do you want the library to be built to be thread safe? (and so it uses mutex 
 # etc)? If so, set the following variable to 1 to enable thread safe code or 
@@ -70,24 +89,24 @@ MEMX_METHOD=0
 # 				  of ZVector and thread safety is not a requirement for you
 #				  then disable this option (set it to 0 zero). It will make
 #				  ZVector gain some extra performance.
-THREAD_SAFE_BUILD=1
+THREAD_SAFE_BUILD:=1
 
 # Do you want ZVector code to be fully reentrant?
 # 0 for no full reentrant code
 # 1 for yes full reentrant code
-FULL_REENTRANT=0
+FULL_REENTRANT:=0
 
 # Do you want the DMF (Data Manipulation Functions) extensions enabled?
 # This extension enables functions like vect_swap that allows you to swap
 # two elements of the same vector.
-DMF_EXTENSIONS=1
+DMF_EXTENSIONS:=1
 
 # Do you want the SFMD (Single Function Multiple Data) extension enabled?
 # This extension provides ZVect functions that you can call to modify entire
 # vectors using a single function call.
 # If you want the SFMD extensions enabled the set the following variable to 1
 # otherwise set it to 0
-SFMD_EXTENSIONS=1
+SFMD_EXTENSIONS:=1
 
 #
 ###############################################################################
@@ -95,7 +114,18 @@ SFMD_EXTENSIONS=1
 ###############################################################################
 # Automated part of th Makefile:
 
-RVAL0 =
+RVAL0:=
+
+# Add Default flags for GCC if the user has not passed any:
+ifeq ($(CC),gcc)
+	ifeq ($(strip $(CFLAGS)),)
+		CFLAGS=-std=c99 -Wall -Wextra -I./src -I./tests
+		CFLAGS+=-O3 -fstack-protector-strong
+	endif
+	ifeq ($(strip $(LDFLAGS)),)
+		LDFLAGS+=
+	endif
+endif
 
 ifeq ($(OS),Windows_NT)
     CCFLAGS += -D WIN32
@@ -110,13 +140,12 @@ ifeq ($(OS),Windows_NT)
         endif
     endif
 else
-    UNAME_S := $(shell uname -s)
-    ifeq ($(UNAME_S),Linux)
+    ifeq ($(OS),Linux)
 		SHELL := /bin/bash
         CCFLAGS += -D LINUX
 		RVAL0:=/usr/bin/chmod -Rf +x $(WDIR)/scripts/ 2>&1
     endif
-    ifeq ($(UNAME_S),Darwin)
+    ifeq ($(OS),Darwin)
 		SHELL := /bin/bash
         CCFLAGS += -D OSX
 		RVAL0:=/bin/chmod -Rf +x $(WDIR)/scripts/ 2>&1
@@ -134,54 +163,54 @@ else
 endif
 
 ifeq ($(THREAD_SAFE_BUILD),1)
-LDFLAGS+= -lpthread
-#CODE_MACROS+= -DTHREAD_SAFE
-RVAL1 = $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_THREAD_SAFE 1
+	LDFLAGS+= -lpthread
+	#CODE_MACROS+= -DTHREAD_SAFE
+	RVAL1 = $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_THREAD_SAFE 1
 else
 RVAL1 = $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_THREAD_SAFE 0
 endif
 
 ifeq ($(SFMD_EXTENSIONS),1)
-#CODE_MACROS+= -DZVECT_DMF_EXTENSIONS
-RVAL2 = $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_DMF_EXTENSIONS 1
+	#CODE_MACROS+= -DZVECT_DMF_EXTENSIONS
+	RVAL2 = $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_DMF_EXTENSIONS 1
 else
-RVAL2 = $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_DMF_EXTENSIONS 0
+	RVAL2 = $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_DMF_EXTENSIONS 0
 endif
 
 ifeq ($(SFMD_EXTENSIONS),1)
-#CODE_MACROS+= -DZVECT_SFMD_EXTENSIONS
-RVAL3 = $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_SFMD_EXTENSIONS 1
+	#CODE_MACROS+= -DZVECT_SFMD_EXTENSIONS
+	RVAL3 = $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_SFMD_EXTENSIONS 1
 else
-RVAL3 = $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_SFMD_EXTENSIONS 0
+	RVAL3 = $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_SFMD_EXTENSIONS 0
 endif
 
 ifeq ($(FULL_REENTRANT),1)
-#CODE_MACROS+= -DZVECT_SFMD_EXTENSIONS
-RVAL4 = $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_FULL_REENTRANT 1
+	#CODE_MACROS+= -DZVECT_SFMD_EXTENSIONS
+	RVAL4 = $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_FULL_REENTRANT 1
 else
-RVAL4 = $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_FULL_REENTRANT 0
+	RVAL4 = $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_FULL_REENTRANT 0
 endif
 
 ifeq ($(MEMX_METHOD),1)
-#CODE_MACROS+= -DZVECT_SFMD_EXTENSIONS
-RVAL5 = $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_MEMX_METHOD 1
+	#CODE_MACROS+= -DZVECT_SFMD_EXTENSIONS
+	RVAL5 = $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_MEMX_METHOD 1
 else
-RVAL5 = $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_MEMX_METHOD 0
+	RVAL5 = $(WDIR)/$(SCRIPTSDIR)/ux_set_extension ZVECT_MEMX_METHOD 0
 endif
 
-SRCF=$(wildcard $(SRC)/*.c)
-OSRCF=$(sort $(SRCF))
-OBJF=$(patsubst $(SRC)/%.c, $(OBJ)/%.o, $(OSRCF))
+SRCF:=$(wildcard $(SRC)/*.c)
+OSRCF:=$(sort $(SRCF))
+OBJF:=$(patsubst $(SRC)/%.c, $(OBJ)/%.o, $(OSRCF))
 
-TESTSLIST=$(wildcard $(TESTDIR)/*.c)
-OTESTSLIST=$(sort $(TESTSLIST))
-TESTSRCS=$(patsubst $(TESTDIR)%.c, %, $(OTESTSLIST))
+TESTSLIST:=$(wildcard $(TESTDIR)/*.c)
+OTESTSLIST:=$(sort $(TESTSLIST))
+TESTSRCS:=$(patsubst $(TESTDIR)%.c, %, $(OTESTSLIST))
 #$(info "$(TESTSRCS)")
 
-TESTBINS=$(patsubst %.c, %, $(TESTSRCS))
+TESTBINS:=$(patsubst %.c, %, $(TESTSRCS))
 #$(info "$(TESTBINS)")
 
-LIBST=$(LIBDIR)/lib$(LIBNAME).a
+LIBST:=$(LIBDIR)/lib$(LIBNAME).a
 #
 ###############################################################################
 
@@ -189,13 +218,14 @@ LIBST=$(LIBDIR)/lib$(LIBNAME).a
 # Targets:
 
 .PHONY: all
-all: CFLAGS+=-O3 -fstack-protector-strong
 all: core test
 
+.PHONY: clean
 clean:
 	$(RM) -r $(LIBDIR) $(OBJ) $(TESTDIR)/bin ./*.o
 
-configure: $(SCRIPTSDIR)/ux_set_extension $(SRC)/$(LIBNAME)_config.h
+.PHONY: configure
+configure: $(SRC)/$(LIBNAME)_config.h $(SCRIPTSDIR)/ux_set_extension
 	@echo ----------------------------------------------------------------
 	$(RVAL0) || :
 	$(RVAL1) || :
@@ -205,10 +235,13 @@ configure: $(SCRIPTSDIR)/ux_set_extension $(SRC)/$(LIBNAME)_config.h
 	$(RVAL5) || :
 	@echo ----------------------------------------------------------------
 
+.PHONY: core
 core: configure $(LIBDIR) $(LIBST)
 
+.PHONY: test
 test: $(TESTDIR)/bin $(TESTBINS)
 
+.PHONY: tests
 tests: test
 	$(info   )
 	$(info ===========================)
@@ -216,6 +249,7 @@ tests: test
 	$(info ===========================)
 	for test in $(TESTBINS) ; do ./$(TESTBIN)$$test ; done 
 
+.PHONY: debug
 debug: CFLAGS+= -ggdb3
 debug: CODE_MACROS+= -DDEBUG
 debug: core tests
@@ -227,7 +261,12 @@ $(OBJF): $(OSRCF)
 	$(info ===========================)
 #	. /opt/rh/devtoolset-10/enable
 	$(CC) -c -o $@ $< $(CFLAGS) $(CODE_MACROS)
-	ls -alh ./o/*
+	@echo ""
+	@echo "Check if the objcode has been built:"
+	@ls -alh ./o/*
+	@echo "==========================="
+	@echo ""
+
 
 $(LIBST): $(OBJ) $(OBJF)
 	$(info  )
@@ -236,7 +275,11 @@ $(LIBST): $(OBJ) $(OBJF)
 	$(info ===========================)
 #	. /opt/rh/devtoolset-10/enable
 	ar rcs $@ $(OBJF)
-	ls -alh ./lib/*
+	@echo ""
+	@echo "Check if the library has been built:"
+	@ls -alh ./lib/*
+	@echo "==========================="
+	@echo ""
 
 $(TESTBINS): $(TESTSRCS)
 	$(info  )
@@ -253,7 +296,13 @@ $(OBJ):
 	[ ! -d $@ ] && mkdir -p $@
 
 $(TESTDIR)/bin:
-	[ ! -d $@ ] && mkdir -p $@
+	$(info )
+	$(info ===========================)
+	$(info Building Test Automation dirs:)
+	$(info ===========================)
+	[ ! -d $(WDIR)/$@ ] && mkdir -p $(WDIR)/$@
+	@echo "==========================="
+	@echo ""
 
 #
 ###############################################################################
