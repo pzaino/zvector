@@ -34,6 +34,10 @@ The library is relatively small, however it comes with some nice features:
 
    We can set a vector to be securely wiped (there is a flag for that), and when we do that, the library will automatically zero out all the bytes that composed the element that is being removed or the entire old vector when a new vector is being created after an expansion.
 
+- **Vector Properties**
+
+   We can configure a set of properties for each vector we create using ZVector. The library will then manipoulate and update the vector according to its properties. Read the User Guide for a complete list of all available properties.
+
 - **Thread Safe** 
 
    The library is also Thread Safe, so if our code is multi-threaded we can use this library without having to do complicated code. The mutex are also applied for each specific vector and only when they are required, so when two threads try to modify two different vectors there are no performance penalties at all.
@@ -54,9 +58,9 @@ The library is relatively small, however it comes with some nice features:
 
    For low memory devices the library supports also a vector shrinking function to avoid any possible memory waste.
 
-- **Stack behaviour support** 
+- **Stack and Queue behaviour support** 
 
-   We can also use the vector as a dynamic stack (FIFO) structure.
+   We can also use the vector as a dynamic stack (FIFO) structure. Or we can use it to create Queues (LIFO) structures (including priority queues)
 
 - **Elements swapping support** 
 
