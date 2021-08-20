@@ -22,20 +22,65 @@ I wrote this library for fun, after watching some presentations on the internet 
 
 The library is relatively small, however it comes with some nice features:
 
-- **All Data Structure support** - We can store whatever data structure we want in the vector; we can use our own data structures and/or use standard base types.
-- **Data copy support** - When we add an element to the vector it gets copied in, so we can safely store elements that we have created as local (aka not using the heap).
-- **Secure Data Wipe support** - We can set a vector to be securely wiped (there is a flag for that), and when we do that, the library will automatically zero out all the bytes that composed the element that is being removed or the entire old vector when a new vector is being created after an expansion.
-- **Thread Safe** - The library is also Thread Safe, so if our code is multi-threaded we can use this library without having to do complicated code. The mutex are also applied for each specific vector and only when they are required, so when two threads try to modify two different vectors there are no performance penalties at all.
-- **Reentrant** - The library should be fully reentrant, so changes are applied when we are ready to and all the library functions do not use global state.
-- **Configurable featureset** - for example: if you are working on single threaded application you can easly disable the extra thread safe code, making so the library smaller and faster. To configure the library check the zvector_config.h and the Makefile.
-- **Suitable for Embedded and IoT applications** - The library is suitable also for Embeeded and IoT coding, when compiled without thread safe code.
-- **Suitable for low memory devices** - For low memory devices the library supports also a vector shrinking function to avoid any possible memory waste.
-- **Stack behaviour support** - We can also use the vector as a dynamic stack (FIFO) structure.
-- **Elements swapping support** - The library comes with an handy reentrant and thread safe swap function that can swap elements in the vector (vect_swap)
-- **Single call to apply a function to the entire vector** - The library supports a single call to apply a C function to each and every element of the vector, very handy in many situations (vect_apply). It also support conditional function application to an entire vectore (vect_apply_if).
-- **Data copy/move and merge support** - The library comes with 3 handy calls to copy one vector into another, or move one vector into another or merge one vector with another and in all the 3 cases a user can chose from which element to which element to perform the requested function.
-- **CI/CD support** - The library comes with its own Unit and Integration tests that are build and executed systematically with each library build and that can be extended automatically just by adding new C files in the `tests` directory (you the make proces will detect them, build them automatically and execute them at every build)
-- **GitHub code test automation** - This library is tested on github (check above the CodeQL badge) at every commit and pull request.
+- **All Data Structures support** 
+
+   We can store whatever data structure we want in the vector; we can use our own data structures and/or use standard base types.
+
+- **Data copy support** 
+
+   When we add an element to the vector it gets copied in, so we can safely store elements that we have created as local (aka not using the heap). If you instead, need passing values by reference then you can configure a vector to do so.
+
+- **Secure Data Wipe support** 
+
+   We can set a vector to be securely wiped (there is a flag for that), and when we do that, the library will automatically zero out all the bytes that composed the element that is being removed or the entire old vector when a new vector is being created after an expansion.
+
+- **Vector Properties**
+
+   We can configure a set of properties for each vector we create using ZVector. The library will then manipoulate and update the vector according to its properties. Read the User Guide for a complete list of all available properties.
+
+- **Thread Safe** 
+
+   The library is also Thread Safe, so if our code is multi-threaded we can use this library without having to do complicated code. The mutex are also applied for each specific vector and only when they are required, so when two threads try to modify two different vectors there are no performance penalties at all.
+
+- **Reentrant** 
+
+   The library should be fully reentrant, so changes are applied when we are ready to and all the library functions do not use global state.
+
+- **Configurable featureset** 
+
+   For example: if you are working on single threaded application you can easly disable the extra thread safe code, making so the library smaller and faster. To configure the library check the zvector_config.h and the Makefile.
+
+- **Suitable for Embedded and IoT applications** 
+
+   The library is suitable also for Embeeded and IoT coding, when compiled without thread safe code.
+
+- **Suitable for low memory devices** 
+
+   For low memory devices the library supports also a vector shrinking function to avoid any possible memory waste.
+
+- **Stack and Queue behaviour support** 
+
+   We can also use the vector as a dynamic stack (FIFO) structure. Or we can use it to create Queues (LIFO) structures (including priority queues)
+
+- **Elements swapping support** 
+
+   The library comes with an handy reentrant and thread safe swap function that can swap elements in the vector (vect_swap), a vect_swap_range to swap a range of values in yoru vector and many more useful data manipoulation functions (including vector rotation and more).
+
+- **Single call to apply a function to the entire vector** 
+
+   The library supports a single call to apply a C function to each and every element of the vector, very handy in many situations (vect_apply). It also support conditional function application to an entire vectore (vect_apply_if). It also support an handly vect_apply_range which applies a user function to a range of values in your vector.
+
+- **Data copy/move and merge support** 
+
+   ZVector comes with 3 handy calls to copy one vector into another, or move one vector into another or merge one vector with another and in all the 3 cases a user can chose from which element to which element to perform the requested function.
+
+- **CI/CD support** 
+
+   The library comes with its own Unit and Integration tests that are build and executed systematically with each library build and that can be extended automatically just by adding new C files in the `tests` directory (you the make proces will detect them, build them automatically and execute them at every build)
+
+- **GitHub code test automation** 
+
+   This library is tested on github (check above the CodeQL badge) at every commit and pull request.
 
 I'll add more functions as I have time and also the possibility to keep the vector ordered.
 
@@ -57,7 +102,7 @@ Add the `zvector.h` to your C code with:
 #include "zvector.h"
 ```
 
-I wrote a full User Guide [here](https://paolozaino.wordpress.com/2021/07/27/software-development-zvector-an-ansi-c-open-source-vector-library/). I also try to keep it up-to-date.
+I wrote a full User Guide [here](https://paolozaino.wordpress.com/2021/07/27/software-development-zvector-an-ansi-c-open-source-vector-library/) and trying to keep it up-to-date.
 
 When compile make sure you link your code to the libvector.a as shown in the Makefile for the Unit Tests (in `tests`).
 
@@ -68,18 +113,30 @@ One important note for beginners is that whenever you try to store some data in 
 * If you have defined such data as a pointer then you can just use the data name, so, for example: `vect_add( myvector, myDataPointer )`
 * If instead you have defined your data as a regular variable for example, then you need to pass it to the add function with an `&` before its name, so something like `vect_add( myvector, &myInt )`
 
-Don't worry, in both cases the actual data contained in your reference will be copied (aka stored) in the vector, so if you free your reference or leave the function that defined it (as long as the vector scope is above such function), the data you've stored in the vector will persist.
+Don't worry, in both cases the actual data contained in your reference will be copied (aka stored) in the vector (unless you've specified as your vector's property ZV_BYREF), so if you free your reference or leave the function that defined it (as long as the vector scope is above such function), the data you've stored in the vector will persist.
 
 ## How do I build it?
-if you have GCC installed then use the Makefile provided, I'll add more support for other compilers when I'll have time.
+if you have GCC installed then use the Makefile provided, to build:
 
-Wheneever you build it the Unit Tests and Integration Tests will be build and executed as part of the library build process (I am a huge supporter of Tests Automation, Test Driven Development and BDD, so if you are new to this you can use this library to check how powerful can be test automation and how it can help you to get faster at coding and releasing code!).
+```
+make
+```
+
+And to build and run the tests:
+
+```
+make tests
+```
+
+I'll add support for other compilers when I'll have time.
+
+For more details, pre-requisites and whatnot please check the User Guide [here](https://paolozaino.wordpress.com/2021/07/27/software-development-zvector-an-ansi-c-open-source-vector-library/)
 
 ## Can I use it in my own commercial applications?
 Yes, absolutely. The library is distributed with the MIT license, so please have a look at the [LICENSE](./LICENSE) file for details.
 
 ## A final note
-Have fun and happy coding, and if you'd like drop me a line telling me how you've used this library in your own projects,
+Have fun and happy coding, and if you'd like, drop me a line telling me how you've used this library in your own projects,
 
 Thanks!
 
