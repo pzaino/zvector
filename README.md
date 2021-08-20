@@ -22,13 +22,13 @@ I wrote this library for fun, after watching some presentations on the internet 
 
 The library is relatively small, however it comes with some nice features:
 
-- **All Data Structure support** 
+- **All Data Structures support** 
 
    We can store whatever data structure we want in the vector; we can use our own data structures and/or use standard base types.
 
 - **Data copy support** 
 
-   When we add an element to the vector it gets copied in, so we can safely store elements that we have created as local (aka not using the heap).
+   When we add an element to the vector it gets copied in, so we can safely store elements that we have created as local (aka not using the heap). If you instead, need passing values by reference then you can configure a vector to do so.
 
 - **Secure Data Wipe support** 
 
@@ -60,15 +60,15 @@ The library is relatively small, however it comes with some nice features:
 
 - **Elements swapping support** 
 
-   The library comes with an handy reentrant and thread safe swap function that can swap elements in the vector (vect_swap)
+   The library comes with an handy reentrant and thread safe swap function that can swap elements in the vector (vect_swap), a vect_swap_range to swap a range of values in yoru vector and many more useful data manipoulation functions (including vector rotation and more).
 
 - **Single call to apply a function to the entire vector** 
 
-   The library supports a single call to apply a C function to each and every element of the vector, very handy in many situations (vect_apply). It also support conditional function application to an entire vectore (vect_apply_if).
+   The library supports a single call to apply a C function to each and every element of the vector, very handy in many situations (vect_apply). It also support conditional function application to an entire vectore (vect_apply_if). It also support an handly vect_apply_range which applies a user function to a range of values in your vector.
 
 - **Data copy/move and merge support** 
 
-   The library comes with 3 handy calls to copy one vector into another, or move one vector into another or merge one vector with another and in all the 3 cases a user can chose from which element to which element to perform the requested function.
+   ZVector comes with 3 handy calls to copy one vector into another, or move one vector into another or merge one vector with another and in all the 3 cases a user can chose from which element to which element to perform the requested function.
 
 - **CI/CD support** 
 
