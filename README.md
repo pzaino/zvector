@@ -24,59 +24,59 @@ The library is relatively small, however it comes with some nice features:
 
 - **All Data Structure support** 
 
-⋅⋅⋅ We can store whatever data structure we want in the vector; we can use our own data structures and/or use standard base types.
+   We can store whatever data structure we want in the vector; we can use our own data structures and/or use standard base types.
 
 - **Data copy support** 
 
-⋅⋅⋅ When we add an element to the vector it gets copied in, so we can safely store elements that we have created as local (aka not using the heap).
+   When we add an element to the vector it gets copied in, so we can safely store elements that we have created as local (aka not using the heap).
 
 - **Secure Data Wipe support** 
 
-⋅⋅⋅ We can set a vector to be securely wiped (there is a flag for that), and when we do that, the library will automatically zero out all the bytes that composed the element that is being removed or the entire old vector when a new vector is being created after an expansion.
+   We can set a vector to be securely wiped (there is a flag for that), and when we do that, the library will automatically zero out all the bytes that composed the element that is being removed or the entire old vector when a new vector is being created after an expansion.
 
 - **Thread Safe** 
 
-⋅⋅⋅ The library is also Thread Safe, so if our code is multi-threaded we can use this library without having to do complicated code. The mutex are also applied for each specific vector and only when they are required, so when two threads try to modify two different vectors there are no performance penalties at all.
+   The library is also Thread Safe, so if our code is multi-threaded we can use this library without having to do complicated code. The mutex are also applied for each specific vector and only when they are required, so when two threads try to modify two different vectors there are no performance penalties at all.
 
 - **Reentrant** 
 
-⋅⋅⋅ The library should be fully reentrant, so changes are applied when we are ready to and all the library functions do not use global state.
+   The library should be fully reentrant, so changes are applied when we are ready to and all the library functions do not use global state.
 
 - **Configurable featureset** 
 
-⋅⋅⋅ for example: if you are working on single threaded application you can easly disable the extra thread safe code, making so the library smaller and faster. To configure the library check the zvector_config.h and the Makefile.
+   For example: if you are working on single threaded application you can easly disable the extra thread safe code, making so the library smaller and faster. To configure the library check the zvector_config.h and the Makefile.
 
 - **Suitable for Embedded and IoT applications** 
 
-⋅⋅⋅ The library is suitable also for Embeeded and IoT coding, when compiled without thread safe code.
+   The library is suitable also for Embeeded and IoT coding, when compiled without thread safe code.
 
 - **Suitable for low memory devices** 
 
-⋅⋅⋅ For low memory devices the library supports also a vector shrinking function to avoid any possible memory waste.
+   For low memory devices the library supports also a vector shrinking function to avoid any possible memory waste.
 
 - **Stack behaviour support** 
 
-⋅⋅⋅ We can also use the vector as a dynamic stack (FIFO) structure.
+   We can also use the vector as a dynamic stack (FIFO) structure.
 
 - **Elements swapping support** 
 
-⋅⋅⋅ The library comes with an handy reentrant and thread safe swap function that can swap elements in the vector (vect_swap)
+   The library comes with an handy reentrant and thread safe swap function that can swap elements in the vector (vect_swap)
 
 - **Single call to apply a function to the entire vector** 
 
-⋅⋅⋅ The library supports a single call to apply a C function to each and every element of the vector, very handy in many situations (vect_apply). It also support conditional function application to an entire vectore (vect_apply_if).
+   The library supports a single call to apply a C function to each and every element of the vector, very handy in many situations (vect_apply). It also support conditional function application to an entire vectore (vect_apply_if).
 
 - **Data copy/move and merge support** 
 
-⋅⋅⋅ The library comes with 3 handy calls to copy one vector into another, or move one vector into another or merge one vector with another and in all the 3 cases a user can chose from which element to which element to perform the requested function.
+   The library comes with 3 handy calls to copy one vector into another, or move one vector into another or merge one vector with another and in all the 3 cases a user can chose from which element to which element to perform the requested function.
 
 - **CI/CD support** 
 
-⋅⋅⋅ The library comes with its own Unit and Integration tests that are build and executed systematically with each library build and that can be extended automatically just by adding new C files in the `tests` directory (you the make proces will detect them, build them automatically and execute them at every build)
+   The library comes with its own Unit and Integration tests that are build and executed systematically with each library build and that can be extended automatically just by adding new C files in the `tests` directory (you the make proces will detect them, build them automatically and execute them at every build)
 
 - **GitHub code test automation** 
 
-⋅⋅⋅ This library is tested on github (check above the CodeQL badge) at every commit and pull request.
+   This library is tested on github (check above the CodeQL badge) at every commit and pull request.
 
 I'll add more functions as I have time and also the possibility to keep the vector ordered.
 
