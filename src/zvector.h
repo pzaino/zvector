@@ -379,7 +379,23 @@ void vect_rotate_left(vector v, const zvect_index i);
  */
 void vect_rotate_right(vector v, const zvect_index i);
 
-#endif
+bool vect_bsearch(vector v, const void *key, int (*f1)(const void *, const void *), zvect_index *item_index);
+
+/*
+ * vect_absearch is a function that allows to perform
+ * an adaptive binary search over the vector we pass 
+ * to it to find the item "key" using the comparision
+ * function "f1".
+ * 
+ * For example to search for the number 5 in a vector 
+ * called v using a compare function called mycompare
+ * use:
+ * int i = 5;
+ * vect_absearch(v, &i, mycompare);
+ */
+bool vect_absearch(vector v, const void *key, int (*f1)(const void *, const void *), zvect_index *item_index);
+
+#endif  // ZVECT_DMF_EXTENSIONS
 
 #ifdef ZVECT_SFMD_EXTENSIONS
 // Single Function Multiple Data extensions:

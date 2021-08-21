@@ -129,6 +129,40 @@ vect_lock_disable();
         printf("Last element in the vector should now be %d: %d\n", x, *((int *)vect_get(v)));
         assert( *((int *)vect_get(v)) == x);
 
+        printf("Checking all elements in the vector now to ensure they are in the correct order:\n");
+        zvect_index item_id = 0;
+        for (item_id = 1; item_id < vect_size(v); item_id++)
+        {
+            if ( compare_func( vect_get_at(v, item_id), vect_get_at(v, item_id - 1)) <= 0 )
+            {
+                printf("Comparing element %d which is %d with element %d which is %d\n", item_id, *((int *)vect_get_at(v, item_id)), item_id - 1, *((int *)vect_get_at(v, item_id - 1)) );
+                assert( compare_func( vect_get_at(v, item_id), vect_get_at(v, item_id - 1)) > 0);
+            }
+        }
+
+    printf("done.\n");
+    testID++;
+
+    fflush(stdout);   
+#endif
+
+#ifdef ZVECT_SFMD_EXTENSIONS
+    int key = 5001;
+    printf("Test %s_%d: Search for the element %d in the vector using Adaptive Binary Search:\n", testGrp, testID, key);
+    fflush(stdout);
+
+        zvect_index item_index = 0; // Let's define an item index as a pointer to a zvect_index
+                                    // so we can pass it as parameter and the search function will
+                                    // return the item index in there.
+        if ( vect_absearch(v, &key, compare_func, &item_index) )
+        {
+            printf("Item %d found in position %d\n", key, item_index);
+        }
+        else
+        {
+            printf("Item %d not found!\n", key);
+        }
+
     printf("done.\n");
     testID++;
 

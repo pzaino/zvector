@@ -115,12 +115,13 @@ SFMD_EXTENSIONS:=1
 # Automated part of th Makefile:
 
 RVAL0:=
+P_CFLAGS:=
 
 # Add Default flags for GCC if the user has not passed any:
 ifeq ($(CC),gcc)
 	ifeq ($(strip $(CFLAGS)),)
-		CFLAGS=-std=c99 -Wall -Wextra -I./src -I./tests
-		CFLAGS+=-O3 -fstack-protector-strong
+		CFLAGS=-std=c99 -Wall -Wextra -I./src -I./tests -fstack-protector-strong
+		P_CFLAGS=-O3 
 	endif
 	ifeq ($(strip $(LDFLAGS)),)
 		LDFLAGS+=
@@ -218,6 +219,7 @@ LIBST:=$(LIBDIR)/lib$(LIBNAME).a
 # Targets:
 
 .PHONY: all
+all: CFLAGS+=$(P_CFLAGS)
 all: core test
 
 .PHONY: clean

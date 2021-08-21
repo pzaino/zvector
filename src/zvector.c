@@ -1023,6 +1023,9 @@ void vect_swap(vector v, const zvect_index i1, const zvect_index i2)
     if (i2 > v->size)
         throw_error("Index out of bounds!");
 
+    if ( i1 == i2 )
+        return;
+
         // Let's swap items:
 #if (ZVECT_THREAD_SAFE == 1)
     check_mutex_lock(v, 1);
@@ -1161,6 +1164,200 @@ void vect_rotate_right(vector v, const zvect_index i)
 #endif
 }
 
+bool _standard_binary_search(vector v, const void *key, zvect_index *item_index, int (*f1)(const void *, const void *))
+{
+	zvect_index bot, mid, top;
+    static uint32_t checks = 0;
+
+	bot = 0;
+	top = v->size - 1;
+
+	while (bot < top)
+	{
+		mid = top - (top - bot) / 2;
+
+		++checks;
+
+        // key < array[mid]
+		if ((*f1)(key, v->data[mid]) < 0 )
+		{
+			top = mid - 1;
+		}
+		else
+		{
+			bot = mid;
+		}
+	}
+
+	++checks;
+
+    // key == array[top]
+	if ( (*f1)(key, v->data[top]) == 0)
+	{
+        *item_index = top;
+		return true;
+	}
+
+    *item_index = top;
+	return false;
+}
+
+bool _adaptive_binary_search(vector v, const void *key, zvect_index *item_index, int (*f1)(const void *, const void *))
+{
+	static unsigned int i = 0, balance = 0, checks = 0;
+	zvect_index bot, top, mid;
+    size_t array_size = v->size;
+
+	if ( (balance >= 32) || (array_size <= 64))
+	{
+		bot = 0;
+		top = array_size;
+
+		goto monobound;
+	}
+	bot = i;
+	top = 32;
+
+	++checks;
+
+    // key >= array[bot]
+	if ( (*f1)(key, v->data[bot]) >= 0 )
+	{
+		while (1)
+		{
+			if ( (bot + top) >= array_size )
+			{
+				top = array_size - bot;
+				break;
+			}
+			bot += top;
+
+			++checks;
+
+            // key < array[bot]
+			if ( (*f1)(key, v->data[bot]) < 0 )
+			{
+				bot -= top;
+				break;
+			}
+			top *= 2;
+		}
+	}
+	else
+	{
+		while (1)
+		{
+			if (bot < top)
+			{
+				top = bot;
+				bot = 0;
+
+				break;
+			}
+			bot -= top;
+
+			++checks;
+
+            // key >= array[bot]
+			if ((*f1)(key, v->data[bot]) >= 0)
+			{
+				break;
+			}
+			top *= 2;
+		}
+	}
+
+	monobound:
+
+	while (top > 3)
+	{
+		mid = top / 2;
+
+		++checks;
+
+        // key >= array[bot + mid]
+		if ( (*f1)(key, v->data[bot + mid]) >= 0 )
+		{
+			bot += mid;
+		}
+		top -= mid;
+	}
+	balance = i > bot ? i - bot : bot - i;
+
+	i = bot;
+
+	while (top)
+	{
+		++checks;
+
+        // key == array[bot + --top]
+		if ( (*f1)(key, v->data[bot + --top]) == 0 )
+		{
+            zvect_index result = bot + top;
+            *item_index = result;
+            return true;
+		}
+	}
+
+    zvect_index result = bot + top;
+    *item_index = result;
+	return false;
+}
+
+bool vect_bsearch(vector v, const void *key, int (*f1)(const void *, const void *), zvect_index *item_index)
+{
+    // check if the vector exists:
+    vect_check(v);
+
+    // Check parameters:
+    if ( key == NULL )
+        return NULL;
+    
+    if ( f1 == NULL )
+        return NULL;
+
+    if (v->size == 0)
+	    return false;
+    
+    *item_index = 0;
+    if (_standard_binary_search(v, key, item_index, f1))
+    {
+        return true;
+    }
+    else
+    {
+        *item_index = 0;
+        return false;
+    }
+}
+
+bool vect_absearch(vector v, const void *key, int (*f1)(const void *, const void *), zvect_index *item_index)
+{
+    // check if the vector exists:
+    vect_check(v);
+
+    // Check parameters:
+    if ( key == NULL )
+        return NULL;
+    
+    if ( f1 == NULL )
+        return NULL;
+
+    if (v->size == 0)
+	    return false;
+    
+    *item_index = 0;
+    if (_adaptive_binary_search(v, key, item_index, f1))
+    {
+        return true;
+    }
+    else
+    {
+        *item_index = 0;
+        return false;
+    }
+}
+
 #endif // ZVECT_DMF_EXTENSIONS
 
 #ifdef ZVECT_SFMD_EXTENSIONS
@@ -1256,12 +1453,90 @@ void vect_apply_if(vector v1, vector v2, void (*f1)(void *), bool (*f2)(void *, 
 #endif
 }
 
+zvect_index _partition(vector v, zvect_index low, zvect_index high, int (*compare_func)(const void *, const void *))
+{
+    if ( high >= v->size )
+        high = v->size - 1;
+    void *pivot = v->data[high];
+    zvect_index i = (low - 1);
+    zvect_index j;
+    for ( j = low; j <= high- 1; j++)
+    {
+        // v->data[j] <= pivot
+        if ((*compare_func)(v->data[j], pivot) <= 0 )
+        {
+            i++;
+            vect_swap(v, i, j);
+        }
+    }
+    vect_swap(v, i + 1, high );
+    return (i + 1);
+}
+
+void _vect_qsort(vector v, zvect_index low, zvect_index high, int (*compare_func)(const void *, const void *))
+{
+    if (low < high)
+    {
+        zvect_index pi = _partition(v, low, high, compare_func);
+        _vect_qsort(v, low, pi - 1, compare_func);
+        _vect_qsort(v, pi + 1, high, compare_func);
+    }
+}
+
+void _vect_qsort2(vector v, zvect_index l, zvect_index r, int (*compare_func)(const void *, const void *))
+{
+    if (r <= l)
+        return;
+
+    zvect_index k = 0, i, p, j, q;
+    void *ref_val = NULL;
+
+    if ( l > 0 )
+        i = l - 1;
+    else
+        i = l;
+    j = r;
+    p = i;
+    q = r;
+    ref_val = v->data[r];
+
+    for (;;)
+    {
+        while((*compare_func)(v->data[i++], ref_val) < 0);
+        if ( i >= v->size )
+            i = v->size - 1;
+        while((*compare_func)(ref_val, v->data[--j]) < 0) if ( j == 1 ) break;
+        if ( i >= j ) break;
+        vect_swap(v, i, j);
+        if ( (*compare_func)( v->data[i], ref_val ) == 0 ) { p++; vect_swap(v, p, i); }
+        if ( (*compare_func)( ref_val, v->data[j] ) == 0 ) { q--; vect_swap(v, q, j); }
+    }
+    if ( (i < v->size ) && ( r < v->size ) )
+    {
+        vect_swap(v, i, r); j = i - 1; i = i + 1;
+        if ( i >= v->size )
+            i = v->size - 1;
+    }
+    for ( k = 1    ; k < p; k++, j--) vect_swap(v, k, j);
+    for ( k = r - 1; k > q; k--, i++) 
+    {
+        if ( i >= v->size )
+            i = v->size - 1; 
+        vect_swap(v, k, i);
+    }
+    _vect_qsort2(v, l, j, compare_func);
+    _vect_qsort2(v, i, r, compare_func);
+}
+
 void vect_qsort(vector v, int (*compare_func)(const void *, const void *))
 {
     // check if the vector v1 exists:
     vect_check(v);
 
     // Check parameters:
+    if (v->size <= 1)
+        return;
+
     if (compare_func == NULL)
         return;
 
@@ -1270,10 +1545,12 @@ void vect_qsort(vector v, int (*compare_func)(const void *, const void *))
     check_mutex_lock(v, 1);
 #endif
 
-    qsort(v->data,
+/*    qsort(v->data,
           v->size,
           sizeof(void *),
           compare_func);
+*/
+_vect_qsort(v, 0, v->size - 1, compare_func);
 
 #if (ZVECT_THREAD_SAFE == 1)
     check_mutex_unlock(v, 1);
