@@ -1059,6 +1059,9 @@ void vect_swap_range(vector v, const zvect_index s1, const zvect_index e1, const
     if (s2 < (s1 + end))
         throw_error("Index out of bounds!");
 
+    if ( s1 == s2 )
+        return;
+
     // Let's swap items:
     zvect_index j, i;
 #if (ZVECT_THREAD_SAFE == 1)
@@ -1164,7 +1167,7 @@ void vect_rotate_right(vector v, const zvect_index i)
 #endif
 }
 
-bool _standard_binary_search(vector v, const void *key, zvect_index *item_index, int (*f1)(const void *, const void *))
+static bool _standard_binary_search(vector v, const void *key, zvect_index *item_index, int (*f1)(const void *, const void *))
 {
 	zvect_index bot, mid, top;
     static uint32_t checks = 0;
@@ -1202,7 +1205,7 @@ bool _standard_binary_search(vector v, const void *key, zvect_index *item_index,
 	return false;
 }
 
-bool _adaptive_binary_search(vector v, const void *key, zvect_index *item_index, int (*f1)(const void *, const void *))
+static bool _adaptive_binary_search(vector v, const void *key, zvect_index *item_index, int (*f1)(const void *, const void *))
 {
 	static unsigned int i = 0, balance = 0, checks = 0;
 	zvect_index bot, top, mid;
@@ -1460,16 +1463,13 @@ static inline zvect_index _partition(vector v, zvect_index low, zvect_index high
     void *pivot = v->data[high];
     zvect_index i = (low - 1);
     zvect_index j;
-    for ( j = low; j <= high- 1; j++)
+    for ( j = low; j <= (high - 1); j++)
     {
         // v->data[j] <= pivot
         if ((*compare_func)(v->data[j], pivot) <= 0 )
-        {
-            i++;
-            vect_swap(v, i, j);
-        }
+            vect_swap(v, ++i, j);
     }
-    vect_swap(v, i + 1, high );
+    vect_swap(v, i + 1, high);
     return (i + 1);
 }
 
