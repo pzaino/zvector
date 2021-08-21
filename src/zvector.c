@@ -1453,7 +1453,7 @@ void vect_apply_if(vector v1, vector v2, void (*f1)(void *), bool (*f2)(void *, 
 #endif
 }
 
-zvect_index _partition(vector v, zvect_index low, zvect_index high, int (*compare_func)(const void *, const void *))
+static inline zvect_index _partition(vector v, zvect_index low, zvect_index high, int (*compare_func)(const void *, const void *))
 {
     if ( high >= v->size )
         high = v->size - 1;
