@@ -379,13 +379,33 @@ void vect_rotate_left(vector v, const zvect_index i);
  */
 void vect_rotate_right(vector v, const zvect_index i);
 
-bool vect_bsearch(vector v, const void *key, int (*f1)(const void *, const void *), zvect_index *item_index);
+/*
+ * vect_qsort allows you to sort a given vector.
+ * The algorith used to sort a vector is Quicksort with
+ * 3 ways partitioning which is generallymuch faster than 
+ * traditional quicksort.
+ *
+ * To sort a vector you need to provide a custom function
+ * that allows vect_sort to determine the order and which 
+ * elements of a vector are used to order it in the way
+ * you desire. It pretty much works as a regular C qsort
+ * function. It quite fast given that it only reorders
+ * pointers to your datastructure stored in the vector.
+ *
+ */
+void vect_qsort(vector v, int (*compare_func)(const void *, const void*));
 
 /*
- * vect_absearch is a function that allows to perform
- * an adaptive binary search over the vector we pass 
- * to it to find the item "key" using the comparision
- * function "f1".
+ * vect_bsearch is a function that allows to perform
+ * an binary search over the vector we pass to it to 
+ * find the item "key" using the comparision function 
+ * "f1".
+ * 
+ * The specific algorithm used to implement vect_bsearch
+ * if my own re-implementation of the Adaptive Binary
+ * Search algorithm (from Igor van den Hoven) which has
+ * some improvements over the original one (look at the 
+ * sources fo rmore details).
  * 
  * For example to search for the number 5 in a vector 
  * called v using a compare function called mycompare
@@ -393,7 +413,9 @@ bool vect_bsearch(vector v, const void *key, int (*f1)(const void *, const void 
  * int i = 5;
  * vect_absearch(v, &i, mycompare);
  */
-bool vect_absearch(vector v, const void *key, int (*f1)(const void *, const void *), zvect_index *item_index);
+bool vect_bsearch(vector v, const void *key, int (*f1)(const void *, const void *), zvect_index *item_index);
+
+
 
 #endif  // ZVECT_DMF_EXTENSIONS
 
@@ -445,20 +467,6 @@ void vect_apply(vector, void (*f1)(void *));
  * }
  */
 void vect_apply_if(vector v1, vector v2, void (*f1)(void *), bool (*f2)(void *, void *));
-
-
-/*
- * vect_sort allows you to sort a given vector.
- *
- * To sort a vector you need to provide a custom function
- * that allows vect_sort to determine the order and which 
- * elements of a vector are used to order it in the way
- * you desire. It pretty much works as a regular C qsort
- * function. It quite fast given that it only reorders
- * pointers to your datastructure stored in the vector.
- *
- */
-void vect_qsort(vector v, int (*compare_func)(const void *, const void*));
 
 // Operations with multiple vectors:
 

@@ -154,7 +154,7 @@ vect_lock_disable();
         zvect_index item_index = 0; // Let's define an item index as a pointer to a zvect_index
                                     // so we can pass it as parameter and the search function will
                                     // return the item index in there.
-        if ( vect_absearch(v, &key, compare_func, &item_index) )
+        if ( vect_bsearch(v, &key, compare_func, &item_index) )
         {
             printf("Item %d found in position %d\n", key, item_index);
         }
