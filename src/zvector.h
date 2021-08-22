@@ -415,7 +415,10 @@ void vect_qsort(vector v, int (*compare_func)(const void *, const void*));
  */
 bool vect_bsearch(vector v, const void *key, int (*f1)(const void *, const void *), zvect_index *item_index);
 
-
+/*
+ * vect_add_ordered
+ */
+void vect_add_ordered(vector v, const void *value, int (*f1)(const void *, const void *));
 
 #endif  // ZVECT_DMF_EXTENSIONS
 
