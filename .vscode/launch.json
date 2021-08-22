@@ -81,6 +81,25 @@
             ]
         },
         {
+            "name": "01UTest005",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/tests/bin/01UTest005",
+            "args": [],
+            "stopAtEntry": true,
+            "cwd": "${fileDirname}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
             "name": "02ITest001",
             "type": "cppdbg",
             "request": "launch",

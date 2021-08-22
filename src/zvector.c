@@ -89,8 +89,8 @@ struct _vector
     zvect_index init_capacity; // - Initial Capacity (this is set at
                                //   creation time).
     zvect_index capacity;      // - Max capacity allocated.
-    size_t data_size;          // - User DataType size.
-    uint32_t flags;            // - If this flag set is used to
+         size_t data_size;     // - User DataType size.
+       uint32_t flags;         // - If this flag set is used to
                                //   represent ALL Vector's properties.
                                //   It contains bits that set Secure
                                //   Wipe, Auto Shrink, Pass Items By
@@ -114,6 +114,12 @@ struct _vector
                                 //   micro-transactions or user locks.
 #endif
 #endif
+#ifdef ZVECT_DMF_EXTENSIONS
+    zvect_index balance;        // - Used by the Adaptive Binary Search
+                                //   to improve performance.
+    zvect_index bottom;         // - Used to optimise Adaptive Binary
+                                //   Search.
+#endif  // ZVECT_DMF_EXTENSIONS
     void (*SfWpFunc)(const void *item, size_t size);
     // - Pointer to a CUSTOM Safe Wipe
     //   function (optional) needed only
@@ -756,16 +762,6 @@ void vect_add_front(vector v, const void *value)
     _vect_add_at(v, value, 0);
 }
 
-void vect_add_ordered(vector v, const void *value, void (*f1)())
-{
-    /* TODO(pzaino): Implement a vect_add function that stores items in 
-     *               an ordered fashion in the given vector. 
-     */
-    UNUSED(v);
-    UNUSED(value);
-    UNUSED(f1);
-}
-
 // inline implementation for all get(s):
 static inline void *_vect_get_at(vector v, const zvect_index i)
 {
@@ -1309,17 +1305,15 @@ static bool _standard_binary_search(vector v, const void *key, zvect_index *item
 // and other types of vectors.
 static bool _adaptive_binary_search(vector v, const void *key, zvect_index *item_index, int (*f1)(const void *, const void *))
 {
-	static unsigned int i = 0, balance = 0;
 	zvect_index bot, top, mid;
-    size_t array_size = v->size;
 
-	if ( (balance >= 32) || (array_size <= 64))
+	if ( (v->balance >= 32) || (v->size <= 64))
 	{
 		bot = 0;
-		top = array_size;
+		top = v->size;
 		goto monobound;
 	}
-	bot = i;
+	bot = v->bottom;
 	top = 32;
 
     // key >= array[bot]
@@ -1327,9 +1321,9 @@ static bool _adaptive_binary_search(vector v, const void *key, zvect_index *item
 	{
 		while (1)
 		{
-			if ( (bot + top) >= array_size )
+			if ( (bot + top) >= v->size )
 			{
-				top = array_size - bot;
+				top = v->size - bot;
 				break;
 			}
 			bot += top;
@@ -1372,22 +1366,27 @@ static bool _adaptive_binary_search(vector v, const void *key, zvect_index *item
 		top -= mid;
 	}
 
-	balance = i > bot ? i - bot : bot - i;
-	i = bot;
+	v->balance = v->bottom > bot ? v->bottom - bot : bot - v->bottom;
+	v->bottom = bot;
 
+    int test = 0;
 	while (top)
 	{
         // key == array[bot + --top]
-		if ( (*f1)(key, v->data[bot + --top]) == 0 )
+        test = (*f1)(key, v->data[bot + (--top)]);
+		if ( test == 0 )
 		{
-            zvect_index result = bot + top;
-            *item_index = result;
+            *item_index = bot + top;
             return true;
 		}
+        else if ( test > 0 )
+        {
+            *item_index = bot + (top + 1);
+            return false;
+        }
 	}
 
-    zvect_index result = bot + top;
-    *item_index = result;
+    *item_index = bot + top;
 	return false;
 }
 #endif  // ! TRADITIONAL_BINARY_SEARCH
@@ -1430,6 +1429,58 @@ bool vect_bsearch(vector v, const void *key, int (*f1)(const void *, const void 
         return false;
     }
 #endif  // ! TRADITIONAL_BINARY_SEARCH
+}
+
+/*
+ * Althought if the vect_add_* doesn't belong to this group of 
+ * functions, the vect_add_ordered is an exception because it
+ * requires vect_bserach and vect_qsort to be available.
+ */
+void vect_add_ordered(vector v, const void *value, int (*f1)(const void *, const void *))
+{
+    // check if the vector exists:
+    vect_check(v);
+
+    // Check parameters:
+    if ( value == NULL )
+        return;
+    
+    // Few tricks to make it faster:
+    if ( v->size == 0 )
+    {
+        // If the vector is empty clearly we can just
+        // use vect_add and add the value normaly!
+        vect_add(v, value);
+        return;
+    }
+
+    if ((*f1)(value, v->data[v->size - 1]) > 0)
+    {
+        // If the compare function returns that
+        // the value passed should go after the
+        // last value in the vector, just do so!
+        vect_add(v, value);
+        return;
+    }
+
+    // Ok previous checks didn't help us so we need
+    // to get "heavy weapons" out and find where in
+    // the vector we should add "value":
+    zvect_index item_index = 0;
+
+    // Here is another trick:
+    // I improved adaptive binary search to ALWAYS
+    // return a index (even when it doesn't find a
+    // searched item), this works for both: regular
+    // searches which will also use the bool to 
+    // know if we actually found the item in that
+    // item_index or not and the vect_add_ordered
+    // which will use item_index (which will be the
+    // place where value should have been) to insert
+    // value as an ordered item :)
+    _adaptive_binary_search(v, value, &item_index, f1);
+
+    vect_add_at(v, value, item_index);
 }
 
 #endif // ZVECT_DMF_EXTENSIONS
