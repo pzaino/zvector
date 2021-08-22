@@ -79,7 +79,7 @@ int main()
 vect_lock_disable();
 #endif
 
-    printf("Test %s_%d: Create a vector of 2 elements and using int for the vector data:\n", testGrp, testID);
+    printf("Test %s_%d: Create aN Ordered Queue of 2 elements and using QueueItem for the vector data:\n", testGrp, testID);
     vector v;
     v = vect_create(2, sizeof(struct QueueItem), ZV_SEC_WIPE); 
     printf("done.\n");
