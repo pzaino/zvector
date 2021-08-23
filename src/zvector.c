@@ -1102,6 +1102,9 @@ void vect_rotate_left(vector v, const zvect_index i)
     if (i > v->size)
         throw_error("Index out of bounds!");
 
+    if ( i == v->size )
+        return;
+
         // Process the vector
 #if (ZVECT_THREAD_SAFE == 1)
     check_mutex_lock(v, 1);
@@ -1144,6 +1147,9 @@ void vect_rotate_right(vector v, const zvect_index i)
 
     if (i > v->size)
         throw_error("Index out of bounds!");
+
+    if ( i == v->size )
+        return;
 
         // Process the vector
 #if (ZVECT_THREAD_SAFE == 1)
@@ -1634,13 +1640,21 @@ void vect_copy(vector v1, vector v2, const zvect_index s2,
     else
         ee2 = e2;
 
-    zvect_index i;
 #if (ZVECT_THREAD_SAFE == 1)
     check_mutex_lock(v1, 2);
 #endif
+    // Set the correct capacity for v1 to get the whole v2:
+    while (v1->capacity <= (v1->size + ee2) )
+        vect_increase_capacity(v1);
 
-    for (i = s2; i <= ee2; i++)
-        vect_add(v1, v2->data[i]);
+    // Copy v2 (from s2) in v1 at the end of v1:
+    //zvect_index i;
+    //for (i = s2; i <= s2+ee2; i++)
+    //   vect_add(v1, v2->data[i]);
+    vect_memcpy(v1->data + v1->size, v2->data + s2, sizeof(void *) * ee2);
+
+    // Update v1 size:
+    v1->size += ee2;
 
 #if (ZVECT_THREAD_SAFE == 1)
     check_mutex_unlock(v1, 2);
@@ -1648,12 +1662,13 @@ void vect_copy(vector v1, vector v2, const zvect_index s2,
 }
 
 /*
- * vect_insert inserts the specified elements from vector
- * v2 (from start position s1 to end position e1) in 
- * vector v1, from position s2.
+ * vect_insert inserts the specified number of elements 
+ * from vector v2 (from position s2) in vector v1 (from 
+ * position s1).
  * 
- * example: to insert items from 10 to 20 in vector v2 to
- *          vector v1 starting at position 5, use:
+ * example: to insert 10 items from v2 (form item at 
+ *          position 10) into vector v1 starting at 
+ *          position 5, use:
  * vect_insert(v1, v2, 10, 10, 5);
  */
 void vect_insert(vector v1, vector v2, const zvect_index s2,
@@ -1689,7 +1704,8 @@ void vect_insert(vector v1, vector v2, const zvect_index s2,
     check_mutex_lock(v1, 2);
 #endif
 
-    for (i = s2; i <= ee2; i++, j++)
+    // Copy v2 items (from s2) in v1 (from s1):
+    for (i = s2; i <= s2 + ee2; i++, j++)
         vect_add_at(v1, v2->data[i], s1 + j);
 
 #if (ZVECT_THREAD_SAFE == 1)
@@ -1697,6 +1713,15 @@ void vect_insert(vector v1, vector v2, const zvect_index s2,
 #endif
 }
 
+/*
+ * vect_move movess the specified number of elements 
+ * from vector v2 (from position s2) in vector v1 (at 
+ * the end of it).
+ * 
+ * example: to move 10 items from v2 (from item at 
+ *          position 10) into vector v1, use:
+ * vect_move(v1, v2, 10, 10, 5);
+ */
 void vect_move(vector v1, vector v2, const zvect_index s2,
                const zvect_index e2)
 {
@@ -1724,16 +1749,29 @@ void vect_move(vector v1, vector v2, const zvect_index s2,
     else
         ee2 = e2;
 
-    zvect_index i;
 #if (ZVECT_THREAD_SAFE == 1)
     check_mutex_lock(v1, 2);
 #endif
 
-    for (i = s2; i <= ee2; i++)
-    {
-        vect_add(v1, v2->data[i]);
+    // Set the correct capacity for v1 to get the whole v2:
+    while (v1->capacity <= (v1->size + ee2) )
+        vect_increase_capacity(v1);
+
+    // Copy v2 (from s2) in v1 at the end of v1:
+    //zvect_index i;
+    //for (i = s2; i <= s2 + ee2; i++)
+    //{
+    //    vect_add(v1, v2->data[i]);
+    //    vect_remove_at(v2, i);
+    //}
+    vect_memcpy(v1->data + v1->size, v2->data + s2, sizeof(void *) * ee2);
+
+    // Update v1 size:
+    v1->size += ee2;
+
+    zvect_index i;
+    for (i = s2; i <= s2 + ee2; i++)
         vect_remove_at(v2, i);
-    }
 
 #if (ZVECT_THREAD_SAFE == 1)
     check_mutex_unlock(v1, 2);

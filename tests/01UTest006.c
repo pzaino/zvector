@@ -188,6 +188,14 @@ vect_lock_disable();
     printf("done.\n");
     testID++; 
 
+    printf(" - Test %s_%d: Rotate right v of %d:\n", testGrp, testID, MAX_ITEMS / 4);
+    fflush(stdout);
+
+        vect_rotate_right(v, MAX_ITEMS / 4);
+
+    printf("done.\n");
+    testID++;
+
     printf(" - Test %s_%d: merge v2 into v:\n", testGrp, testID);
     fflush(stdout);
 
