@@ -30,7 +30,7 @@
 #include <assert.h>
 #include <string.h>
 
-#if (  defined(_MSC_VER) )
+#if ( defined(_MSC_VER) )
  // Silly stuff that needs to be added for Microsoft compilers
  // which are still at the MS-DOS age apparently...
 #define ZVECTORH "../src/zvector.h"
@@ -108,7 +108,7 @@ void * doSomething1(void *arg)
         printf("Test %s_%d:  -  All items incremented.\n", testGrp, testID);
 #endif  // ZVECT_SFMD_EXTENSIONS
 
-    //pthread_exit(NULL);
+    pthread_exit(NULL);
     return NULL;
 }
 
@@ -142,7 +142,7 @@ void * doSomething2(void *arg)
         printf("Test %s_%d:  -  All items multiplied.\n", testGrp, testID);
 #endif
 
-    //pthread_exit(NULL);
+    pthread_exit(NULL);
     return NULL;
 }
 
@@ -199,9 +199,6 @@ int main()
 
         // Let's start the threads:
         pthread_join(tid[0], NULL);
-
-        // Let's ensure that thread 0 starts always before thread 1:
-        //usleep(100);
 
         err = pthread_create(&(tid[i]), NULL, &doSomething2, v);
         if (err != 0)

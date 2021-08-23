@@ -112,21 +112,21 @@ struct _vector
                                 //   for this Vector.
     CRITICAL_SECTION lock;      // - Vector's mutex for thread safe
                                 //   micro-transactions or user locks.
-#endif
-#endif
+#endif  // MUTEX_TYPE
+#endif  // ZVECT_THREAD_SAFE
 #ifdef ZVECT_DMF_EXTENSIONS
-    zvect_index balance; // - Used by the Adaptive Binary Search
-                         //   to improve performance.
-    zvect_index bottom;  // - Used to optimise Adaptive Binary
-                         //   Search.
-#endif                   // ZVECT_DMF_EXTENSIONS
+    zvect_index balance;        // - Used by the Adaptive Binary Search
+                                //   to improve performance.
+    zvect_index bottom;         // - Used to optimise Adaptive Binary
+                                //   Search.
+#endif  // ZVECT_DMF_EXTENSIONS
     void (*SfWpFunc)(const void *item, size_t size);
-    // - Pointer to a CUSTOM Safe Wipe
-    //   function (optional) needed only
-    //   for Secure Wiping special
-    //   structures.
+                                // - Pointer to a CUSTOM Safe Wipe
+                                //   function (optional) needed only
+                                //   for Secure Wiping special
+                                //   structures.
     void **data ZVECT_DATAALIGN;
-    // - Vector's storage.
+                                // - Vector's storage.
 } ZVECT_DATAALIGN;
 
 /***********************
@@ -141,7 +141,7 @@ static void throw_error(const char *error_message)
 #else
     printf("Error: %s\n", error_message);
     exit(-1);
-#endif
+#endif  // OS_TYPE
 }
 
 static inline void vect_check(vector x)
@@ -191,7 +191,7 @@ static void _free_items(vector v, zvect_index first, zvect_index offset)
 
 #if (ZVECT_MEMX_METHOD == 0)
 static inline
-#endif
+#endif  // ZVECT_MEMX_METHOD
     void *
     vect_memcpy(void *__restrict dst, const void *__restrict src, size_t size)
 {
@@ -225,7 +225,7 @@ static inline
             return memcpy(dst, src, size);
     }
     return dst;
-#endif
+#endif  // ZVECT_MEMX_METHOD
 }
 
 static inline void *vect_memmove(void *__restrict dst, const void *__restrict src, size_t size)
@@ -258,7 +258,7 @@ static inline void mutex_alloc(pthread_mutex_t *lock)
     pthread_mutex_init(lock, &Attr);
 #else
     pthread_mutex_init(lock, NULL);
-#endif
+#endif  // macOS
 }
 
 static inline void mutex_destroy(pthread_mutex_t *lock)
@@ -288,8 +288,8 @@ static inline void mutex_destroy(CRITICAL_SECTION *lock)
 {
     DeleteCriticalSection(lock);
 }
-#endif
-#endif
+#endif  // MUTEX_TYPE
+#endif  // ZVECT_THREAD_SAFE
 
 #if (ZVECT_THREAD_SAFE == 1)
 // The following two functions are generic locking functions
@@ -328,7 +328,7 @@ static inline void check_mutex_unlock(vector v, volatile uint8_t lock_type)
         }
     }
 }
-#endif
+#endif  // ZVECT_THREAD_SAFE
 
 /******************************
  **    ZVector Primitives    **
@@ -494,7 +494,7 @@ static void _vect_destroy(vector v, uint32_t flags)
         {
             if (v->data[i] != NULL)
             {
-                if (v->flags & ZV_SEC_WIPE)
+                if ((v->flags & ZV_SEC_WIPE) )
                     item_safewipe(v, v->data[i]);
                 if (!(v->flags & ZV_BYREF))
                     free(v->data[i]);
@@ -1757,7 +1757,7 @@ void vect_merge(vector v1, vector v2)
 #endif
 
     // Set the correct capacity for v1 to get the whole v2:
-    while (v1->capacity <= v2->size)
+    while (v1->capacity <= (v1->size + v2->size) )
         vect_increase_capacity(v1);
 
     // Copy the whole v2 in v1 at the end of v1:
@@ -1765,6 +1765,9 @@ void vect_merge(vector v1, vector v2)
     //for (i = 0; i < v2->size; i++)
     //    vect_add(v1, v2->data[i]);
     vect_memcpy(v1->data + v1->size, v2->data, sizeof(void *) * v2->size);
+
+    // Update v1 size:
+    v1->size += v2->size;
 
     // Because we are merging two vectors in one
     // after merged v2 to v1 there is no need for
