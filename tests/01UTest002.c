@@ -40,9 +40,9 @@ typedef struct Car
     uint32_t year;
 } car;
 
-void clear_str(char *str, uint32_t numchars)
+void clear_str(const char *str, const uint32_t numchars)
 {
-    memset(str, 0, numchars);
+    memset((void *)str, 0, numchars);
 }
 
 void strCopy(char *dst, const char *src, size_t len)

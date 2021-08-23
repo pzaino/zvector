@@ -74,7 +74,7 @@ int main()
     srand((time(NULL) * max_strLen) + (++mySeed));
 
     printf("=== UTest%s ===\n", testGrp);
-    printf("Testing Dynamic QUEUES (single thread)\n");
+    printf("Testing Dynamic QUEUES (single thread) with vect_merge\n");
 
     fflush(stdout);
 
@@ -82,19 +82,31 @@ int main()
 vect_lock_disable();
 #endif
 
-    printf("Test %s_%d: Create aN Ordered Queue of 2 elements and using QueueItem for the vector data:\n", testGrp, testID);
-    vector v;
-    v = vect_create(2, sizeof(struct QueueItem), ZV_SEC_WIPE); 
+    printf("Test %s_%d: Create a Queue of 2 elements and using QueueItem for the vector data:\n", testGrp, testID);
+
+        vector v = vect_create(2, sizeof(struct QueueItem), ZV_SEC_WIPE); 
+
+    printf("done.\n");
+    testID++;
+
+    fflush(stdout);
+
+    printf("Test %s_%d: Create 2 ordered Queues of 2 elements each and using QueueItem for the vector data:\n", testGrp, testID);
+
+        vector v1 = vect_create(2, sizeof(struct QueueItem), ZV_SEC_WIPE); 
+        vector v2 = vect_create(2, sizeof(struct QueueItem), ZV_SEC_WIPE);
+
     printf("done.\n");
     testID++;
 
     fflush(stdout);
 
     // Simulating Producer:
-    printf("Test %s_%d: Produce %d events with event id randomly generated, store them ordered in the queue and check if they are stored correctly:\n", testGrp, testID, MAX_ITEMS);
+    uint32_t i;
+    printf("Test %s_%d: Produce %d events with event id randomly generated, store them ordered in the queue v1 and check if they are stored correctly:\n", testGrp, testID, MAX_ITEMS / 2);
     fflush(stdout);
-        uint32_t i;
-        for (i = 0; i < MAX_ITEMS; i++)
+
+        for (i = 0; i < MAX_ITEMS / 2; i++)
         {
             QueueItem qi;
             qi.eventID = rand();
@@ -106,19 +118,19 @@ vect_lock_disable();
             //printf("produced event message: %s\n", qi.msg);
 
             // Let's add a new item in the queue:
-            vect_add_ordered(v, &qi, compare_func);
+            vect_add_ordered(v1, &qi, compare_func);
 
             // Let's check if the vector size has grown correctly:
-            assert(vect_size(v) == (zvect_index)i + 1);
+            assert(vect_size(v1) == (zvect_index)i + 1);
 
         }
     printf(" - Test %s_%d: Ordered Vector generated, now proceeding with checking if it's correctly ordered:\n", testGrp, testID);
     fflush(stdout);
 
-        for (i = 1; i < MAX_ITEMS; i++)
+        for (i = 1; i < MAX_ITEMS / 2; i++)
         {
-            QueueItem item1 = *((QueueItem *)vect_get_at(v, i - 1));
-            QueueItem item2 = *((QueueItem *)vect_get_at(v, i));
+            QueueItem item1 = *((QueueItem *)vect_get_at(v1, i - 1));
+            QueueItem item2 = *((QueueItem *)vect_get_at(v1, i));
 
             assert( item1.eventID <= item2.eventID );
         }
@@ -128,6 +140,69 @@ vect_lock_disable();
     testID++;
 
     fflush(stdout);
+
+    // Simulating Producer:
+    printf("Test %s_%d: Produce %d events with event id randomly generated, store them ordered in v2 queue and check if they are stored correctly:\n", testGrp, testID, MAX_ITEMS / 2);
+    fflush(stdout);
+
+        for (i = 0; i < MAX_ITEMS / 2; i++)
+        {
+            QueueItem qi;
+            qi.eventID = rand();
+            qi.msg[0] = '\0';
+            clear_str(qi.msg, MAX_MSG_SIZE);
+            mk_rndstr(qi.msg, max_strLen - 1);
+            qi.priority = 0;
+
+            //printf("produced event message: %s\n", qi.msg);
+
+            // Let's add a new item in the queue:
+            vect_add_ordered(v2, &qi, compare_func);
+
+            // Let's check if the vector size has grown correctly:
+            assert(vect_size(v2) == (zvect_index)i + 1);
+
+        }
+    printf(" - Test %s_%d: Ordered Vector generated, now proceeding with checking if it's correctly ordered:\n", testGrp, testID);
+    fflush(stdout);
+
+        for (i = 1; i < MAX_ITEMS / 2; i++)
+        {
+            QueueItem item1 = *((QueueItem *)vect_get_at(v2, i - 1));
+            QueueItem item2 = *((QueueItem *)vect_get_at(v2, i));
+
+            assert( item1.eventID <= item2.eventID );
+        }
+
+
+    printf("done.\n");
+    testID++;
+
+    fflush(stdout);
+
+    printf(" - Test %s_%d: merge v1 into v:\n", testGrp, testID);
+    fflush(stdout);
+
+        vect_merge(v, v1);
+
+    printf("done.\n");
+    testID++; 
+
+    printf(" - Test %s_%d: Rotate right v of %d:\n", testGrp, testID, MAX_ITEMS / 4);
+    fflush(stdout);
+
+        vect_rotate_right(v, MAX_ITEMS / 4);
+
+    printf("done.\n");
+    testID++;
+
+    printf(" - Test %s_%d: merge v2 into v:\n", testGrp, testID);
+    fflush(stdout);
+
+        vect_merge(v, v2);
+
+    printf("done.\n");
+    testID++; 
 
     // Simulating Consumer:
     printf("Test %s_%d: Consume %d events from the queue:\n", testGrp, testID, MAX_ITEMS);

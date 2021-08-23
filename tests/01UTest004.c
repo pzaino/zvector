@@ -90,7 +90,7 @@ vect_lock_disable();
     {
         QueueItem qi;
         qi.eventID = i;
-        // qi.msg = malloc(sizeof(char) * max_strLen);
+        qi.msg[0] = '\0';
         clear_str(qi.msg, MAX_MSG_SIZE);
         mk_rndstr(qi.msg, max_strLen - 1);
         qi.priority = 0;
@@ -127,11 +127,7 @@ vect_lock_disable();
     {
         // Let's retrieve the value from the vector correctly:
         // For beginners: this is how in C we convert back a void * into the original dtata_type
-        QueueItem *item = (QueueItem *)vect_remove_front(v); // = (QueueItem *)malloc(sizeof(QueueItem *));
-        /* if (item == NULL)
-            printf("Not enough memory to allocate item for testing.");
-
-        item = (QueueItem *)vect_remove_front(v); */
+        QueueItem *item = (QueueItem *)vect_remove_front(v); 
 
         // Let's test if the value we have retrieved is correct:
         printf("Event %*d: ID (%*d) - Message: %s\n", 2, i, 2, item->eventID, item->msg);

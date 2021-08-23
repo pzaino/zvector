@@ -474,11 +474,11 @@ void vect_apply_if(vector v1, vector v2, void (*f1)(void *), bool (*f2)(void *, 
 // Operations with multiple vectors:
 
 /*
- * vect_copy is a function that allows you to copy one
- * vector to another. Please note: only vectors with the
- * same data size (the parameter you've passed during the
- * creation of both the vectors) can be copied on in the
- * other!
+ * vect_copy is a function that allows to copy a specified
+ * set of elements from a vector to another. 
+ * Please note: only vectors with the same data size (the 
+ * parameter we pass during the creation of both vectors) 
+ * can be copied into the other!
  * 
  * vect_copy(v1, v2, 3, 5)      will copy all the items in
  *                              vector v2, from the 4th item
@@ -491,11 +491,12 @@ void vect_apply_if(vector v1, vector v2, void (*f1)(void *), bool (*f2)(void *, 
 void vect_copy(vector v1, vector v2, zvect_index start, zvect_index max_elements);
 
 /*
- * vect_move is a function that allows you to move items from
- * one vector to another. It will also re-organise the source 
- * vector and (obviously) expand the destination vector if 
- * needed. Please note: only vectors of the same data size
- * can be moved one in the other!
+ * vect_move is a function that allows to move a specified
+ * set of items from one vector to another. 
+ * It will also re-organise the source vector and (obviously) 
+ * expand the destination vector if needed. 
+ * Please note: only vectors of the same data size can be moved 
+ * one into the other!
  * 
  * vect_move(v1, v2, 2, 2)      will move items in v2 from the
  *                              the 3rd item in v2 till the 5th
@@ -504,8 +505,9 @@ void vect_copy(vector v1, vector v2, zvect_index start, zvect_index max_elements
 void vect_move(vector v1, vector v2, zvect_index start, zvect_index max_elements);
 
 /*
- * vect_merge is a function that merges together 2 vectors
- * and, at the end of it, the source vector will be destroyed.
+ * vect_merge is a function that merges together 2 vectors of
+ * the same data size. At the end of the process, the source 
+ * vector will be destroyed.
  * 
  * vect_merge(v1, v2)           will merge vector v2 to v1 and then
  *                              destroy v2. So at the end of the job

@@ -156,7 +156,7 @@ vect_lock_disable();
                                     // return the item index in there.
         if ( vect_bsearch(v, &key, compare_func, &item_index) )
         {
-            printf("Item %d found in position %d\n", key, item_index);
+            printf("Item %d found at location %d\n", key, item_index);
         }
         else
         {
