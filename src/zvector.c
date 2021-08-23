@@ -89,8 +89,8 @@ struct _vector
     zvect_index init_capacity; // - Initial Capacity (this is set at
                                //   creation time).
     zvect_index capacity;      // - Max capacity allocated.
-         size_t data_size;     // - User DataType size.
-       uint32_t flags;         // - If this flag set is used to
+    size_t data_size;          // - User DataType size.
+    uint32_t flags;            // - If this flag set is used to
                                //   represent ALL Vector's properties.
                                //   It contains bits that set Secure
                                //   Wipe, Auto Shrink, Pass Items By
@@ -115,11 +115,11 @@ struct _vector
 #endif
 #endif
 #ifdef ZVECT_DMF_EXTENSIONS
-    zvect_index balance;        // - Used by the Adaptive Binary Search
-                                //   to improve performance.
-    zvect_index bottom;         // - Used to optimise Adaptive Binary
-                                //   Search.
-#endif  // ZVECT_DMF_EXTENSIONS
+    zvect_index balance; // - Used by the Adaptive Binary Search
+                         //   to improve performance.
+    zvect_index bottom;  // - Used to optimise Adaptive Binary
+                         //   Search.
+#endif                   // ZVECT_DMF_EXTENSIONS
     void (*SfWpFunc)(const void *item, size_t size);
     // - Pointer to a CUSTOM Safe Wipe
     //   function (optional) needed only
@@ -344,6 +344,8 @@ static void vect_increase_capacity(vector v)
     vect_check(v);
 
     // Get actual capacity and double it
+    if ((v->capacity == 0) || (v->capacity < v->init_capacity))
+        v->capacity = v->init_capacity;
     zvect_index new_capacity = v->capacity * 2;
     void **new_data = (void **)realloc(v->data, sizeof(void *) * new_capacity);
     if (new_data == NULL)
@@ -457,6 +459,10 @@ vector vect_create(const size_t init_capacity, const size_t item_size, const uin
     v->flags = properties;
     v->SfWpFunc = NULL;
     v->status = 0;
+#ifdef ZVECT_DMF_EXTENSIONS
+    v->balance = 0;
+    v->bottom = 0;
+#endif // ZVECT_DMF_EXTENSIONS
 
     v->data = NULL;
 
@@ -474,17 +480,13 @@ vector vect_create(const size_t init_capacity, const size_t item_size, const uin
     return v;
 }
 
-void vect_destroy(vector v)
+static void _vect_destroy(vector v, uint32_t flags)
 {
-    // Check if the vector exists:
-    vect_check(v);
-
 #if (ZVECT_THREAD_SAFE == 1)
     check_mutex_lock(v, 1);
 #endif
-
     // Clear the vector:
-    if (v->size > 0)
+    if ((v->size > 0) && (flags & 1))
     {
         // Secure Wipe the vector (or just free) depending on vector properties:
         zvect_index i = v->size; // if v->size is 200, then the first i below will be 199
@@ -519,17 +521,28 @@ void vect_destroy(vector v)
     if (v->data != NULL)
         free(v->data);
 
+    // Clear vector status flags:
+    v->status = 0;
+
 #if (ZVECT_THREAD_SAFE == 1)
     check_mutex_unlock(v, 1);
     mutex_destroy(&(v->lock));
 #endif
 
-    // Clear vector status flags:
-    v->status = 0;
-
     // All done and freed, so we can safely
     // free the vector itself:
     free(v);
+}
+
+void vect_destroy(vector v)
+{
+    // Check if the vector exists:
+    vect_check(v);
+
+    // Call _vect_destroy with flags set to 1
+    // to destroy data according to the vector
+    // properties:
+    _vect_destroy(v, 1);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -1019,7 +1032,7 @@ void vect_swap(vector v, const zvect_index i1, const zvect_index i2)
     if (i2 > v->size)
         throw_error("Index out of bounds!");
 
-    if ( i1 == i2 )
+    if (i1 == i2)
         return;
 
         // Let's swap items:
@@ -1055,7 +1068,7 @@ void vect_swap_range(vector v, const zvect_index s1, const zvect_index e1, const
     if (s2 < (s1 + end))
         throw_error("Index out of bounds!");
 
-    if ( s1 == s2 )
+    if (s1 == s2)
         return;
 
     // Let's swap items:
@@ -1166,15 +1179,15 @@ void vect_rotate_right(vector v, const zvect_index i)
 #ifdef TRADITIONAL_QSORT
 static inline zvect_index _partition(vector v, zvect_index low, zvect_index high, int (*compare_func)(const void *, const void *))
 {
-    if ( high >= v->size )
+    if (high >= v->size)
         high = v->size - 1;
     void *pivot = v->data[high];
     zvect_index i = (low - 1);
     zvect_index j;
-    for ( j = low; j <= (high - 1); j++)
+    for (j = low; j <= (high - 1); j++)
     {
         // v->data[j] <= pivot
-        if ((*compare_func)(v->data[j], pivot) <= 0 )
+        if ((*compare_func)(v->data[j], pivot) <= 0)
             vect_swap(v, ++i, j);
     }
     vect_swap(v, i + 1, high);
@@ -1190,12 +1203,12 @@ static void _vect_qsort(vector v, zvect_index low, zvect_index high, int (*compa
         _vect_qsort(v, pi + 1, high, compare_func);
     }
 }
-#endif  // TRADITIONAL_QSORT
+#endif // TRADITIONAL_QSORT
 
 #ifndef TRADITIONAL_QSORT
 // This is my much faster imlementation of a quicksort algorithm
 // it foundamentally use the 3 ways partitioning adapted and improved
-// to dela with arrays of pointers together with having a custom 
+// to dela with arrays of pointers together with having a custom
 // compare function:
 static void _vect_qsort(vector v, zvect_index l, zvect_index r, int (*compare_func)(const void *, const void *))
 {
@@ -1206,7 +1219,7 @@ static void _vect_qsort(vector v, zvect_index l, zvect_index r, int (*compare_fu
     void *ref_val = NULL;
 
     // l = left (also low)
-    if ( l > 0 )
+    if (l > 0)
         i = l - 1;
     else
         i = l;
@@ -1218,20 +1231,36 @@ static void _vect_qsort(vector v, zvect_index l, zvect_index r, int (*compare_fu
 
     for (;;)
     {
-        while((*compare_func)(v->data[i], ref_val) < 0) i++;
-        while((*compare_func)(ref_val, v->data[--j]) < 0) if ( j == l ) break;
-        if ( i >= j ) break;
+        while ((*compare_func)(v->data[i], ref_val) < 0)
+            i++;
+        while ((*compare_func)(ref_val, v->data[--j]) < 0)
+            if (j == l)
+                break;
+        if (i >= j)
+            break;
         vect_swap(v, i, j);
-        if ( (*compare_func)( v->data[i], ref_val ) == 0 ) { p++; vect_swap(v, p, i); }
-        if ( (*compare_func)( ref_val, v->data[j] ) == 0 ) { q--; vect_swap(v, q, j); }
+        if ((*compare_func)(v->data[i], ref_val) == 0)
+        {
+            p++;
+            vect_swap(v, p, i);
+        }
+        if ((*compare_func)(ref_val, v->data[j]) == 0)
+        {
+            q--;
+            vect_swap(v, q, j);
+        }
     }
-    vect_swap(v, i, r); j = i - 1; i = i + 1;
-    for ( k = l    ; k < p; k++, j--) vect_swap(v, k, j);
-    for ( k = r - 1; k > q; k--, i++) vect_swap(v, k, i);
+    vect_swap(v, i, r);
+    j = i - 1;
+    i = i + 1;
+    for (k = l; k < p; k++, j--)
+        vect_swap(v, k, j);
+    for (k = r - 1; k > q; k--, i++)
+        vect_swap(v, k, i);
     _vect_qsort(v, l, j, compare_func);
     _vect_qsort(v, i, r, compare_func);
 }
-#endif  // ! TRADITIONAL_QSORT
+#endif // ! TRADITIONAL_QSORT
 
 void vect_qsort(vector v, int (*compare_func)(const void *, const void *))
 {
@@ -1250,12 +1279,12 @@ void vect_qsort(vector v, int (*compare_func)(const void *, const void *))
     check_mutex_lock(v, 1);
 #endif
 
-/*    qsort(v->data,
+    /*    qsort(v->data,
           v->size,
           sizeof(void *),
           compare_func);
 */
-_vect_qsort(v, 0, v->size - 1, compare_func);
+    _vect_qsort(v, 0, v->size - 1, compare_func);
 
 #if (ZVECT_THREAD_SAFE == 1)
     check_mutex_unlock(v, 1);
@@ -1265,131 +1294,131 @@ _vect_qsort(v, 0, v->size - 1, compare_func);
 #ifdef TRADITIONAL_BINARY_SEARCH
 static bool _standard_binary_search(vector v, const void *key, zvect_index *item_index, int (*f1)(const void *, const void *))
 {
-	zvect_index bot, mid, top;
+    zvect_index bot, mid, top;
 
-	bot = 0;
-	top = v->size - 1;
+    bot = 0;
+    top = v->size - 1;
 
-	while (bot < top)
-	{
-		mid = top - (top - bot) / 2;
+    while (bot < top)
+    {
+        mid = top - (top - bot) / 2;
 
         // key < array[mid]
-		if ((*f1)(key, v->data[mid]) < 0 )
-		{
-			top = mid - 1;
-		}
-		else
-		{
-			bot = mid;
-		}
-	}
+        if ((*f1)(key, v->data[mid]) < 0)
+        {
+            top = mid - 1;
+        }
+        else
+        {
+            bot = mid;
+        }
+    }
 
     // key == array[top]
-	if ( (*f1)(key, v->data[top]) == 0)
-	{
+    if ((*f1)(key, v->data[top]) == 0)
+    {
         *item_index = top;
-		return true;
-	}
+        return true;
+    }
 
     *item_index = top;
-	return false;
+    return false;
 }
-#endif  // TRADITIONAL_BINARY_SEARCH
+#endif // TRADITIONAL_BINARY_SEARCH
 
 #ifndef TRADITIONAL_BINARY_SEARCH
-// This is my re-implementation of Igor van den Hoven's Adaptive 
-// Binary Search algorithm. It has few improvements over the 
+// This is my re-implementation of Igor van den Hoven's Adaptive
+// Binary Search algorithm. It has few improvements over the
 // original design, most notably the use of custom compare
 // fuction that makes it suitable also to search through strings
 // and other types of vectors.
 static bool _adaptive_binary_search(vector v, const void *key, zvect_index *item_index, int (*f1)(const void *, const void *))
 {
-	zvect_index bot, top, mid;
+    zvect_index bot, top, mid;
 
-	if ( (v->balance >= 32) || (v->size <= 64))
-	{
-		bot = 0;
-		top = v->size;
-		goto monobound;
-	}
-	bot = v->bottom;
-	top = 32;
+    if ((v->balance >= 32) || (v->size <= 64))
+    {
+        bot = 0;
+        top = v->size;
+        goto monobound;
+    }
+    bot = v->bottom;
+    top = 32;
 
     // key >= array[bot]
-	if ( (*f1)(key, v->data[bot]) >= 0 )
-	{
-		while (1)
-		{
-			if ( (bot + top) >= v->size )
-			{
-				top = v->size - bot;
-				break;
-			}
-			bot += top;
+    if ((*f1)(key, v->data[bot]) >= 0)
+    {
+        while (1)
+        {
+            if ((bot + top) >= v->size)
+            {
+                top = v->size - bot;
+                break;
+            }
+            bot += top;
 
             // key < array[bot]
-			if ( (*f1)(key, v->data[bot]) < 0 )
-			{
-				bot -= top;
-				break;
-			}
-			top *= 2;
-		}
-	}
-	else
-	{
-		while (1)
-		{
-			if (bot < top)
-			{
-				top = bot;
-				bot = 0;
-				break;
-			}
-			bot -= top;
+            if ((*f1)(key, v->data[bot]) < 0)
+            {
+                bot -= top;
+                break;
+            }
+            top *= 2;
+        }
+    }
+    else
+    {
+        while (1)
+        {
+            if (bot < top)
+            {
+                top = bot;
+                bot = 0;
+                break;
+            }
+            bot -= top;
 
             // key >= array[bot]
-			if ((*f1)(key, v->data[bot]) >= 0)
-			    break;
-			top *= 2;
-		}
-	}
+            if ((*f1)(key, v->data[bot]) >= 0)
+                break;
+            top *= 2;
+        }
+    }
 
-	monobound:
-	while (top > 3)
-	{
-		mid = top / 2;
+monobound:
+    while (top > 3)
+    {
+        mid = top / 2;
         // key >= array[bot + mid]
-		if ( (*f1)(key, v->data[bot + mid]) >= 0 )
-		    bot += mid;
-		top -= mid;
-	}
+        if ((*f1)(key, v->data[bot + mid]) >= 0)
+            bot += mid;
+        top -= mid;
+    }
 
-	v->balance = v->bottom > bot ? v->bottom - bot : bot - v->bottom;
-	v->bottom = bot;
+    v->balance = v->bottom > bot ? v->bottom - bot : bot - v->bottom;
+    v->bottom = bot;
 
     int test = 0;
-	while (top)
-	{
+    while (top)
+    {
         // key == array[bot + --top]
         test = (*f1)(key, v->data[bot + (--top)]);
-		if ( test == 0 )
-		{
+        if (test == 0)
+        {
             *item_index = bot + top;
             return true;
-		}
-        else if ( test > 0 )
+        }
+        else if (test > 0)
         {
             *item_index = bot + (top + 1);
             return false;
         }
-	}
+    }
 
     *item_index = bot + top;
-	return false;
+    return false;
 }
-#endif  // ! TRADITIONAL_BINARY_SEARCH
+#endif // ! TRADITIONAL_BINARY_SEARCH
 
 bool vect_bsearch(vector v, const void *key, int (*f1)(const void *, const void *), zvect_index *item_index)
 {
@@ -1397,15 +1426,15 @@ bool vect_bsearch(vector v, const void *key, int (*f1)(const void *, const void 
     vect_check(v);
 
     // Check parameters:
-    if ( key == NULL )
+    if (key == NULL)
         return NULL;
-    
-    if ( f1 == NULL )
+
+    if (f1 == NULL)
         return NULL;
 
     if (v->size == 0)
-	    return false;
-    
+        return false;
+
     *item_index = 0;
 #ifdef TRADITIONAL_BINARY_SEARCH
     if (_standard_binary_search(v, key, item_index, f1))
@@ -1417,7 +1446,7 @@ bool vect_bsearch(vector v, const void *key, int (*f1)(const void *, const void 
         *item_index = 0;
         return false;
     }
-#endif  // TRADITIONAL_BINARY_SEARCH
+#endif // TRADITIONAL_BINARY_SEARCH
 #ifndef TRADITIONAL_BINARY_SEARCH
     if (_adaptive_binary_search(v, key, item_index, f1))
     {
@@ -1428,7 +1457,7 @@ bool vect_bsearch(vector v, const void *key, int (*f1)(const void *, const void 
         *item_index = 0;
         return false;
     }
-#endif  // ! TRADITIONAL_BINARY_SEARCH
+#endif // ! TRADITIONAL_BINARY_SEARCH
 }
 
 /*
@@ -1442,11 +1471,11 @@ void vect_add_ordered(vector v, const void *value, int (*f1)(const void *, const
     vect_check(v);
 
     // Check parameters:
-    if ( value == NULL )
+    if (value == NULL)
         return;
-    
+
     // Few tricks to make it faster:
-    if ( v->size == 0 )
+    if (v->size == 0)
     {
         // If the vector is empty clearly we can just
         // use vect_add and add the value normaly!
@@ -1472,7 +1501,7 @@ void vect_add_ordered(vector v, const void *value, int (*f1)(const void *, const
     // I improved adaptive binary search to ALWAYS
     // return a index (even when it doesn't find a
     // searched item), this works for both: regular
-    // searches which will also use the bool to 
+    // searches which will also use the bool to
     // know if we actually found the item in that
     // item_index or not and the vect_add_ordered
     // which will use item_index (which will be the
@@ -1520,15 +1549,15 @@ void vect_apply_range(vector v, void (*f)(void *), const zvect_index x, const zv
     if (f == NULL)
         return;
 
-    if ( x > v->size )
+    if (x > v->size)
         throw_error("Index out of bounds!");
 
-    if ( y > v->size )
+    if (y > v->size)
         throw_error("Index out of bounds!");
 
     zvect_index start;
     zvect_index end;
-    if ( x > y )
+    if (x > y)
     {
         start = x;
         end = y;
@@ -1577,8 +1606,6 @@ void vect_apply_if(vector v1, vector v2, void (*f1)(void *), bool (*f2)(void *, 
     check_mutex_unlock(v1, 1);
 #endif
 }
-
-
 
 void vect_copy(vector v1, vector v2, const zvect_index s2,
                const zvect_index e2)
@@ -1725,22 +1752,29 @@ void vect_merge(vector v1, vector v2)
     if (v1->data_size != v2->data_size)
         throw_error("Vectors data size mismatch!");
 
-    zvect_index i;
 #if (ZVECT_THREAD_SAFE == 1)
     check_mutex_lock(v1, 2);
 #endif
 
-    for (i = 0; i < v2->size; i++)
-        vect_add(v1, v2->data[i]);
+    // Set the correct capacity for v1 to get the whole v2:
+    while (v1->capacity <= v2->size)
+        vect_increase_capacity(v1);
 
-#if (ZVECT_THREAD_SAFE == 1)
-    check_mutex_unlock(v1, 2);
-#endif
+    // Copy the whole v2 in v1 at the end of v1:
+    // zvect_index i;
+    //for (i = 0; i < v2->size; i++)
+    //    vect_add(v1, v2->data[i]);
+    vect_memcpy(v1->data + v1->size, v2->data, sizeof(void *) * v2->size);
+
     // Because we are merging two vectors in one
     // after merged v2 to v1 there is no need for
     // v2 to still exists, so let's destroy it to
     // free memory correctly:
-    vect_destroy(v2);
+    _vect_destroy(v2, 0);
+
+#if (ZVECT_THREAD_SAFE == 1)
+    check_mutex_unlock(v1, 2);
+#endif
 }
 #endif
 
