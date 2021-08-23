@@ -14,6 +14,7 @@ You can use ZVector to create:
 - Dynamic Arrays
 - Dynamic Stacks (LIFO)
 - Dynamic Queues (FIFO)
+- Dynamic Ordered Queues
 
 The library also offers automatic Secure Data Wiping, so you can use it to store sensitive data. It is also constantly tested for security and bug hunting.
 
@@ -70,9 +71,13 @@ The library is relatively small, however it comes with some nice features:
 
    The library supports a single call to apply a C function to each and every element of the vector, very handy in many situations (vect_apply). It also support conditional function application to an entire vectore (vect_apply_if). It also support an handly vect_apply_range which applies a user function to a range of values in your vector.
 
-- **Data copy/move and merge support** 
+- **Bulk Data copy, move, insert and merge support** 
 
    ZVector comes with 3 handy calls to copy one vector into another, or move one vector into another or merge one vector with another and in all the 3 cases a user can chose from which element to which element to perform the requested function.
+
+- **Custom QuickSort and Improved Adaptive Binary Search**
+
+   ZVector comes with a custom QuickSort algorithm that uses 3 ways partitioning for very fast ordering of a vector. It also comes with an improved Adaptive Binary Search algorithm for very fast record search. Both of them supports custom user compare functions, so ordering and searches can be done on every possible type of records.
 
 - **CI/CD support** 
 
@@ -82,7 +87,7 @@ The library is relatively small, however it comes with some nice features:
 
    This library is tested on github (check above the CodeQL badge) at every commit and pull request.
 
-I'll add more functions as I have time and also the possibility to keep the vector ordered.
+More features will be added over time as well as I constantly seek to improve its performance.
 
 ## How does it works?
 It's very simple, it's an ANSI C99 library, no funky dependecies, so it should compile everywhere (let me know if you find any issue).
