@@ -1432,12 +1432,14 @@ bool vect_bsearch(vector v, const void *key, int (*f1)(const void *, const void 
     // check if the vector exists:
     vect_check(v);
 
+    *item_index = 0;
+
     // Check parameters:
     if (key == NULL)
-        return NULL;
+        return false;
 
     if (f1 == NULL)
-        return NULL;
+        return false;
 
     if (v->size == 0)
         return false;

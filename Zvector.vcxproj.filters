@@ -18,33 +18,6 @@
     <ClCompile Include="src\zvector.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="tests\01UTest001.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="tests\01UTest002.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="tests\01UTest003.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="tests\01UTest004.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="tests\02ITest001.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="tests\02ITest002.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="tests\02ITest003.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="tests\03ATest001.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="tests\04PTest001.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\zvector.h">
