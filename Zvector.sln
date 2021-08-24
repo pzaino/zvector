@@ -5,6 +5,11 @@ VisualStudioVersion = 16.0.31424.327
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Zvector", "Zvector.vcxproj", "{22D4CC1C-CA65-432E-948B-E38AA285EF25}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ZVectorTests", "tests\ZVectorTests.vcxproj", "{6E46C5C3-4B3B-4AD3-BDC1-9296C3C1223D}"
+	ProjectSection(ProjectDependencies) = postProject
+		{22D4CC1C-CA65-432E-948B-E38AA285EF25} = {22D4CC1C-CA65-432E-948B-E38AA285EF25}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +26,13 @@ Global
 		{22D4CC1C-CA65-432E-948B-E38AA285EF25}.Release|x64.Build.0 = Release|x64
 		{22D4CC1C-CA65-432E-948B-E38AA285EF25}.Release|x86.ActiveCfg = Release|Win32
 		{22D4CC1C-CA65-432E-948B-E38AA285EF25}.Release|x86.Build.0 = Release|Win32
+		{6E46C5C3-4B3B-4AD3-BDC1-9296C3C1223D}.Debug|x64.ActiveCfg = Debug|x64
+		{6E46C5C3-4B3B-4AD3-BDC1-9296C3C1223D}.Debug|x86.ActiveCfg = Debug|Win32
+		{6E46C5C3-4B3B-4AD3-BDC1-9296C3C1223D}.Debug|x86.Build.0 = Debug|Win32
+		{6E46C5C3-4B3B-4AD3-BDC1-9296C3C1223D}.Release|x64.ActiveCfg = Release|x64
+		{6E46C5C3-4B3B-4AD3-BDC1-9296C3C1223D}.Release|x64.Build.0 = Release|x64
+		{6E46C5C3-4B3B-4AD3-BDC1-9296C3C1223D}.Release|x86.ActiveCfg = Release|Win32
+		{6E46C5C3-4B3B-4AD3-BDC1-9296C3C1223D}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
