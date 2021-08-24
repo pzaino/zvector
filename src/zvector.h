@@ -416,7 +416,21 @@ void vect_qsort(vector v, int (*compare_func)(const void *, const void*));
 bool vect_bsearch(vector v, const void *key, int (*f1)(const void *, const void *), zvect_index *item_index);
 
 /*
- * vect_add_ordered
+ * vect_add_ordered allows the insertion of new items in
+ * an ordered fashion. Pleas enote that fo rthis to work
+ * fine you shoul dalways use only ordered vectors or if
+ * an empty vector use vect_add_ordered only to add new
+ * values to it!
+ * 
+ * As fo rany other ordered function you must provide 
+ * your own compare function (syntax is the usual one
+ * and it's the same as for regular CLib qsort function)
+ * 
+ * To add item 3 to a vector called v using vect_add_ordered
+ * (assumin gyour compare function is called my_compare), 
+ * use:
+ * 
+ * vect_Add_ordered(v, 3, my_compare);
  */
 void vect_add_ordered(vector v, const void *value, int (*f1)(const void *, const void *));
 
