@@ -34,7 +34,7 @@ $(info Building on: $(OS))
 
 
 WDIR:=$(shell pwd)
-DESTDIR?=
+DESTDIR?=/usr/local/lib
 
 # Configure desired compiler:
 CC:=gcc
@@ -255,6 +255,10 @@ tests: test
 debug: CFLAGS+= -ggdb3
 debug: CODE_MACROS+= -DDEBUG
 debug: core tests
+
+.PHONY: install
+install: core 
+	sudo cp -f $(LIBST) $(DESTDIR)
 
 $(OBJF): $(OSRCF)
 	$(info  )
