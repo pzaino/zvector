@@ -116,18 +116,18 @@ struct _vector
 #endif // MUTEX_TYPE
 #endif // ZVECT_THREAD_SAFE
 #ifdef ZVECT_DMF_EXTENSIONS
-    zvect_index balance; // - Used by the Adaptive Binary Search
-                         //   to improve performance.
-    zvect_index bottom;  // - Used to optimise Adaptive Binary
-                         //   Search.
-#endif                   // ZVECT_DMF_EXTENSIONS
+    zvect_index balance;        // - Used by the Adaptive Binary Search
+                                //   to improve performance.
+    zvect_index bottom;         // - Used to optimise Adaptive Binary
+                                //   Search.
+#endif                          // ZVECT_DMF_EXTENSIONS
     void (*SfWpFunc)(const void *item, size_t size);
-    // - Pointer to a CUSTOM Safe Wipe
-    //   function (optional) needed only
-    //   for Secure Wiping special
-    //   structures.
+                                // - Pointer to a CUSTOM Safe Wipe
+                                //   function (optional) needed only
+                                //   for Secure Wiping special
+                                //   structures.
     void **data ZVECT_DATAALIGN;
-    // - Vector's storage.
+                                // - Vector's storage.
 } ZVECT_DATAALIGN;
 
 /***********************
