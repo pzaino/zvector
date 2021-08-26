@@ -207,7 +207,7 @@ static inline
 #elif (ZVECT_MEMX_METHOD == 1)
     // Using improved memcpy (where improved means for
     // embedded systems only!):
-    size_t i;
+    register size_t i;
     if (size > 0)
     {
         if (((uintptr_t)dst % sizeof(ADDR_TYPE1) == 0) &&
@@ -1555,7 +1555,7 @@ void vect_apply(vector v, void (*f)(void *))
     check_mutex_lock(v, 1);
 #endif
 
-    for (i = 0; i < v->size; i++)
+    for ( i = v->size; i--; )
         (*f)(v->data[i]);
 
 #if (ZVECT_THREAD_SAFE == 1)
@@ -1621,7 +1621,7 @@ void vect_apply_if(vector v1, vector v2, void (*f1)(void *), bool (*f2)(void *, 
     check_mutex_lock(v1, 1);
 #endif
 
-    for (i = 0; i < v1->size; i++)
+    for (i = v1->size; i-- ; )
         if ((*f2)(v1->data[i], v2->data[i]))
             (*f1)(v1->data[i]);
 
