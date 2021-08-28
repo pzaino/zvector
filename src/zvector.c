@@ -171,7 +171,7 @@ static void _free_items(vector v, zvect_index first, zvect_index offset)
     if (v->size == 0)
         return;
 
-    zvect_index j;
+    register zvect_index j;
     for (j = (first + offset); j >= first; j--)
     {
         if (v->data[j] != NULL)
@@ -179,7 +179,10 @@ static void _free_items(vector v, zvect_index first, zvect_index offset)
             if (v->flags & ZV_SEC_WIPE)
                 item_safewipe(v, v->data[j]);
             if (!(v->flags & ZV_BYREF))
+            {
                 free(v->data[j]);
+                v->data[j] = NULL;
+            }
         }
         if (j == first)
             break; // this is required if we are using
@@ -204,7 +207,7 @@ static inline
 #elif (ZVECT_MEMX_METHOD == 1)
     // Using improved memcpy (where improved means for
     // embedded systems only!):
-    size_t i;
+    register size_t i;
     if (size > 0)
     {
         if (((uintptr_t)dst % sizeof(ADDR_TYPE1) == 0) &&
@@ -498,7 +501,10 @@ static void _vect_destroy(vector v, uint32_t flags)
                 if ((v->flags & ZV_SEC_WIPE))
                     item_safewipe(v, v->data[i]);
                 if (!(v->flags & ZV_BYREF))
+                {
                     free(v->data[i]);
+                    v->data[i]=NULL;
+                }
             }
         }
     }
@@ -517,10 +523,16 @@ static void _vect_destroy(vector v, uint32_t flags)
 
     // Destroy it:
     if ((v->status & ZVS_CUST_WIPE_ON))
+    {
         free(v->SfWpFunc);
+        v->SfWpFunc = NULL;
+    }
 
     if (v->data != NULL)
+    {
         free(v->data);
+        v->data = NULL;
+    }   
 
     // Clear vector status flags:
     v->status = 0;
@@ -533,6 +545,7 @@ static void _vect_destroy(vector v, uint32_t flags)
     // All done and freed, so we can safely
     // free the vector itself:
     free(v);
+    v = NULL;
 }
 
 void vect_destroy(vector v)
@@ -1073,7 +1086,7 @@ void vect_swap_range(vector v, const zvect_index s1, const zvect_index e1, const
         return;
 
     // Let's swap items:
-    zvect_index j, i;
+    register zvect_index j, i;
 #if (ZVECT_THREAD_SAFE == 1)
     check_mutex_lock(v, 1);
 #endif
@@ -1222,7 +1235,8 @@ static void _vect_qsort(vector v, zvect_index l, zvect_index r, int (*compare_fu
     if (r <= l)
         return;
 
-    zvect_index k = 0, i, p, j, q;
+    register zvect_index k = 0;
+    zvect_index i, p, j, q;
     void *ref_val = NULL;
 
     // l = left (also low)
@@ -1536,12 +1550,12 @@ void vect_apply(vector v, void (*f)(void *))
         return;
 
     // Process the vector:
-    zvect_index i;
+    register zvect_index i;
 #if (ZVECT_THREAD_SAFE == 1)
     check_mutex_lock(v, 1);
 #endif
 
-    for (i = 0; i < v->size; i++)
+    for ( i = v->size; i--; )
         (*f)(v->data[i]);
 
 #if (ZVECT_THREAD_SAFE == 1)
@@ -1578,7 +1592,7 @@ void vect_apply_range(vector v, void (*f)(void *), const zvect_index x, const zv
     }
 
     // Process the vector:
-    zvect_index i;
+    register zvect_index i;
 #if (ZVECT_THREAD_SAFE == 1)
     check_mutex_lock(v, 1);
 #endif
@@ -1602,12 +1616,12 @@ void vect_apply_if(vector v1, vector v2, void (*f1)(void *), bool (*f2)(void *, 
         throw_error("Vector 2 size too small, can't apply 'if' function for all items in vector 1!");
 
     // Process vectors:
-    zvect_index i;
+    register zvect_index i;
 #if (ZVECT_THREAD_SAFE == 1)
     check_mutex_lock(v1, 1);
 #endif
 
-    for (i = 0; i < v1->size; i++)
+    for (i = v1->size; i-- ; )
         if ((*f2)(v1->data[i], v2->data[i]))
             (*f1)(v1->data[i]);
 
@@ -1702,7 +1716,7 @@ void vect_insert(vector v1, vector v2, const zvect_index s2,
         ee2 = e2;
 
     // Process vectors:
-    zvect_index i, j = 0;
+    register zvect_index i, j = 0;
 #if (ZVECT_THREAD_SAFE == 1)
     check_mutex_lock(v1, 2);
 #endif
