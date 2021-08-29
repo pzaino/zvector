@@ -40,5 +40,9 @@
     "C_Cpp.default.intelliSenseMode": "gcc-x64",
     "C_Cpp.formatting": "clangFormat",
     "c-cpp-compile-run.cpp-flags": "-Wall -Wextra ",
-    "c-cpp-compile-run.c-flags": "-Wall -Wextra -I${workspaceFolder}src "
+    "c-cpp-compile-run.c-flags": "-Wall -Wextra -I${workspaceFolder}src ",
+    "editor.insertSpaces": false,
+    "files.trimTrailingWhitespace": true,
+    "editor.trimAutoWhitespace": false,
+    "editor.detectIndentation": false
 }
