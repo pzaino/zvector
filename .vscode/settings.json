@@ -8,11 +8,11 @@
     ],
     "c-cpp-flylint.cppcheck.force": true,
     "c-cpp-flylint.cppcheck.includePaths": [
-        "${workspaceFolder}",        
+        "${workspaceFolder}",
         "${workspaceFolder}/src"
     ],
     "c-cpp-flylint.clang.includePaths": [
-        "${workspaceFolder}",        
+        "${workspaceFolder}",
         "${workspaceFolder}/src"
     ],
     "c-cpp-flylint.clang.language": "C",
@@ -27,8 +27,18 @@
     ],
     "c-cpp-flylint.cppcheck.verbose": true,
     "c-cpp-flylint.includePaths": [
-        "${workspaceFolder}",        
+        "${workspaceFolder}",
         "${workspaceFolder}/src"
     ],
-    "c-cpp-flylint.language": "c"
+    "c-cpp-flylint.language": "c",
+    "C_Cpp.default.cppStandard": "c++98",
+    "C_Cpp.default.cStandard": "c99",
+    "C_Cpp.default.includePath": [
+        "${workspaceFolder}",
+        "${workspaceFolder}/src"
+    ],
+    "C_Cpp.default.intelliSenseMode": "gcc-x64",
+    "C_Cpp.formatting": "clangFormat",
+    "c-cpp-compile-run.cpp-flags": "-Wall -Wextra ",
+    "c-cpp-compile-run.c-flags": "-Wall -Wextra -I${workspaceFolder}src "
 }
