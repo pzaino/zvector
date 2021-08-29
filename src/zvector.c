@@ -50,7 +50,9 @@ enum {
 // only if the user has requested
 // special extensions:
 #if (OS_TYPE == 1)
-#	include <malloc.h>
+#	if ( !defined(macOS) )
+#		include <malloc.h>
+#	endif
 #	include <xmmintrin.h>
 #endif // OS_TYPE
 #if (ZVECT_THREAD_SAFE == 1)
@@ -231,11 +233,11 @@ static volatile bool lock_enabled = true;
 #		define ZVECT_THREAD_SAFE 0
 #	elif MUTEX_TYPE == 1
 static inline void mutex_lock(pthread_mutex_t *lock) {
-  pthread_mutex_lock(lock);
+	pthread_mutex_lock(lock);
 }
 
 static inline void mutex_unlock(pthread_mutex_t *lock) {
-  pthread_mutex_unlock(lock);
+	pthread_mutex_unlock(lock);
 }
 
 static inline void mutex_alloc(pthread_mutex_t *lock) {
@@ -314,8 +316,9 @@ static inline void check_mutex_unlock(vector v, volatile uint8_t lock_type) {
 
 void init_zvect(void) {
 #if (OS_TYPE == 1)
+#	if ( !defined(macOS) )
 	// mallopt(M_MXFAST, 80*sizeof(size_t)/4);
-
+#	endif
 #endif  // OS_TYPE == 1
 
 	// We are done initialising ZVector so set the following
