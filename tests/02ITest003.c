@@ -129,8 +129,10 @@ void *consumer(void *arg) {
 
 		uint32_t i;
 		for (i = 0; i < MAX_ITEMS; i++) {
-			while (vect_is_empty(v));
-				vect_lock(v);
+			while (vect_is_empty(v))
+				;
+
+			vect_lock(v);
 
 			// Let's retrieve the value from the vector correctly:
 			// For beginners: this is how in C we convert back a void * into the original dtata_type
@@ -207,7 +209,8 @@ int main() {
 	//usleep(100);
 
 	// Now wait until the Queue is empty:
-	while(!vect_is_empty(v));
+	while(!vect_is_empty(v))
+		;
 
 	printf("Test %s_%d: Dellete all left over events (if any):\n", testGrp, testID);
 	fflush(stdout);
