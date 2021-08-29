@@ -5,13 +5,14 @@
  *  Domain: General
  * License: Copyright by Paolo Fabio Zaino, all rights reserved
  *          Distributed under MIT license
- *          
+ *
  */
 
 #ifndef SRC_ZVECTOR_H_
 #define SRC_ZVECTOR_H_
+
 #if defined(_MSC_VER) && (_MSC_VER >= 1020)
-#pragma once
+#	pragma once
 #endif
 
 // Requires standard C libraries:
@@ -38,20 +39,20 @@ typedef struct _vector *vector;
  * Each vector can have multiple properties enabled at the
  * same time, you can use the typical C form to specify multiple
  * properties for the same vector:
- * 
+ *
  * ZV_SEC_WIPE | ZV_BYREF
- * 
+ *
  * The above will create a vector that supports passing items to
  * it by reference (instead of copying them into the vector) and
  * having Secure Wipe enabled, so that when an element is deleted
  * its reference will also be fully zeroed out before freeing it.
- */ 
+ */
 enum ZVECT_PROPERTIES {
-    ZV_NONE       = 0,      // Sets or Resets all vector's properties to 0.
-    ZV_SEC_WIPE   = 1 << 0, // Sets the vector for automatic Secure Wipe of items.
-    ZV_ENCRYPTED  = 1 << 1, // Sets the vector for automatic encryption and decryption of data when stored.
-    ZV_AUTOSHRINK = 1 << 2, // Sets the vector to have automatic capacity shrinking.
-    ZV_BYREF      = 1 << 3  // Sets the vector to store items by reference instead of copying them as per default.
+	ZV_NONE       = 0,      // Sets or Resets all vector's properties to 0.
+	ZV_SEC_WIPE   = 1 << 0, // Sets the vector for automatic Secure Wipe of items.
+	ZV_ENCRYPTED  = 1 << 1, // Sets the vector for automatic encryption and decryption of data when stored.
+	ZV_AUTOSHRINK = 1 << 2, // Sets the vector to have automatic capacity shrinking.
+	ZV_BYREF      = 1 << 3  // Sets the vector to store items by reference instead of copying them as per default.
 };
 
 /*****************************
@@ -63,7 +64,7 @@ enum ZVECT_PROPERTIES {
 /*
  * vect_create creates and returns a new vector
  * of the specified "capacity", with a storage area that
- * can store items of "item_size" size and, if we want to 
+ * can store items of "item_size" size and, if we want to
  * have an automatic secure erasing enabled (ZV_SEC_WIPE
  * ), we can simply pass ZV_SAFE_WIPE (or other flags too)
  * afer item_size. Flags syntax is the usual C flag sets:
@@ -72,21 +73,21 @@ enum ZVECT_PROPERTIES {
 vector vect_create(size_t capacity, size_t item_size, uint32_t properties);
 
 /*
- * vect_destroy destrois the specified vector and, if 
+ * vect_destroy destrois the specified vector and, if
  * secure_wipe is enabled, also ensure erasing each single
  * value in the vector before destroying it.
- */ 
+ */
 void vect_destroy(vector);
 
-/* 
- * vect_shrink is useful when operating on systems with 
+/*
+ * vect_shrink is useful when operating on systems with
  * small amount of RAM and it basically allow to shrink
  * the vector capacity to match the actual used size, to
- * save unused memory locations. 
+ * save unused memory locations.
  */
 void vect_shrink(vector);
 
-/* 
+/*
  * vect_set_wipefunct allows you to pass ZVector a pointer to a custom
  * function (of your creation) to securely wipe data from the vector v
  * when automatic safe wipe is called.
@@ -98,16 +99,16 @@ void vect_set_wipefunct(vector v, void (*f1)(const void *item, size_t size));
 /*
  * vect_is_empty returns true if the vector is empty
  * and false if the vector is NOT empty.
- */ 
+ */
 bool vect_is_empty(vector);
 
 /*
  * vect_size returns the actual size (the number of)
  * USED slots in the vector storage.
- */ 
+ */
 zvect_index vect_size(vector);
 
-/* 
+/*
  * vect_clear clears out a vector and also resizes it
  * to its initial capacity.
  */
@@ -119,9 +120,9 @@ void vect_clear(vector);
 /*
  * vect_lock_enable allows you to enable thread safe
  * code at runtime. It doesn't lock anything, it just
- * enables globally ZVector thread safe code at 
+ * enables globally ZVector thread safe code at
  * runtime.
- * 
+ *
  * Example of use:
  * vect_lock_enable;
  */
@@ -130,35 +131,35 @@ void vect_lock_enable(void);
 /*
  * vect_lock_disable allows you to disable thread safe
  * code at runtime. It doesn't lock anything, it just
- * disables globally ZVector thread safe code at 
+ * disables globally ZVector thread safe code at
  * runtime.
- * 
+ *
  * Example of use:
  * vect_lock_disable;
  */
 void vect_lock_disable(void);
 
 /*
- * vect_lock allows you to lock the given vector to 
+ * vect_lock allows you to lock the given vector to
  * have exclusive write access from your own thread.
- * When you lock a vector directly then ZVector will 
- * NOT use its internal locking mechanism for that 
+ * When you lock a vector directly then ZVector will
+ * NOT use its internal locking mechanism for that
  * specific vector.
- * 
+ *
  * Example of use: To lock a vector called v
  * vect_lock(v);
  */
 void vect_lock(vector v);
 
 /*
- * vect_lock allows you to unlock the given vector that 
+ * vect_lock allows you to unlock the given vector that
  * you have previously locked with vect_lock.
- * 
+ *
  * Example of use: To unlock a vector called v
  * vect_unlock(v);
  */
 void vect_unlock(vector v);
-#endif
+#endif  // ( ZVECT_THREAD_SAFE == 1 )
 
 /////////////////////////////////////////////////////
 // Vector Data Storage functions:
@@ -166,16 +167,16 @@ void vect_unlock(vector v);
 /*
  * vect_push and vect_pop are used to use the
  * vector as a dynamic stack.
- * 
+ *
  * int i = 3;
- * vect_push(v, &i)     pushes the element 3 at 
+ * vect_push(v, &i)     pushes the element 3 at
  *                      the top of the vector
  *                      as a stack would do.
  */
 void vect_push(vector, const void *);
 
 /*
- * vect_pop(v)          pops (returns) the element 
+ * vect_pop(v)          pops (returns) the element
  *                      at the top of the vector as
  *                      a regular pop would do with
  *                      a stack. Remember when you
@@ -188,7 +189,7 @@ void *vect_pop(vector);
 /*
  * vect_add adds a new item into the vector and,
  * if required, will also reorganize the vector.
- * 
+ *
  * int i = 3;
  * vect_add(v, &i)       will add the new item 3
  *                       into the vector at the end
@@ -202,7 +203,7 @@ void vect_add(vector, const void *);
  *                       at position 2 in the v
  *                       vector and move all the
  *                       items from the original 2nd
- *                       onward of a position to make 
+ *                       onward of a position to make
  *                       space for the new item 4.
  */
 void vect_add_at(vector, const void *, zvect_index);
@@ -210,13 +211,13 @@ void vect_add_at(vector, const void *, zvect_index);
 /*
  * int i = 5;
  * vect_add_front(v, &i) will add the new item 5
- *                       at the beginning of the vector 
+ *                       at the beginning of the vector
  *                       v and will also move all the
  *                       existsing elements of one
  *                       position in the vector to make
  *                       space for the new item 5 at the
  *                       beginning of v.
- */ 
+ */
 void vect_add_front(vector, const void *);
 
 /*
@@ -230,7 +231,7 @@ void vect_add_front(vector, const void *);
 void *vect_get(vector v);
 
 /*
- * 
+ *
  * vect_get_at(v, 3)    will return the element at location
  *                      3 in the vector v.
  */
@@ -238,14 +239,14 @@ void *vect_get_at(vector v, const zvect_index i);
 
 /*
  * vect_get_front(v)    will return the first element in
- *                      the vector v. 
+ *                      the vector v.
  */
 void *vect_get_front(vector v);
 
-/* 
+/*
  *vect_put allows you to REPLACE an item
  * in the vector.
- * 
+ *
  * int i = 3;
  * vect_put(v, &i)       will replace the last element
  *                       in the vector with 3.
@@ -253,7 +254,7 @@ void *vect_get_front(vector v);
 void vect_put(vector, const void *);
 
 /*
- * 
+ *
  * int i = 4;
  * vect_put_at(v, &i, 2) will replace the 3rd element
  *                       (2 + 1, as vector's 1st item
@@ -263,20 +264,20 @@ void vect_put(vector, const void *);
 void vect_put_at(vector v, const void *item, const zvect_index i);
 
 /*
- * 
+ *
  * int i = 5;
  * vect_put_front(v, &i) will replace the 1st element
- *                       of the vector with the item 
+ *                       of the vector with the item
  *                       5.
- */ 
+ */
 void vect_put_front(vector v, const void *item);
 
-/* 
+/*
  * vect_remove removes an item from the vector
  * and reorganise the vector. It also returns
  * the item remove from the vector, so you can
  * use it to simulate a stack behaviour as well.
- * 
+ *
  * vect_remove(v)       will remove and return the
  *                      last item in the vector.
  */
@@ -294,12 +295,12 @@ void *vect_remove_at(vector v, const zvect_index i);
  */
 void *vect_remove_front(vector v);
 
-/* 
+/*
  * vect_delete deletes an item from the vector
  * and reorganise the vector. It does not return
  * the item like remove.
- * 
- * vect_delete(v)       will delete and the last 
+ *
+ * vect_delete(v)       will delete and the last
  *                      item in the vector.
  */
 void vect_delete(vector v);
@@ -311,7 +312,7 @@ void vect_delete(vector v);
 void vect_delete_at(vector v, const zvect_index i);
 
 /*
- * vect_delete_range(v, 20, 30) 
+ * vect_delete_range(v, 20, 30)
  *                      will delete items from item
  *                      20 to item 30 in the vector
  *                      v.
@@ -335,9 +336,9 @@ void vect_delete_front(vector v);
 /*
  * vect_swap is a function that allows you to swap two
  * items in the same vector.
- * You just pass the vector and the index of both the 
+ * You just pass the vector and the index of both the
  * two items to swap.
- * 
+ *
  * Fo rexample to swap item 3 with item 22 on vector v
  * use:
  * vect_swap(v, 3, 22);
@@ -347,10 +348,10 @@ void vect_swap(vector v, const zvect_index s, const zvect_index e);
 /*
  * vect_swap_range is a function that allows to swap
  * a range of items in the same vector.
- * You just pass the vector, the index of the first item 
+ * You just pass the vector, the index of the first item
  * to swap, the index of the last item to swap and the
  * index of the first item to swap with.
- * 
+ *
  * For example to swap items from 10 to 20 with items
  * from 30 to 40 on vector v, use:
  * vect_swap_range(v, 10, 20, 30);
@@ -361,7 +362,7 @@ void vect_swap_range(vector v, const zvect_index s1, const zvect_index e1, const
  * vect_rotate_left is a function that allows to rotate
  * a vector of "i" positions to the left (or from the
  * "front" to the "end").
- * 
+ *
  * For example to rotate a vector called v of 5 positions
  * to the left, use:
  * vect_rotate_left(v, 5);
@@ -372,7 +373,7 @@ void vect_rotate_left(vector v, const zvect_index i);
  * vect_rotate_right is a function that allows to rotate
  * a vector of "i" positions to the right (or from the
  * "end" to the "front").
- * 
+ *
  * For example to rotate a vector called v of 5 positions
  * to the right, use:
  * vect_rotate_right(v, 5);
@@ -382,11 +383,11 @@ void vect_rotate_right(vector v, const zvect_index i);
 /*
  * vect_qsort allows you to sort a given vector.
  * The algorith used to sort a vector is Quicksort with
- * 3 ways partitioning which is generallymuch faster than 
+ * 3 ways partitioning which is generallymuch faster than
  * traditional quicksort.
  *
  * To sort a vector you need to provide a custom function
- * that allows vect_sort to determine the order and which 
+ * that allows vect_sort to determine the order and which
  * elements of a vector are used to order it in the way
  * you desire. It pretty much works as a regular C qsort
  * function. It quite fast given that it only reorders
@@ -397,17 +398,17 @@ void vect_qsort(vector v, int (*compare_func)(const void *, const void*));
 
 /*
  * vect_bsearch is a function that allows to perform
- * an binary search over the vector we pass to it to 
- * find the item "key" using the comparision function 
+ * an binary search over the vector we pass to it to
+ * find the item "key" using the comparision function
  * "f1".
- * 
+ *
  * The specific algorithm used to implement vect_bsearch
  * if my own re-implementation of the Adaptive Binary
  * Search algorithm (from Igor van den Hoven) which has
- * some improvements over the original one (look at the 
+ * some improvements over the original one (look at the
  * sources fo rmore details).
- * 
- * For example to search for the number 5 in a vector 
+ *
+ * For example to search for the number 5 in a vector
  * called v using a compare function called mycompare
  * use:
  * int i = 5;
@@ -421,15 +422,15 @@ bool vect_bsearch(vector v, const void *key, int (*f1)(const void *, const void 
  * fine you shoul dalways use only ordered vectors or if
  * an empty vector use vect_add_ordered only to add new
  * values to it!
- * 
- * As fo rany other ordered function you must provide 
+ *
+ * As fo rany other ordered function you must provide
  * your own compare function (syntax is the usual one
  * and it's the same as for regular CLib qsort function)
- * 
+ *
  * To add item 3 to a vector called v using vect_add_ordered
- * (assumin gyour compare function is called my_compare), 
+ * (assumin gyour compare function is called my_compare),
  * use:
- * 
+ *
  * vect_Add_ordered(v, 3, my_compare);
  */
 void vect_add_ordered(vector v, const void *value, int (*f1)(const void *, const void *));
@@ -440,8 +441,8 @@ void vect_add_ordered(vector v, const void *value, int (*f1)(const void *, const
 // Single Function Multiple Data extensions:
 
 /*
- * vect_apply allows you to apply a C function to 
- * each item in the vector, so you just pass the vector, 
+ * vect_apply allows you to apply a C function to
+ * each item in the vector, so you just pass the vector,
  * the function you want to execute against each item on
  * a vector and make sure such function is declared and
  * defined to accept a "void *" pointer which will be the
@@ -464,18 +465,18 @@ void vect_apply(vector, void (*f1)(void *));
  * second parameter. So, for example, if we want to increment all
  * items in v1 of 10 if they are smaller then the corresponded item
  * in v2 then we can simply use:
- * 
+ *
  * vect_apply_if(v1, v2, increment_item, is_item_too_small);
- * 
+ *
  * and make sure we have defined 'increment_item' and
  * 'is_item_too_small' as:
- * 
+ *
  * void increment_item(void *item1)
  * {
  *  int *value = (int *)item1;
  *  *value +=10;
  * }
- * 
+ *
  * bool is_item_too_small(void *item1, void *item2)
  * {
  *  if (*((int *)item1) < *((int *)item2))
@@ -489,15 +490,15 @@ void vect_apply_if(vector v1, vector v2, void (*f1)(void *), bool (*f2)(void *, 
 
 /*
  * vect_copy is a function that allows to copy a specified
- * set of elements from a vector to another. 
- * Please note: only vectors with the same data size (the 
- * parameter we pass during the creation of both vectors) 
+ * set of elements from a vector to another.
+ * Please note: only vectors with the same data size (the
+ * parameter we pass during the creation of both vectors)
  * can be copied into the other!
- * 
+ *
  * vect_copy(v1, v2, 3, 5)      will copy all the items in
  *                              vector v2, from the 4th item
  *                              till the 9th (3 + 5, remember
- *                              vector items start from 0) in 
+ *                              vector items start from 0) in
  *                              the vector v1. So at the end
  *                              of the process you'll have such
  *                              items copied at the end of v1.
@@ -506,28 +507,28 @@ void vect_copy(vector v1, vector v2, zvect_index start, zvect_index max_elements
 
 /*
  * vect_move is a function that allows to move a specified
- * set of items from one vector to another. 
- * It will also re-organise the source vector and (obviously) 
- * expand the destination vector if needed. 
- * Please note: only vectors of the same data size can be moved 
+ * set of items from one vector to another.
+ * It will also re-organise the source vector and (obviously)
+ * expand the destination vector if needed.
+ * Please note: only vectors of the same data size can be moved
  * one into the other!
- * 
+ *
  * vect_move(v1, v2, 2, 2)      will move items in v2 from the
  *                              the 3rd item in v2 till the 5th
- *                              at the end of v1. 
- */ 
+ *                              at the end of v1.
+ */
 void vect_move(vector v1, vector v2, zvect_index start, zvect_index max_elements);
 
 /*
  * vect_merge is a function that merges together 2 vectors of
- * the same data size. At the end of the process, the source 
+ * the same data size. At the end of the process, the source
  * vector will be destroyed.
- * 
+ *
  * vect_merge(v1, v2)           will merge vector v2 to v1 and then
  *                              destroy v2. So at the end of the job
- *                              v1 will contains the old v1 items + 
+ *                              v1 will contains the old v1 items +
  *                              all v2 items.
- */  
+ */
 void vect_merge(vector v1, vector v2);
 
 #endif  // ZVECT_SFMD_EXTENSIONS
