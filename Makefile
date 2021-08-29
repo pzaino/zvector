@@ -121,7 +121,7 @@ P_CFLAGS:=
 ifeq ($(CC),gcc)
 	ifeq ($(strip $(CFLAGS)),)
 		CFLAGS=-std=c99 -Wall -Wextra -I./src -I./tests -fstack-protector-strong
-		P_CFLAGS=-O3 
+		P_CFLAGS=-O3
 	endif
 	ifeq ($(strip $(LDFLAGS)),)
 		LDFLAGS+=

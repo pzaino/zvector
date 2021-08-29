@@ -40,7 +40,7 @@ uint8_t testID = 1;
 
 void populate_vector(vector v)
 {
-    /* 
+    /*
 	   This macro initialise the perf mesurement library.
        have a look at my CCPal project on github for more details.
 	*/
@@ -54,7 +54,7 @@ void populate_vector(vector v)
 
         while ( i++ < MAX_ITEMS )
             vect_add(v, &i);
-        
+
         CCPAL_STOP_MEASURING;
 
         // Returns perf analysis results:
@@ -66,146 +66,149 @@ void populate_vector(vector v)
     fflush(stdout);
 }
 
-int main()
-{
-    /* 
-	   This macro initialise the perf mesurement library.
-       have a look at my CCPal project on github for more details.
-	*/
+int main() {
+	/*
+	 * This macro initialise the perf mesurement library.
+	 * have a look at my CCPal project on github for more details.
+	 */
 	CCPAL_INIT_LIB;
 
-    printf("=== PTest%s ===\n", testGrp);
-    printf("Testing basic vector PERFORMANCE (BEST POSSIBLE SCENARIO)\n");
+	printf("=== PTest%s ===\n", testGrp);
+	printf("Testing basic vector PERFORMANCE (BEST POSSIBLE SCENARIO)\n");
 
-    fflush(stdout);
+	fflush(stdout);
 
-    printf("Test %s_%d: Create a vector of 10 elements and using int for the vector data:\n", testGrp, testID);
-    fflush(stdout);
-    
-        vector v;
-        v = vect_create(10, sizeof(int), ZV_BYREF);
+	printf("Test %s_%d: Create a vector of 10 elements and using int for the vector data:\n", testGrp, testID);
+	fflush(stdout);
 
-    printf("done.\n");
-    testID++;
+		vector v;
+		v = vect_create(10, sizeof(int), ZV_BYREF);
 
-    fflush(stdout);
+	printf("done.\n");
+	testID++;
 
-    // Populate the vector and mesure how long it takes:
+	fflush(stdout);
+
+	// Populate the vector and mesure how long it takes:
 #   if ( ZVECT_THREAD_SAFE == 1 )
-    vect_lock(v);
-#   endif
-    populate_vector(v);
-#   if ( ZVECT_THREAD_SAFE == 1 )
-    vect_unlock(v);
+		vect_lock(v);
 #   endif
 
-    printf("Test %s_%d: check if the size of the vector is now %d:\n", testGrp, testID, MAX_ITEMS);
-    fflush(stdout);
-
-        assert(vect_size(v) == MAX_ITEMS);
-
-    printf("done.\n");
-    testID++;
-
-    fflush(stdout);
-
-    /*
-    printf("Test %s_%d: Add elements in the middle of the vector:\n", testGrp, testID);
-    i=555555;
-    vect_add_at(v, &i, 100);
-    assert(*((int *)vect_get_at(v, 100)) == i);
-    assert(*((int *)vect_get_at(v, 101)) == 100);
-    printf("done.\n");
-    testID++;
-    */
-
-    printf("Test %s_%d: Remove vector elements one by one (from the end of the vector) and test how long it takes:\n", testGrp, testID);
-    fflush(stdout);
+		populate_vector(v);
 
 #   if ( ZVECT_THREAD_SAFE == 1 )
-    vect_lock(v);
+    		vect_unlock(v);
 #   endif
 
-        CCPAL_START_MEASURING;
+	printf("Test %s_%d: check if the size of the vector is now %d:\n", testGrp, testID, MAX_ITEMS);
+	fflush(stdout);
 
-        while ( !vect_is_empty(v) )
-            vect_delete(v);
-        
-        CCPAL_STOP_MEASURING;
+		assert(vect_size(v) == MAX_ITEMS);
+
+	printf("done.\n");
+	testID++;
+
+	fflush(stdout);
+
+	/*
+	printf("Test %s_%d: Add elements in the middle of the vector:\n", testGrp, testID);
+	i=555555;
+	vect_add_at(v, &i, 100);
+	assert(*((int *)vect_get_at(v, 100)) == i);
+	assert(*((int *)vect_get_at(v, 101)) == 100);
+	printf("done.\n");
+	testID++;
+	*/
+
+	printf("Test %s_%d: Remove vector elements one by one (from the end of the vector) and test how long it takes:\n", testGrp, testID);
+	fflush(stdout);
 
 #   if ( ZVECT_THREAD_SAFE == 1 )
-    vect_unlock(v);
+		vect_lock(v);
 #   endif
 
-    // Returns perf analysis results:
-    CCPAL_REPORT_ANALYSIS;
+		CCPAL_START_MEASURING;
 
-    printf("done.\n");
-    testID++;
+		while ( !vect_is_empty(v) )
+			vect_delete(v);
 
-    fflush(stdout);
+		CCPAL_STOP_MEASURING;
 
-    printf("Test %s_%d: check if vector is empty:\n", testGrp, testID);
-    fflush(stdout);
+#   if ( ZVECT_THREAD_SAFE == 1 )
+    		vect_unlock(v);
+#   endif
 
-        assert(vect_is_empty(v));
+		// Returns perf analysis results:
+		CCPAL_REPORT_ANALYSIS;
 
-    printf("done.\n");
-    testID++;
+	printf("done.\n");
+	testID++;
 
-    fflush(stdout);
+	fflush(stdout);
 
-    printf("Test %s_%d: Check if vector size is now 0 (zero):\n", testGrp, testID);
-    fflush(stdout);
+	printf("Test %s_%d: check if vector is empty:\n", testGrp, testID);
+	fflush(stdout);
 
-        assert(vect_size(v) == 0);
+		assert(vect_is_empty(v));
 
-    printf("done.\n");
-    testID++;
+	printf("done.\n");
+	testID++;
 
-    fflush(stdout);
+	fflush(stdout);
+
+	printf("Test %s_%d: Check if vector size is now 0 (zero):\n", testGrp, testID);
+	fflush(stdout);
+
+		assert(vect_size(v) == 0);
+
+	printf("done.\n");
+	testID++;
+
+	fflush(stdout);
 
     // Re-populate the vector again and measure how long it takes:
 #   if ( ZVECT_THREAD_SAFE == 1 )
-    vect_lock(v);
+		vect_lock(v);
 #   endif
-    populate_vector(v);
+
+		populate_vector(v);
+
 #   if ( ZVECT_THREAD_SAFE == 1 )
-    vect_unlock(v);
+		vect_unlock(v);
 #   endif
 
-    printf("Test %s_%d: destroy the vector:\n", testGrp, testID);
-    fflush(stdout);
+	printf("Test %s_%d: destroy the vector:\n", testGrp, testID);
+	fflush(stdout);
 
-        CCPAL_START_MEASURING;
+		CCPAL_START_MEASURING;
 
-        vect_destroy(v);
+		vect_destroy(v);
 
-        CCPAL_STOP_MEASURING;
+		CCPAL_STOP_MEASURING;
 
-        // Returns perf analysis results:
-        CCPAL_REPORT_ANALYSIS;
+		// Returns perf analysis results:
+		CCPAL_REPORT_ANALYSIS;
 
-    printf("done.\n");
-    testID++;
+	printf("done.\n");
+	testID++;
 
-    fflush(stdout);
+	fflush(stdout);
 
-    printf("================\n\n");
+	printf("================\n\n");
 
-    return 0;
+	return 0;
 }
 
 #else
 int main()
 {
-    printf("=== PTest%s ===\n", testGrp);
-    printf("Testing ZVector Library PERFORMANCE:\n");
+	printf("=== PTest%s ===\n", testGrp);
+	printf("Testing ZVector Library PERFORMANCE:\n");
 
-    printf("Skipping test because this OS is not yet supported for perf tests, sorry!\n");
+	printf("Skipping test because this OS is not yet supported for perf tests, sorry!\n");
 
-    printf("================\n\n");
+	printf("================\n\n");
 
-    return 0;
+	return 0;
 }
 #endif

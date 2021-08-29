@@ -51,73 +51,73 @@ void clear_str(char *str, uint32_t numchars)
 void run_cmd(char *cmd_line, char *buffer)
 {
     FILE *pipe;
-    int len; 
+    int len;
 
     pipe = popen(cmd_line, "r");
 
     if (NULL == pipe) {
         perror("pipe");
         exit(1);
-    } 
+    }
 
     if( fgets(buffer, sizeof(buffer), pipe) != NULL) {
         // we are populating buffer now...
     }
 
     len = strlen(buffer);
-    buffer[len-1] = '\0'; 
+    buffer[len-1] = '\0';
 
-    pclose(pipe); 
+    pclose(pipe);
 }
 */
 
-int main()
-{
-    printf("=== ATest%s ===\n", testGrp);
-    printf("CPPCheck Source code Analisys:\n");
+int main() {
+	printf("=== ATest%s ===\n", testGrp);
+	printf("CPPCheck Source code Analisys:\n");
 
-    fflush(stdout);
+	fflush(stdout);
 
-    /*
-    printf("Test %s_%d: Check is CPPCheck is installed on this system:\n", testGrp, testID);
- 
-    char buffer[10240];
-    clear_str(buffer, 10240);
+	/*
+	printf("Test %s_%d: Check is CPPCheck is installed on this system:\n", testGrp, testID);
 
-    run_cmd("which cppcheck 2>&1 | grep -Poi \"no cppcheck in\" | wc -l", buffer);
- 
-    char *result=(buffer[0] == '0') ? "yes" : "no";
+	char buffer[10240];
+	clear_str(buffer, 10240);
 
-    if ( buffer[0] == '1' )
-    {
-        printf("Sckipping CPPCheck test because I couldn't find it on your system: %s\n", result);
-        return 0;
-    }
-    else
-    {
-        printf("Proceeding with  CPPCheck test because I found it on your system: %s\n", result);
-    }
+	run_cmd("which cppcheck 2>&1 | grep -Poi \"no cppcheck in\" | wc -l", buffer);
 
-    printf("done.\n");
-    testID++;
+	char *result=(buffer[0] == '0') ? "yes" : "no";
 
-    fflush(stdout);
-    */
+	if ( buffer[0] == '1' )
+	{
+		printf("Sckipping CPPCheck test because I couldn't find it on your system: %s\n", result);
+		return 0;
+	}
+	else
+	{
+		printf("Proceeding with  CPPCheck test because I found it on your system: %s\n", result);
+	}
 
-    printf("Test %s_%d: Run CPPCheck analysis against the Library sources:\n", testGrp, testID);
-    fflush(stdout);
+	printf("done.\n");
+	testID++;
 
-    //clear_str(buffer, 10240);
-    int rval;
-    rval = system("$(pwd)/scripts/cpp_check.sh");
-    UNUSED(rval);
-    printf("done.\n");
-    testID++;
+	fflush(stdout);
+	*/
 
-    fflush(stdout);
+	printf("Test %s_%d: Run CPPCheck analysis against the Library sources:\n", testGrp, testID);
+	fflush(stdout);
 
-    printf("================\n\n");
+		//clear_str(buffer, 10240);
+		int rval;
+		rval = system("$(pwd)/scripts/cpp_check.sh");
+		UNUSED(rval);
 
-    return 0;
-    UNUSED(rval);
+	printf("done.\n");
+	testID++;
+
+	fflush(stdout);
+
+	printf("================\n\n");
+
+	return 0;
+	UNUSED(rval);
 }
