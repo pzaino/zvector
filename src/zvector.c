@@ -790,8 +790,16 @@ static inline void _vect_put_at(vector v, const void *value,
 	check_mutex_lock(v, 1);
 #endif
 
-	// Add value at the specified index:
-	vect_memcpy(v->data[i], value, v->data_size);
+	// Add value at the specified index, considering
+	// if the vector has ZV_BYREF property enabled:
+	if ( v->flags & ZV_BYREF ) {
+		void *temp = v->data[i];
+		v->data[i] = (void *)value;
+		if ( v->flags & ZV_SEC_WIPE )
+			memset((void *)temp, 0, v->data_size);
+	} else {
+		vect_memcpy(v->data[i], value, v->data_size);
+	}
 
 #if (ZVECT_THREAD_SAFE == 1)
 	check_mutex_unlock(v, 1);
