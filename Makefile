@@ -1,15 +1,15 @@
 ###############################################################################
-#        Name: Automatic Makefile
-#      Author: Paolo Fabio Zaino
-#     License: Copyright by Paolo Fabio Ziano, all rights reserved.
-# 			   Distributed under MIT license (read the MIT license for details)
+#         Name: Automatic Makefile
+#       Author: Paolo Fabio Zaino
+#      License: Copyright by Paolo Fabio Ziano, all rights reserved.
+#		Distributed under MIT license (read the MIT license for details)
 #
-# Description: This Makefile is intended to be reusable to build many types of
-#			   C Libraries and it will also build and execute automatically all
-#			   the provided Unit and Integration tests at every build.
-#			   Your can reuse it very easly in your own libraries, just copy it
-#              in you rlibrary structure and change the parameters in the next
-#			   section "Manualpart of the Makefile", and you're ready to build!
+#  Description: This Makefile is intended to be reusable to build many types of
+#		C Libraries and it will also build and execute automatically all
+#		the provided Unit and Integration tests at every build.
+#		Your can reuse it very easly in your own libraries, just copy it
+#		in you rlibrary structure and change the parameters in the next
+#		section "Manualpart of the Makefile", and you're ready to build!
 ###############################################################################
 
 ###############################################################################
@@ -43,7 +43,7 @@ CC:=gcc
 CFLAGS+=
 LDFLAGS+=
 
-# If you want to pass some MACROS to your code you can use the following 
+# If you want to pass some MACROS to your code you can use the following
 # variable just add your -D<MY_MACRO>:
 CODE_MACROS+=
 
@@ -59,8 +59,8 @@ OBJ:=o
 # Configure Library build scripts dir (scripts required to build the library)
 SCRIPTSDIR:=scripts
 
-# Configure directory containing source Unit Test Files and Integration Test 
-# files and configure desired directory where to store compiled tests ready 
+# Configure directory containing source Unit Test Files and Integration Test
+# files and configure desired directory where to store compiled tests ready
 # for execution:
 TESTDIR:=tests
 TESTBIN:=$(TESTDIR)/bin
@@ -69,7 +69,7 @@ TESTBIN:=$(TESTDIR)/bin
 ##############################################################################
 # ZVect Extensions
 
-# In this section of the Makefile you can configure which ZVector Library 
+# In this section of the Makefile you can configure which ZVector Library
 # extensions you want to be built-in when compilin gthe library.
 # If you want an extension enabled the set the corresponded variable to 1
 # otherwise set it to 0.
@@ -78,17 +78,17 @@ TESTBIN:=$(TESTDIR)/bin
 # 0 for standard CLib memcpy and memmove
 # 1 for optimised ZVector memcpy and memmove
 # Recommendation: Try 1 ONLY when compiling for embedded systems
-# 				  or IoT applications where you won't have Linux and the 
-#				  glibc available. Otherwise you should stick to 0.
+# 		  or IoT applications where you won't have Linux and the
+#		  glibc available. Otherwise you should stick to 0.
 MEMX_METHOD:=0
 
-# Do you want the library to be built to be thread safe? (and so it uses mutex 
-# etc)? If so, set the following variable to 1 to enable thread safe code or 
+# Do you want the library to be built to be thread safe? (and so it uses mutex
+# etc)? If so, set the following variable to 1 to enable thread safe code or
 # set it to 0 to disable the thread safe code within the library:
 # Recommendation: If you need to squeeze as much performance as possible out
-# 				  of ZVector and thread safety is not a requirement for you
-#				  then disable this option (set it to 0 zero). It will make
-#				  ZVector gain some extra performance.
+# 		  of ZVector and thread safety is not a requirement for you
+#		  then disable this option (set it to 0 zero). It will make
+#		  ZVector gain some extra performance.
 THREAD_SAFE_BUILD:=1
 
 # Do you want ZVector code to be fully reentrant?
@@ -249,7 +249,7 @@ tests: test
 	$(info ===========================)
 	$(info Running all found tests... )
 	$(info ===========================)
-	for test in $(TESTBINS) ; do ./$(TESTBIN)$$test ; done 
+	for test in $(TESTBINS) ; do ./$(TESTBIN)$$test ; done
 
 .PHONY: debug
 debug: CFLAGS+= -ggdb3
@@ -257,7 +257,7 @@ debug: CODE_MACROS+= -DDEBUG
 debug: core tests
 
 .PHONY: install
-install: core 
+install: core
 	sudo cp -f $(LIBST) $(DESTDIR)
 
 $(OBJF): $(OSRCF)

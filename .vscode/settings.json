@@ -1,48 +1,50 @@
 {
-    "cpplint.filters": [
-        "-whitespace"
-    ],
-    "c-cpp-flylint.flexelint.enable": false,
-    "c-cpp-flylint.clang.standard": [
-        ""
-    ],
-    "c-cpp-flylint.cppcheck.force": true,
-    "c-cpp-flylint.cppcheck.includePaths": [
-        "${workspaceFolder}",
-        "${workspaceFolder}/src"
-    ],
-    "c-cpp-flylint.clang.includePaths": [
-        "${workspaceFolder}",
-        "${workspaceFolder}/src"
-    ],
-    "c-cpp-flylint.clang.language": "C",
-    "c-cpp-flylint.cppcheck.extraArgs": [
-        "--bug-hunting",
-        "--enable=all",
-        "--suppress=missingIncludeSystem"
-    ],
-    "c-cpp-flylint.cppcheck.language": "C",
-    "c-cpp-flylint.cppcheck.standard": [
-        "c99"
-    ],
-    "c-cpp-flylint.cppcheck.verbose": true,
-    "c-cpp-flylint.includePaths": [
-        "${workspaceFolder}",
-        "${workspaceFolder}/src"
-    ],
-    "c-cpp-flylint.language": "c",
-    "C_Cpp.default.cppStandard": "c++98",
-    "C_Cpp.default.cStandard": "c99",
-    "C_Cpp.default.includePath": [
-        "${workspaceFolder}",
-        "${workspaceFolder}/src"
-    ],
-    "C_Cpp.default.intelliSenseMode": "gcc-x64",
-    "C_Cpp.formatting": "clangFormat",
-    "c-cpp-compile-run.cpp-flags": "-Wall -Wextra ",
-    "c-cpp-compile-run.c-flags": "-Wall -Wextra -I${workspaceFolder}src ",
-    "editor.insertSpaces": false,
-    "files.trimTrailingWhitespace": true,
-    "editor.trimAutoWhitespace": false,
-    "editor.detectIndentation": false
+	"cpplint.filters": [
+		"-whitespace"
+	],
+	"c-cpp-flylint.flexelint.enable": false,
+	"c-cpp-flylint.clang.standard": [
+		""
+	],
+	"c-cpp-flylint.cppcheck.force": true,
+	"c-cpp-flylint.cppcheck.includePaths": [
+		"${workspaceFolder}",
+		"${workspaceFolder}/src"
+	],
+	"c-cpp-flylint.clang.includePaths": [
+		"${workspaceFolder}",
+		"${workspaceFolder}/src"
+	],
+	"c-cpp-flylint.clang.language": "C",
+	"c-cpp-flylint.cppcheck.extraArgs": [
+		"--bug-hunting",
+		"--enable=all",
+		"--suppress=missingIncludeSystem"
+	],
+	"c-cpp-flylint.cppcheck.language": "C",
+	"c-cpp-flylint.cppcheck.standard": [
+		"c99"
+	],
+	"c-cpp-flylint.cppcheck.verbose": true,
+	"c-cpp-flylint.includePaths": [
+		"${workspaceFolder}",
+		"${workspaceFolder}/src"
+	],
+	"c-cpp-flylint.language": "c",
+	"C_Cpp.default.cppStandard": "c++98",
+	"C_Cpp.default.cStandard": "c99",
+	"C_Cpp.default.includePath": [
+		"${workspaceFolder}",
+		"${workspaceFolder}/src"
+	],
+	"C_Cpp.default.intelliSenseMode": "gcc-x64",
+	"C_Cpp.formatting": "clangFormat",
+	"c-cpp-compile-run.cpp-flags": "-Wall -Wextra ",
+	"c-cpp-compile-run.c-flags": "-Wall -Wextra -I${workspaceFolder}src ",
+	"editor.insertSpaces": false,
+	"editor.trimAutoWhitespace": true,
+	"editor.detectIndentation": true,
+	"files.trimTrailingWhitespace": true,
+	"C_Cpp.clang_format_fallbackStyle": "none",
+	"editor.tabSize": 8
 }
