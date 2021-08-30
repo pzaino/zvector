@@ -232,7 +232,7 @@ int main() {
 
 	fflush(stdout);
 
-	printf("Test %s_%d: Dellete all left over events (if any):\n", testGrp,
+	printf("Test %s_%d: Delete all left over events (if any):\n", testGrp,
 		testID);
 	fflush(stdout);
 

@@ -212,7 +212,7 @@ int main() {
 	while(!vect_is_empty(v))
 		;
 
-	printf("Test %s_%d: Dellete all left over events (if any):\n", testGrp, testID);
+	printf("Test %s_%d: Delete all left over events (if any):\n", testGrp, testID);
 	fflush(stdout);
 
 		while (!vect_is_empty(v))
