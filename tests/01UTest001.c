@@ -56,7 +56,7 @@ int main() {
 		testGrp, testID, MAX_ITEMS);
 	fflush(stdout);
 
-	int i;
+		int i;
 		for (i = 0; i < MAX_ITEMS; i++)
 		{
 			// Let's add a new value in the vector:
@@ -166,6 +166,17 @@ int main() {
 
 	fflush(stdout);
 #endif
+
+	printf("Test %s_%d: Replace some vector's elements:\n", testGrp, testID);
+	fflush(stdout);
+
+		i = 10101010;
+		vect_put_front(v, &i);
+
+		assert(*((int *)vect_get_front(v)) == i);
+
+	printf("done.\n");
+	testID++;
 
 	printf("Test %s_%d: Remove vector elements one by one:\n", testGrp, testID);
 	fflush(stdout);
