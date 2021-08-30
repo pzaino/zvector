@@ -98,7 +98,7 @@ The user decides which type of items (between regular base types or custom types
 
 Properties can be expressed as a set of flags, for example: ZV_BYREF | ZV_SEC_WIPE will set a vector with both these two properties on. Turning on a property simply means asking ZVector to automatically deal with that specific property. So enabling ZV_SEC_WIPE means that ZVector itself will handle secure data wipe of the data stored in a vector when such data is no longer needed.
 
-The vector follows the rules of immutable data. So, when a vector gets extended it may also gets its data copied into the new larger vector, however, to improve performances, ZVector only maintain and copies an array of pointers to such data (so the actual user data is untouched) and the functions that perform such copy are optimised for memory bandwidth to improve performance.
+When a vector gets extended it may also gets its data copied into the new larger vector, however, to improve performances, ZVector only maintains and copies an array of pointers to such data (so the actual user data is untouched) and the functions that perform such copy are optimised for memory bandwidth to improve performance.
 
 ## How do I use it?
 To learn the API have a look at the `vector.h` file in src. To learn how to use it have a look at the Unit Test code in tests.
