@@ -19,7 +19,7 @@ You can use ZVector to create:
 The library also offers automatic Secure Data Wiping, so you can use it to store sensitive data. It is also constantly tested for security and bug hunting.
 
 ## Introduction
-I wrote this library for fun, after watching some presentations on the internet (from different authors) that were talking about dynamic arrays in standard C.
+I wrote this library for fun, after watching some presentations on the internet (from different authors) about dynamic arrays in C.
 
 The library is relatively small, however it comes with some nice features:
 
@@ -29,7 +29,7 @@ The library is relatively small, however it comes with some nice features:
 
 - **Data copy support**
 
-   When we add an element to the vector it gets copied in, so we can safely store elements that we have created as local (aka not using the heap). If you instead, need passing values by reference then you can configure a vector to do so.
+   When we add an element to the vector it gets copied, so we can safely store elements that we have created as local (aka not using the heap). If you instead, need passing values by reference, then you can configure a vector to do so.
 
 - **Secure Data Wipe support**
 
@@ -37,23 +37,23 @@ The library is relatively small, however it comes with some nice features:
 
 - **Vector Properties**
 
-   We can configure a set of properties for each vector we create using ZVector. The library will then manipoulate and update the vector according to its properties. Read the User Guide for a complete list of all available properties.
+   We can configure a set of properties for each vector we create using ZVector. The library will then manipulate and update the vector according to its properties. Read the User Guide for a complete list of all available properties.
 
 - **Thread Safe**
 
-   The library is also Thread Safe, so if our code is multi-threaded we can use this library without having to do complicated code. The mutex are also applied for each specific vector and only when they are required, so when two threads try to modify two different vectors there are no performance penalties at all.
+   The library is also Thread Safe, so if our code is multi-threaded we can use this library without having to do complicated code. The mutex is also applied for each specific vector and only when it's required, so when two threads try to modify two different vectors there are no performance penalties at all.
 
 - **Reentrant**
 
-   The library should be fully reentrant, so changes are applied when we are ready to and all the library functions do not use global state.
+   The library should be fully reentrant, so changes are applied when we are ready for, and all the library functions do not use global state.
 
 - **Configurable featureset**
 
-   For example: if you are working on single threaded application you can easly disable the extra thread safe code, making so the library smaller and faster. To configure the library check the zvector_config.h and the Makefile.
+   For example: if you are working on a single threaded application, you can easily disable the extra thread safe code, making so the library smaller and faster. To configure the library, check the zvector_config.h and the Makefile.
 
 - **Suitable for Embedded and IoT applications**
 
-   The library is suitable also for Embeeded and IoT coding, when compiled without thread safe code.
+   The library is suitable also for Embedded and IoT coding, when compiled without thread safe code.
 
 - **Suitable for low memory devices**
 
@@ -65,36 +65,40 @@ The library is relatively small, however it comes with some nice features:
 
 - **Elements swapping support**
 
-   The library comes with an handy reentrant and thread safe swap function that can swap elements in the vector (vect_swap), a vect_swap_range to swap a range of values in a vector and many more useful data manipoulation functions (including vector rotation and more).
+   The library comes with a handy reentrant and thread safe swap function that can swap elements in the vector (vect_swap), a vect_swap_range to swap a range of values in a vector and many more useful data manipulation functions (including vector rotation and more).
 
 - **Single call to apply a function to the entire vector**
 
-   The library supports a single call to apply a C function to each and every items in a vector, very handy in many situations (vect_apply). It also supports "conditional function application" to an entire vector (vect_apply_if) and an handy vect_apply_range which applies a user function to a range of values in a vector.
+   The library supports a single call to apply a C function to each and every item in a vector, very handy in many situations (vect_apply). It also supports "conditional function application" to an entire vector (vect_apply_if) and a handy vect_apply_range which applies a user function to a range of values in a vector.
 
 - **Bulk Data copy, move, insert and merge support**
 
-   ZVector comes with 4 handy calls to copy one vector into another, or move it into another, merge it with another and bulk-insert items from a vector to another. These funtions are also optimised for speed.
+   ZVector comes with 4 handy calls to copy one vector into another, or move it into another, merge it with another and bulk-insert items from a vector to another. These functions are also optimised for speed.
 
 - **Custom QuickSort and Improved Adaptive Binary Search**
 
-   ZVector comes with a custom QuickSort algorithm that uses 3 ways partitioning for very fast ordering of a vector. It also comes with an improved Adaptive Binary Search algorithm for very fast record search. Both of them supports custom user compare functions, so ordering and searches can be done on every possible type of records.
+   ZVector comes with a custom QuickSort algorithm that uses 3 ways partitioning for very fast ordering of a vector. It also comes with an improved Adaptive Binary Search algorithm for very fast record search. Both of them supports custom user compare functions, so ordering and searches can be done for every possible type of records.
 
 - **CI/CD support**
 
-   The library comes with its own Unit and Integration tests that are build and executed systematically with each library build and that can be extended automatically just by adding new C files in the `tests` directory (you the make proces will detect them, build them automatically and execute them at every build)
+   The library comes with its own Unit and Integration tests that are built and executed systematically with each library build and that can be extended automatically just by adding new C files in the `tests` directory (you the make process will detect them, build them automatically and execute them at every build)
 
 - **GitHub code test automation**
 
-   This library is tested on github (check above the CodeQL badge) at every commit and pull request.
+   This library is continuously tested on GitHub (check above the CodeQL badge) at every commit and pull request.
 
 More features will be added over time as well as I constantly seek to improve its performance.
 
 ## How does it works?
-It's very simple, it's an ANSI C99 library, no funky dependecies, so it should compile everywhere (let me know if you find any issue).
+It's very simple, it's an ANSI C99 library, no funky dependencies, so it should compile everywhere (let me know if you find any issue).
 
-The vector follows the rules of immutable data. So, when you extend a vector it gets copied into a new and larger one. However, if you are concerned about the security implications of immutable data structures, you can set a special flag on each security sensitive vector you create and the library will ensure to erase each element of these flagged vectors when extending or squishing the vector or deleting it.
+ZVector uses a `_vector` struct to represent a dynamic array of arbitrary items. The library tries to hide the `_vector` data structure, this to make it easier to use the library and improve clean coding where possible.
 
-The library tries to hide the `_vector` datastructure, this to make it easier to use the library and improve clean coding where possible.
+The user decides which type of items (between regular base types or custom types or data structures, etc), the initial capacity of a vector and its properties.
+
+Properties can be expressed as a set of flags, for example: ZV_BYREF | ZV_SEC_WIPE will set a vector with both these two properties on. Turning on a property simply means asking ZVector to automatically deal with that specific property. So enabling ZV_SEC_WIPE means that ZVector itself will handle secure data wipe of the data stored in a vector when such data is no longer needed.
+
+The vector follows the rules of immutable data. So, when a vector gets extended it may also gets its data copied into the new larger vector, however, to improve performances, ZVector only maintain and copies an array of pointers to such data (so the actual user data is untouched) and the functions that perform such copy are optimised for memory bandwidth to improve performance.
 
 ## How do I use it?
 To learn the API have a look at the `vector.h` file in src. To learn how to use it have a look at the Unit Test code in tests.
