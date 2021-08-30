@@ -1,8 +1,8 @@
 <img align="right" width="320" height="280" src="/images/ZVectorLogo2.png">
 
-Development branch status:  
+Development branch status:
 
-[![CodeQL](https://github.com/pzaino/vector/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/pzaino/vector/actions)  
+[![CodeQL](https://github.com/pzaino/vector/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/pzaino/vector/actions)
 
 [![CI](https://github.com/pzaino/vector/workflows/CI/badge.svg)](https://github.com/pzaino/vector/actions) (Linux, macOS)
 
@@ -13,7 +13,7 @@ This is a fast, configurable, portable, thread safe and reentrant Vector Library
 You can use ZVector to create:
 - Dynamic Arrays
 - Dynamic Stacks (LIFO)
-- Dynamic Queues (FIFO)
+- Dynamic Queues (FIFO) (included priority queues)
 - Dynamic Ordered Queues
 
 The library also offers automatic Secure Data Wiping, so you can use it to store sensitive data. It is also constantly tested for security and bug hunting.
@@ -23,15 +23,15 @@ I wrote this library for fun, after watching some presentations on the internet 
 
 The library is relatively small, however it comes with some nice features:
 
-- **All Data Structures support** 
+- **All Data Structures support**
 
    We can store whatever data structure we want in the vector; we can use our own data structures and/or use standard base types.
 
-- **Data copy support** 
+- **Data copy support**
 
    When we add an element to the vector it gets copied in, so we can safely store elements that we have created as local (aka not using the heap). If you instead, need passing values by reference then you can configure a vector to do so.
 
-- **Secure Data Wipe support** 
+- **Secure Data Wipe support**
 
    We can set a vector to be securely wiped (there is a flag for that), and when we do that, the library will automatically zero out all the bytes that composed the element that is being removed or the entire old vector when a new vector is being created after an expansion.
 
@@ -39,51 +39,51 @@ The library is relatively small, however it comes with some nice features:
 
    We can configure a set of properties for each vector we create using ZVector. The library will then manipoulate and update the vector according to its properties. Read the User Guide for a complete list of all available properties.
 
-- **Thread Safe** 
+- **Thread Safe**
 
    The library is also Thread Safe, so if our code is multi-threaded we can use this library without having to do complicated code. The mutex are also applied for each specific vector and only when they are required, so when two threads try to modify two different vectors there are no performance penalties at all.
 
-- **Reentrant** 
+- **Reentrant**
 
    The library should be fully reentrant, so changes are applied when we are ready to and all the library functions do not use global state.
 
-- **Configurable featureset** 
+- **Configurable featureset**
 
    For example: if you are working on single threaded application you can easly disable the extra thread safe code, making so the library smaller and faster. To configure the library check the zvector_config.h and the Makefile.
 
-- **Suitable for Embedded and IoT applications** 
+- **Suitable for Embedded and IoT applications**
 
    The library is suitable also for Embeeded and IoT coding, when compiled without thread safe code.
 
-- **Suitable for low memory devices** 
+- **Suitable for low memory devices**
 
    For low memory devices the library supports also a vector shrinking function to avoid any possible memory waste.
 
-- **Stack and Queue behaviour support** 
+- **Stack and Queue behaviour support**
 
    We can also use the vector as a dynamic stack (FIFO) structure. Or we can use it to create Queues (LIFO) structures (including priority queues)
 
-- **Elements swapping support** 
+- **Elements swapping support**
 
-   The library comes with an handy reentrant and thread safe swap function that can swap elements in the vector (vect_swap), a vect_swap_range to swap a range of values in yoru vector and many more useful data manipoulation functions (including vector rotation and more).
+   The library comes with an handy reentrant and thread safe swap function that can swap elements in the vector (vect_swap), a vect_swap_range to swap a range of values in a vector and many more useful data manipoulation functions (including vector rotation and more).
 
-- **Single call to apply a function to the entire vector** 
+- **Single call to apply a function to the entire vector**
 
-   The library supports a single call to apply a C function to each and every element of the vector, very handy in many situations (vect_apply). It also support conditional function application to an entire vectore (vect_apply_if). It also support an handly vect_apply_range which applies a user function to a range of values in your vector.
+   The library supports a single call to apply a C function to each and every items in a vector, very handy in many situations (vect_apply). It also supports "conditional function application" to an entire vector (vect_apply_if) and an handy vect_apply_range which applies a user function to a range of values in a vector.
 
-- **Bulk Data copy, move, insert and merge support** 
+- **Bulk Data copy, move, insert and merge support**
 
-   ZVector comes with 3 handy calls to copy one vector into another, or move one vector into another or merge one vector with another and in all the 3 cases a user can chose from which element to which element to perform the requested function.
+   ZVector comes with 4 handy calls to copy one vector into another, or move it into another, merge it with another and bulk-insert items from a vector to another. These funtions are also optimised for speed.
 
 - **Custom QuickSort and Improved Adaptive Binary Search**
 
    ZVector comes with a custom QuickSort algorithm that uses 3 ways partitioning for very fast ordering of a vector. It also comes with an improved Adaptive Binary Search algorithm for very fast record search. Both of them supports custom user compare functions, so ordering and searches can be done on every possible type of records.
 
-- **CI/CD support** 
+- **CI/CD support**
 
    The library comes with its own Unit and Integration tests that are build and executed systematically with each library build and that can be extended automatically just by adding new C files in the `tests` directory (you the make proces will detect them, build them automatically and execute them at every build)
 
-- **GitHub code test automation** 
+- **GitHub code test automation**
 
    This library is tested on github (check above the CodeQL badge) at every commit and pull request.
 
@@ -131,6 +131,12 @@ And to build and run the tests:
 
 ```
 make tests
+```
+
+To install the static library and headers use:
+
+```
+make install
 ```
 
 I'll add support for other compilers when I'll have time.
