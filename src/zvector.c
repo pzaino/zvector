@@ -775,9 +775,7 @@ void vect_set_wipefunct(vector v, void (*f1)(const void *, size_t)) {
 // inline implementation for all add(s):
 static inline void _vect_add_at(vector v, const void *value,
                                 const zvect_index i) {
-	// check if the vector exists:
-	_vect_check(v);
-
+	// Get vector size:
 	zvect_index vsize = _vect_size(v);
 
 	// Check if the provided index is out of bounds:
@@ -890,11 +888,10 @@ static inline void _vect_add_at(vector v, const void *value,
 #endif
 	// Increment vector size
 	v->prev_end = vsize;
-	if (!i) {
+	if (!i)
 		v->begin = base;
-	} else {
+	else
 		v->end++;
-	}
 
 #if (ZVECT_THREAD_SAFE == 1)
 	check_mutex_unlock(v, 1);
@@ -907,30 +904,39 @@ static inline void _vect_add_at(vector v, const void *value,
 }
 
 inline void vect_push(vector v, const void *value) {
+	// check if the vector exists:
+	_vect_check(v);
+
 	// Add an item at the END (top) of the vector
 	_vect_add_at(v, value, _vect_size(v));
 }
 
 void vect_add(vector v, const void *value) {
+	// check if the vector exists:
+	_vect_check(v);
+
 	// Add an item at the END of the vector
 	_vect_add_at(v, value, _vect_size(v));
 }
 
 void vect_add_at(vector v, const void *value, const zvect_index i) {
+	// check if the vector exists:
+	_vect_check(v);
+
 	// Add an item at position "i" of the vector
 	_vect_add_at(v, value, i);
 }
 
 void vect_add_front(vector v, const void *value) {
+	// check if the vector exists:
+	_vect_check(v);
+
 	// Add an item at the FRONT of the vector
 	_vect_add_at(v, value, 0);
 }
 
 // inline implementation for all get(s):
 static inline void *_vect_get_at(vector v, const zvect_index i) {
-	// check if the vector exists:
-	_vect_check(v);
-
 	// Check if passed index is out of bounds:
 	if (i >= _vect_size(v))
 		throw_error("Index out of bounds!");
@@ -940,23 +946,29 @@ static inline void *_vect_get_at(vector v, const zvect_index i) {
 }
 
 void *vect_get(vector v) {
+	// check if the vector exists:
+	_vect_check(v);
+
 	return _vect_get_at(v, _vect_size(v) - 1);
 }
 
 void *vect_get_at(vector v, const zvect_index i) {
+	// check if the vector exists:
+	_vect_check(v);
+
 	return _vect_get_at(v, i);
 }
 
 void *vect_get_front(vector v) {
+	// check if the vector exists:
+	_vect_check(v);
+
 	return _vect_get_at(v, 0);
 }
 
 // inlin eimplementation for all put:
 static inline void _vect_put_at(vector v, const void *value,
                                 const zvect_index i) {
-	// check if the vector exists:
-	_vect_check(v);
-
 	// Check if the index passed is out of bounds:
 	if (i >= _vect_size(v))
 		throw_error("Index out of bounds!");
@@ -982,22 +994,29 @@ static inline void _vect_put_at(vector v, const void *value,
 }
 
 void vect_put(vector v, const void *value) {
+	// check if the vector exists:
+	_vect_check(v);
+
 	_vect_put_at(v, value, _vect_size(v) - 1);
 }
 
 void vect_put_at(vector v, const void *value, const zvect_index i) {
+	// check if the vector exists:
+	_vect_check(v);
+
 	_vect_put_at(v, value, i);
 }
 
 void vect_put_front(vector v, const void *value) {
+	// check if the vector exists:
+	_vect_check(v);
+
 	_vect_put_at(v, value, 0);
 }
 
 // This is the inline implementation for all the remove and pop
 static inline void *_vect_remove_at(vector v, const zvect_index i) {
-	// check if the vector exists:
-	_vect_check(v);
-
+	// Get the vector size:
 	zvect_index vsize = _vect_size(v);
 
 	// Check if the index is out of bounds:
@@ -1064,7 +1083,7 @@ static inline void *_vect_remove_at(vector v, const zvect_index i) {
 		}
 	}
 
-  // Reduce vector size:
+	// Reduce vector size:
 #if (ZVECT_FULL_REENTRANT == 0)
 	if (!(v->flags & ZV_BYREF)) {
 		if (!array_changed)
@@ -1104,15 +1123,24 @@ static inline void *_vect_remove_at(vector v, const zvect_index i) {
 }
 
 inline void *vect_pop(vector v) {
+	// check if the vector exists:
+	_vect_check(v);
+
 	return _vect_remove_at(v, _vect_size(v) - 1);
 }
 
 void *vect_remove(vector v) {
+	// check if the vector exists:
+	_vect_check(v);
+
 	return _vect_remove_at(v, _vect_size(v) - 1);
 }
 
 void *vect_remove_at(vector v, const zvect_index i) {
-  return _vect_remove_at(v, i);
+	// check if the vector exists:
+	_vect_check(v);
+
+	return _vect_remove_at(v, i);
 }
 
 void *vect_remove_front(vector v) { return _vect_remove_at(v, 0); }
@@ -1120,9 +1148,6 @@ void *vect_remove_front(vector v) { return _vect_remove_at(v, 0); }
 // This is the inline implementation for all the delete
 static inline void _vect_delete_at(vector v, const zvect_index start,
                                    const zvect_index offset) {
-	// check if the vector exists:
-	_vect_check(v);
-
 	zvect_index vsize = _vect_size(v);
 
 	// Check if the index is out of bounds:
@@ -1155,7 +1180,7 @@ static inline void _vect_delete_at(vector v, const zvect_index start,
 			_free_items(v, ((vsize - 1) - offset), offset);
 	}
 	v->prev_end = vsize;
-	if ( start ) {
+	if ( start != 0 ) {
 		if ((v->end - (offset + 1)) > v->begin) {
 			v->end -= (offset + 1);
 		} else {
@@ -1188,20 +1213,32 @@ static inline void _vect_delete_at(vector v, const zvect_index start,
 }
 
 void vect_delete(vector v) {
+	// check if the vector exists:
+	_vect_check(v);
+
 	_vect_delete_at(v, _vect_size(v) - 1, 0);
 }
 
 void vect_delete_at(vector v, zvect_index i) {
+	// check if the vector exists:
+	_vect_check(v);
+
 	_vect_delete_at(v, i, 0);
 }
 
 void vect_delete_range(vector v, const zvect_index first_element,
                        const zvect_index last_element) {
+	// check if the vector exists:
+	_vect_check(v);
+
 	zvect_index end = (last_element - first_element);
 	_vect_delete_at(v, first_element, end);
 }
 
 void vect_delete_front(vector v) {
+	// check if the vector exists:
+	_vect_check(v);
+
 	_vect_delete_at(v, 0, 0);
 }
 
@@ -1589,8 +1626,6 @@ bool vect_bsearch(vector v, const void *key,
                   zvect_index *item_index) {
 	// check if the vector exists:
 	_vect_check(v);
-
-	*item_index = 0;
 
 	// Check parameters:
 	if (key == NULL)

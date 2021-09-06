@@ -73,7 +73,7 @@ int main() {
 	CCPAL_INIT_LIB;
 
 	printf("=== PTest%s ===\n", testGrp);
-	printf("Testing basic vector PERFORMANCE (WORST POSSIBLE SCENARIO)\n");
+	printf("Testing basic vector PERFORMANCE (Typical Dynamic Arrays WORST USE CASE SCENARIO)\n");
 
 	fflush(stdout);
 
