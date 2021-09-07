@@ -214,7 +214,8 @@ int main() {
 	//usleep(100);
 
 	// Now wait until the Queue is empty:
-	while (!vect_is_empty(v));
+	while (!vect_is_empty(v))
+		;
 
 	printf("Test %s_%d: Delete all left over events (if any):\n", testGrp, testID);
 	fflush(stdout);

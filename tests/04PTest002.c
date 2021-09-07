@@ -30,7 +30,7 @@
 #endif
 #include ZVECTORH
 
-#define MAX_ITEMS 100000
+#define MAX_ITEMS 10000000
 
 // Setup tests:
 char *testGrp = "002";
@@ -73,11 +73,11 @@ int main() {
 	CCPAL_INIT_LIB;
 
 	printf("=== PTest%s ===\n", testGrp);
-	printf("Testing basic vector PERFORMANCE (WORST POSSIBLE SCENARIO)\n");
+	printf("Testing basic vector PERFORMANCE (Typical Dynamic Arrays WORST USE CASE SCENARIO)\n");
 
 	fflush(stdout);
 
-	printf("Test %s_%d: Create a vector of 1000 elements and using int for the vector data:\n", testGrp, testID);
+	printf("Test %s_%d: Create a vector of 10 elements and using int for the vector data:\n", testGrp, testID);
 	fflush(stdout);
 
 		vector v;
