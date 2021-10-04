@@ -50,9 +50,8 @@ typedef struct _vector *vector;
 enum ZVECT_PROPERTIES {
 	ZV_NONE       = 0,      // Sets or Resets all vector's properties to 0.
 	ZV_SEC_WIPE   = 1 << 0, // Sets the vector for automatic Secure Wipe of items.
-	ZV_ENCRYPTED  = 1 << 1, // Sets the vector for automatic encryption and decryption of data when stored.
-	ZV_AUTOSHRINK = 1 << 2, // Sets the vector to have automatic capacity shrinking.
-	ZV_BYREF      = 1 << 3  // Sets the vector to store items by reference instead of copying them as per default.
+	ZV_BYREF      = 1 << 1, // Sets the vector to store items by reference instead of copying them as per default.
+	ZV_CIRCULAR   = 1 << 2, // Sets the vector to be a circular vector (so it will not grow in capacity automatically). Elements will be overwritten as in typical circular buffers!
 };
 
 /*****************************
@@ -86,6 +85,7 @@ void vect_destroy(vector);
  * save unused memory locations.
  */
 void vect_shrink(vector);
+#define vect_shrink_to_fit(x) vect_shrink(x)
 
 /*
  * vect_set_wipefunct allows you to pass ZVector a pointer to a custom
@@ -169,66 +169,73 @@ void vect_unlock(vector v);
  * vector as a dynamic stack.
  *
  * int i = 3;
- * vect_push(v, &i)     pushes the element 3 at
- *                      the top of the vector
- *                      as a stack would do.
+ * vect_push(v, &i)     pushes the element  3 at  the
+ *                      back of the  vector  v, which
+ * 			corresponds  to  the top of a
+ * 			Stack.
  */
 void vect_push(vector, const void *);
 
 /*
- * vect_pop(v)          pops (returns) the element
- *                      at the top of the vector as
- *                      a regular pop would do with
- *                      a stack. Remember when you
- *                      use vect_pop the element you
+ * vect_pop(v)          "pops" (returns) the  element
+ *                      at the back of the  vector as
+ *                      a regular  pop would  do with
+ *                      with  an  element at  the top
+ * 			of a stack. Remember when you
+ *                      use  vect_pop the element you
  *                      receive is also removed from
  *                      the vector!
  */
 void *vect_pop(vector);
+#define vect_pop_back(x) vect_pop(x)
 
 /*
  * vect_add adds a new item into the vector and,
  * if required, will also reorganize the vector.
  *
  * int i = 3;
- * vect_add(v, &i)       will add the new item 3
- *                       into the vector at the end
- *                       of the v vector.
+ * vect_add(v, &i)       will add the new item  3 in
+ *                       the vector  v  at  the  end
+ *                       (or back) of the  vector v.
  */
 void vect_add(vector, const void *);
+#define vect_push_back(x, y) vect_add(x, y)
 
 /*
  * int i = 4;
- * vect_add_at(v, &i, 2) will add the new item 4
- *                       at position 2 in the v
- *                       vector and move all the
- *                       items from the original 2nd
- *                       onward of a position to make
- *                       space for the new item 4.
+ * vect_add_at(v, &i, 2) will add the  new  item 4 at
+ *                       position  2 in the  vector v
+ *                       and move  all  the  elements
+ * 			 from the original 2nd onward
+ * 			 of a position to  make space
+ * 			 for the new item 4.
  */
 void vect_add_at(vector, const void *, zvect_index);
 
 /*
  * int i = 5;
- * vect_add_front(v, &i) will add the new item 5
- *                       at the beginning of the vector
- *                       v and will also move all the
- *                       existsing elements of one
- *                       position in the vector to make
- *                       space for the new item 5 at the
- *                       beginning of v.
+ * vect_add_front(v, &i) will add the new  item  5 at
+ * 			 the beginning  of the vector
+ *                       v  (or front)  and will also
+ * 			 move   all   the   existsing
+ * 			 elements of one position  in
+ * 			 the vector to make space for
+ * 			 the new item 5 at  the front
+ *			 of vector v.
  */
 void vect_add_front(vector, const void *);
+#define vect_push_front(x, y) vect_add_front(x, y)
 
 /*
  * vect_get returns an item from the specified vector
  *
- * vect_get(v)          will return the last element in
- *                      the v vector (but will not touch
- *                      the element as it happens in
- *                       vect_pop(v)).
+ * vect_get(v)          will  return  the  ast element in
+ *                      the v vector (but will not remove
+ *                      the  element  as  it  happens  in
+ *                      vect_pop(v)).
  */
 void *vect_get(vector v);
+#define vect_back(v)  vect_get(v)
 
 /*
  *
@@ -236,12 +243,14 @@ void *vect_get(vector v);
  *                      3 in the vector v.
  */
 void *vect_get_at(vector v, const zvect_index i);
+#define vect_at(v, x)  vect_get_at(v, x)
 
 /*
  * vect_get_front(v)    will return the first element in
  *                      the vector v.
  */
 void *vect_get_front(vector v);
+#define vect_front(v)  vect_get_front(v)
 
 /*
  *vect_put allows you to REPLACE an item
