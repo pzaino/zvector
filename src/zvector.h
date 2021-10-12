@@ -15,6 +15,10 @@
 #	pragma once
 #endif
 
+#ifdef _cplusplus
+extern "C" {
+#endif
+
 // Requires standard C libraries:
 #include <stdarg.h>
 #include <stdlib.h>
@@ -541,5 +545,9 @@ void vect_move(vector v1, vector v2, zvect_index start, zvect_index max_elements
 void vect_merge(vector v1, vector v2);
 
 #endif  // ZVECT_SFMD_EXTENSIONS
+
+#ifdef _cplusplus
+}
+#endif
 
 #endif  // SRC_ZVECTOR_H_
