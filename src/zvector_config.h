@@ -5,7 +5,7 @@
  *  Domain: General
  * License: Copyright by Paolo Fabio Zaino, all rights reserved
  *          Distributed under MIT license
- *          
+ *
  */
 
 #ifndef SRC_ZVECTOR_CONFIG_H_
@@ -32,6 +32,8 @@
 // If you want a larger index you can
 // change it to, for example, uint64_t
 typedef uint32_t zvect_index;
+#define zvect_index_max 4294967295 // If you change zvect_index type make sure you update this value
+				   // it's the maximum number that can be stored in a zvect_index.
 
 // Default vector storage size
 // This will be used when the user
@@ -48,7 +50,7 @@ typedef uint32_t zvect_index;
 // The following options are handled by Make
 // So you should not need to modify them here.
 
-// Choose which type of memory functions you want 
+// Choose which type of memory functions you want
 // to use for your case:
 // 0 = Use Standard memcpy and memmove
 // 1 = Use Optimised memcpy and memove
@@ -63,7 +65,7 @@ typedef uint32_t zvect_index;
 // Enable/Disable DMF Extensions:
 #define ZVECT_DMF_EXTENSIONS 1
 
-// Enable/Disable SFMD Extensions: 
+// Enable/Disable SFMD Extensions:
 #define ZVECT_SFMD_EXTENSIONS 1
 
 #endif  // SRC_ZVECTOR_CONFIG_H_
