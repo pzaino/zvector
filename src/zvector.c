@@ -53,7 +53,7 @@
 #		include <malloc.h>
 #	endif
 #	if (CPU_TYPE == x86_64)
-#		include <xmmintrin.h>
+//#		include <xmmintrin.h>
 #	endif
 #endif // OS_TYPE
 #if (ZVECT_THREAD_SAFE == 1)
@@ -386,7 +386,7 @@ static void p_free_items(const vector v, zvect_index first, zvect_index offset) 
  * This function increase the CAPACITY of a vector.
  */
 static void p_vect_increase_capacity(const vector v, const zvect_index direction) {
-	zvect_index new_capacity = 0;
+	zvect_index new_capacity;
 
 	void **new_data = NULL;
 	zvect_index nb = 0, ne = 0;
@@ -443,7 +443,7 @@ static void p_vect_decrease_capacity(const vector v, const zvect_index direction
 	if ( p_vect_capacity(v) <= v->init_capacity)
 		return;
 
-	zvect_index new_capacity = 0;
+	zvect_index new_capacity;
 
 	void **new_data = NULL;
 	zvect_index nb = 0, ne = 0;
@@ -526,7 +526,7 @@ static void p_vect_shrink(const vector v) {
 	if (new_data == NULL)
 		p_throw_error("Not enough memory available to shrink the vector!");
 
-	zvect_index ne = 0, nb = 0;
+	zvect_index ne, nb;
 	nb = ( new_capacity / 2 );
 	ne = ( nb + (v->end - v->begin) );
 	p_vect_memcpy(new_data + nb, v->data + v->begin, sizeof(void *) * (v->end - v->begin) );
@@ -722,7 +722,7 @@ static inline void *p_vect_remove_at(const vector v, const zvect_index i) {
 	zvect_index vsize = p_vect_size(v);
 	zvect_index idx = i;
 
-        if (vsize==0)
+    if (vsize==0)
 		return NULL;
 
 	// Check if the index is out of bounds:
@@ -1515,9 +1515,8 @@ static void p_vect_qsort(vector v, zvect_index low, zvect_index high,
 static void p_vect_qsort(const vector v, zvect_index l, zvect_index r,
                         int (*compare_func)(const void *, const void *)) {
 	if (r <= l)
-	return;
+	    return;
 
-	register zvect_index k = 0;
 	zvect_index i, p, j, q;
 	void *ref_val = NULL;
 
@@ -1553,6 +1552,7 @@ static void p_vect_qsort(const vector v, zvect_index l, zvect_index r,
 	vect_swap(v, i, r);
 	j = i - 1;
 	i = i + 1;
+    register zvect_index k;
 	for (k = l; k < p; k++, j--)
 		vect_swap(v, k, j);
 	for (k = r - 1; k > q; k--, i++)
@@ -1679,10 +1679,9 @@ static bool p_adaptive_binary_search(const vector v, const void *key,
 	v->balance = v->bottom > bot ? v->bottom - bot : bot - v->bottom;
 	v->bottom = bot;
 
-	int test = 0;
 	while (top) {
 		// key == array[bot + --top]
-		test = (*f1)(key, v->data[v->begin + (bot + (--top))]);
+		int test = (*f1)(key, v->data[v->begin + (bot + (--top))]);
 		if (test == 0) {
 			*item_index = bot + top;
 			return true;

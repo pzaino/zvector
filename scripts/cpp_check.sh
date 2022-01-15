@@ -1,4 +1,5 @@
 #!/bin/bash
+
 #################################################################
 #
 #    Name: cpp_check.sh
@@ -137,3 +138,4 @@ ${cppcheck_cmd} ${start_path}/src/*.c --bug-hunting \
              --suppress=missingIncludeSystem -v 2>&1
 
 exit $?
+

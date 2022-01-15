@@ -1,4 +1,5 @@
 #!/bin/bash
+
 #################################################################
 #
 #    Name: mem_check.sh
@@ -104,3 +105,4 @@ ${valgrind_cmd} --leak-check=full \
             ${extra_opts} ${code_to_check} ${out_route}
 
 exit $?
+
