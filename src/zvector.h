@@ -32,7 +32,7 @@ extern "C" {
 #include "zvector_config.h"
 
 // Declare required structs:
-typedef struct _vector *vector;
+typedef struct p_vector *vector;
 
 // Declare required enums:
 

@@ -102,6 +102,19 @@ grep_cmd="$($cpath/which grep)"
 GCC_VER="$(${gcc_cmd} -v 2>&1 | ${grep_cmd} ${gpargs} 'gcc version \K[0-9]+\.[0-9]+\.[0-9]+')"
 GCC_TARGET="$(${gcc_cmd} -v 2>&1 | ${grep_cmd} ${gpargs} 'Target: \K.*' )"
 GCC_PATH="/usr/lib/gcc/${GCC_TARGET}/${GCC_VER}/include/"
+if [ ! -d $GCC_PATH ];
+then
+  if [ "$Arch" == "x86_64" ];
+  then
+      GCC_PATH="/usr/lib64/gcc/${GCC_TARGET}/${GCC_VER}/include/"
+      if [ ! -d $GCC_PATH ];
+      then
+          GCC_PATH="/usr/lib64/gcc/${GCC_TARGET}"
+          mjr="$(cut -d . -f 1 <<< $GCC_VER)"
+          GCC_PATH="${GCC_PATH}/${mjr}"
+      fi
+  fi
+fi
 
 ###############
 # Run CPPCheck:
@@ -109,6 +122,7 @@ GCC_PATH="/usr/lib/gcc/${GCC_TARGET}/${GCC_VER}/include/"
 
 ${cppcheck_cmd} ${start_path}/src/*.c --bug-hunting \
              --enable=all \
+             --output-file=./cppcheck_report.txt \
              --platform=${Platform} \
              --std=c99 \
              --force \

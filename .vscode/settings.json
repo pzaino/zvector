@@ -17,6 +17,7 @@
 	],
 	"c-cpp-flylint.clang.language": "C",
 	"c-cpp-flylint.cppcheck.extraArgs": [
+		"--std c99",
 		"--bug-hunting",
 		"--enable=all",
 		"--suppress=missingIncludeSystem"
@@ -46,5 +47,11 @@
 	"editor.detectIndentation": true,
 	"files.trimTrailingWhitespace": true,
 	"C_Cpp.clang_format_fallbackStyle": "none",
-	"editor.tabSize": 8
+	"editor.tabSize": 8,
+	"editor.cursorStyle": "block",
+	"C_Cpp.default.systemIncludePath": [
+		"/usr/include/",
+		"/usr/local/include/",
+		"/usr/lib64/gcc/x86_64-suse-linux/11/include"
+	]
 }
