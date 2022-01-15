@@ -182,7 +182,7 @@ static void p_throw_error(const char *error_message) {
 #if (ZVECT_MEMX_METHOD == 0)
 static inline
 #endif // ZVECT_MEMX_METHOD
-void * p_vect_memcpy(void *__restrict dst, const void *__restrict src, size_t size) {
+void *p_vect_memcpy(void *__restrict dst, const void *__restrict src, size_t size) {
 #if (ZVECT_MEMX_METHOD == 0)
 	// Using regular memcpy
 	// If you are using ZVector on Linux/macOS/BSD/Windows
