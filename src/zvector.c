@@ -718,11 +718,13 @@ static inline void p_vect_add_at(const vector v, const void *value,
 
 // This is the inline implementation for all the remove and pop
 static inline void *p_vect_remove_at(const vector v, const zvect_index i) {
-	// Get the vector size:
-	zvect_index vsize = p_vect_size(v);
 	zvect_index idx = i;
 
-    if (vsize==0)
+    // Get the vector size:
+    zvect_index vsize = p_vect_size(v);
+
+    // If the vector is empty just return null
+    if (vsize == 0)
 		return NULL;
 
 	// Check if the index is out of bounds:
@@ -734,10 +736,6 @@ static inline void *p_vect_remove_at(const vector v, const zvect_index i) {
 		if (idx >= vsize)
 			idx = idx % vsize;
 	}
-
-	// If the vector is empty just return null
-	if (vsize == 0)
-		return NULL;
 
 	// Check if the vector got corrupted
 	if (v->begin > v->end)
