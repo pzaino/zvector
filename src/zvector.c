@@ -942,7 +942,7 @@ static void p_vect_destroy(vector v, uint32_t flags) {
 
 	// Destroy it:
 	if ((v->status & ZVS_CUST_WIPE_ON)) {
-		free(v->SfWpFunc);
+		//free(v->SfWpFunc);
 		v->SfWpFunc = NULL;
 	}
 
