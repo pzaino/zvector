@@ -70,13 +70,13 @@ enum ZVECT_PROPERTIES {
  * can store items of "item_size" size and, if we want to
  * have an automatic secure erasing enabled (ZV_SEC_WIPE
  * ), we can simply pass ZV_SAFE_WIPE (or other flags too)
- * afer item_size. Flags syntax is the usual C flag sets:
+ * after item_size. Flags syntax is the usual C flag sets:
  * ZV_SEC_WIPE | ZV_BYREF etc.
  */
 vector vect_create(size_t capacity, size_t item_size, uint32_t properties);
 
 /*
- * vect_destroy destrois the specified vector and, if
+ * vect_destroy destroys the specified vector and, if
  * secure_wipe is enabled, also ensure erasing each single
  * value in the vector before destroying it.
  */
@@ -84,7 +84,7 @@ void vect_destroy(vector);
 
 /*
  * vect_shrink is useful when operating on systems with
- * small amount of RAM and it basically allow to shrink
+ * small amount of RAM, and it basically allows to shrink
  * the vector capacity to match the actual used size, to
  * save unused memory locations.
  */
@@ -184,9 +184,9 @@ void vect_push(vector, const void *);
  * vect_pop(v)          "pops" (returns) the  element
  *                      at the back of the  vector as
  *                      a regular  pop would  do with
- *                      with  an  element at  the top
- * 			of a stack. Remember when you
- *                      use  vect_pop the element you
+ *                      an  element at  the top  of a
+ *                      stack. Remember when  you use
+ *                      vect_pop the element you
  *                      receive is also removed from
  *                      the vector!
  */
@@ -219,13 +219,13 @@ void vect_add_at(vector, const void *, zvect_index);
 /*
  * int i = 5;
  * vect_add_front(v, &i) will add the new  item  5 at
- * 			 the beginning  of the vector
+ * 			             the beginning  of the vector
  *                       v  (or front)  and will also
- * 			 move   all   the   existsing
- * 			 elements of one position  in
- * 			 the vector to make space for
- * 			 the new item 5 at  the front
- *			 of vector v.
+ * 			             move   all   the   existing
+ * 			             elements of one position  in
+ * 			             the vector to make space for
+ * 			             the new item 5 at  the front
+ *			             of vector v.
  */
 void vect_add_front(vector, const void *);
 #define vect_push_front(x, y) vect_add_front(x, y)
@@ -330,7 +330,7 @@ void vect_delete_at(vector v, const zvect_index i);
  *                      20 to item 30 in the vector
  *                      v.
  */
-void vect_delete_range(vector v, const zvect_index first_elemeny, const zvect_index last_element);
+void vect_delete_range(vector v, const zvect_index first_element, const zvect_index last_element);
 
 /*
  *
@@ -340,11 +340,11 @@ void vect_delete_range(vector v, const zvect_index first_elemeny, const zvect_in
 void vect_delete_front(vector v);
 
 ////////////
-// Vector Data manipoulation functions:
+// Vector Data manipulation functions:
 ////////////
 
 #ifdef ZVECT_DMF_EXTENSIONS
-// Data Manipoulation Functions extensions:
+// Data Manipulation Functions extensions:
 
 /*
  * vect_swap is a function that allows you to swap two
@@ -352,7 +352,7 @@ void vect_delete_front(vector v);
  * You just pass the vector and the index of both the
  * two items to swap.
  *
- * Fo rexample to swap item 3 with item 22 on vector v
+ * For example to swap item 3 with item 22 on vector v
  * use:
  * vect_swap(v, 3, 22);
  */
@@ -395,8 +395,8 @@ void vect_rotate_right(vector v, const zvect_index i);
 
 /*
  * vect_qsort allows you to sort a given vector.
- * The algorith used to sort a vector is Quicksort with
- * 3 ways partitioning which is generallymuch faster than
+ * The algorithm used to sort a vector is Quicksort with
+ * 3 ways partitioning which is generally much faster than
  * traditional quicksort.
  *
  * To sort a vector you need to provide a custom function
@@ -404,44 +404,44 @@ void vect_rotate_right(vector v, const zvect_index i);
  * elements of a vector are used to order it in the way
  * you desire. It pretty much works as a regular C qsort
  * function. It quite fast given that it only reorders
- * pointers to your datastructure stored in the vector.
+ * pointers to your datastructures stored in the vector.
  *
  */
 void vect_qsort(vector v, int (*compare_func)(const void *, const void*));
 
 /*
  * vect_bsearch is a function that allows to perform
- * an binary search over the vector we pass to it to
- * find the item "key" using the comparision function
+ * a binary  search over the vector we pass to it to
+ * find the item "key" using the comparison function
  * "f1".
  *
  * The specific algorithm used to implement vect_bsearch
  * if my own re-implementation of the Adaptive Binary
  * Search algorithm (from Igor van den Hoven) which has
  * some improvements over the original one (look at the
- * sources fo rmore details).
+ * sources for more details).
  *
  * For example to search for the number 5 in a vector
- * called v using a compare function called mycompare
+ * called v using a compare function called "my_compare"
  * use:
  * int i = 5;
- * vect_absearch(v, &i, mycompare);
+ * vect_absearch(v, &i, my_compare);
  */
 bool vect_bsearch(vector v, const void *key, int (*f1)(const void *, const void *), zvect_index *item_index);
 
 /*
  * vect_add_ordered allows the insertion of new items in
- * an ordered fashion. Pleas enote that fo rthis to work
- * fine you shoul dalways use only ordered vectors or if
+ * an ordered fashion. Please note that for this to work
+ * fine you should always use only ordered vectors or if
  * an empty vector use vect_add_ordered only to add new
  * values to it!
  *
- * As fo rany other ordered function you must provide
- * your own compare function (syntax is the usual one
+ * As for any other ordered function you must provide
+ * your own compare function (syntax is the usual one,
  * and it's the same as for regular CLib qsort function)
  *
  * To add item 3 to a vector called v using vect_add_ordered
- * (assumin gyour compare function is called my_compare),
+ * (assuming your compare function is called my_compare),
  * use:
  *
  * vect_Add_ordered(v, 3, my_compare);
@@ -471,12 +471,12 @@ void vect_apply(vector, void (*f1)(void *));
 
 /*
  * vect_apply_if is a function that will apply "f1" C function
- * to each and every items in vector v1, IF the return value of
+ * to each and every item in vector v1, IF the return value of
  * function f2 is true. So it allows what is known as conditional
  * application. f2 will receive an item from v1 as first parameter
  * and an item from v2 (at the same position of the item in v1) as
  * second parameter. So, for example, if we want to increment all
- * items in v1 of 10 if they are smaller then the corresponded item
+ * items in v1 of 10 if they are smaller than the corresponded item
  * in v2 then we can simply use:
  *
  * vect_apply_if(v1, v2, increment_item, is_item_too_small);
@@ -527,8 +527,8 @@ void vect_copy(vector v1, vector v2, zvect_index start, zvect_index max_elements
  * one into the other!
  *
  * vect_move(v1, v2, 2, 2)      will move items in v2 from the
- *                              the 3rd item in v2 till the 5th
- *                              at the end of v1.
+ *                              3rd item in v2 till the 5th at
+ *                              the end of v1.
  */
 void vect_move(vector v1, vector v2, zvect_index start, zvect_index max_elements);
 
@@ -539,7 +539,7 @@ void vect_move(vector v1, vector v2, zvect_index start, zvect_index max_elements
  *
  * vect_merge(v1, v2)           will merge vector v2 to v1 and then
  *                              destroy v2. So at the end of the job
- *                              v1 will contains the old v1 items +
+ *                              v1 will contain the old v1 items +
  *                              all v2 items.
  */
 void vect_merge(vector v1, vector v2);

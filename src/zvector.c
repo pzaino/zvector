@@ -123,7 +123,7 @@ struct p_vector {
 	volatile uint8_t lock_type;	// - This field contains the lock used
 					//   for this Vector.
 	void *lock;			// - Vector's mutex for thread safe
-					//   micro-transactions or user locks.
+					//   micro transactions or user locks.
 #	elif MUTEX_TYPE == 1
 	volatile uint8_t lock_type;	// - This field contains the lock used
 					//   for this Vector.
@@ -182,11 +182,11 @@ static void p_throw_error(const char *error_message) {
 #if (ZVECT_MEMX_METHOD == 0)
 static inline
 #endif // ZVECT_MEMX_METHOD
-void * p_vect_memcpy(void *__restrict dst, const void *__restrict src, size_t size) {
+void *p_vect_memcpy(void *__restrict dst, const void *__restrict src, size_t size) {
 #if (ZVECT_MEMX_METHOD == 0)
 	// Using regular memcpy
 	// If you are using ZVector on Linux/macOS/BSD/Windows
-	// your should stick to this one!
+	// you should stick to this one!
 	return memcpy(dst, src, size);
 #elif (ZVECT_MEMX_METHOD == 1)
 	// Using improved memcpy (where improved means for
@@ -322,7 +322,7 @@ void p_init_zvect(void) {
 #endif  // OS_TYPE == 1
 
 	// We are done initialising ZVector so set the following
-	// to one, so this function will not longer be called:
+	// to one, so this function will no longer be called:
 	p_init_state = 1;
 }
 
@@ -370,10 +370,10 @@ static void p_free_items(const vector v, zvect_index first, zvect_index offset) 
 		}
 		if (j == first)
 			break;	// this is required if we are using
-				// uint and the first element is elemnt
-				// 0, because on GCC a uint will fail
+				// uint and the first element is element
+				// 0, because on GCC an uint will fail
 				// then check in the for ( j >= first )
-				// in this particoular case!
+				// in this particular case!
 	}
 }
 
@@ -680,7 +680,7 @@ static inline void p_vect_add_at(const vector v, const void *value,
 	}
 #else
 	if (array_changed && !(v->flags & ZV_BYREF)) {
-		// We moved chunks of memory so we need to
+		// We moved chunks of memory, so we need to
 		// allocate new memory for the item at position i:
 		v->data[base + i] = (void *)malloc(v->data_size);
 		if (v->data[base + i] == NULL)
@@ -718,11 +718,13 @@ static inline void p_vect_add_at(const vector v, const void *value,
 
 // This is the inline implementation for all the remove and pop
 static inline void *p_vect_remove_at(const vector v, const zvect_index i) {
-	// Get the vector size:
-	zvect_index vsize = p_vect_size(v);
 	zvect_index idx = i;
 
-    if (vsize==0)
+    // Get the vector size:
+    zvect_index vsize = p_vect_size(v);
+
+    // If the vector is empty just return null
+    if (vsize == 0)
 		return NULL;
 
 	// Check if the index is out of bounds:
@@ -734,10 +736,6 @@ static inline void *p_vect_remove_at(const vector v, const zvect_index i) {
 		if (idx >= vsize)
 			idx = idx % vsize;
 	}
-
-	// If the vector is empty just return null
-	if (vsize == 0)
-		return NULL;
 
 	// Check if the vector got corrupted
 	if (v->begin > v->end)
@@ -756,8 +754,8 @@ static inline void *p_vect_remove_at(const vector v, const zvect_index i) {
 #endif
 
 	// Get the value we are about to remove:
-	// If the vector is set as ZV_BYREF then just copy the pointer to the item
-	// If the vector is set as regular then copy the item
+	// If the vector is set as ZV_BYREF, then just copy the pointer to the item
+	// If the vector is set as regular, then copy the item
 	void *rval;
 	zvect_index base = v->begin;
 	if (v->flags & ZV_BYREF) {
@@ -765,7 +763,7 @@ static inline void *p_vect_remove_at(const vector v, const zvect_index i) {
 	} else {
 		rval = (void *)malloc(v->data_size);
 		p_vect_memcpy(rval, v->data[base + idx], v->data_size);
-		// If the vector is set for secure wipe and we copied the item
+		// If the vector is set for secure wipe, and we copied the item
 		// then we need to wipe the old copy:
 		if (v->flags & ZV_SEC_WIPE)
 			p_item_safewipe(v, v->data[base + idx]);
@@ -836,7 +834,7 @@ static inline void *p_vect_remove_at(const vector v, const zvect_index i) {
 	return rval;
 }
 
-// This is the inline implementation for all the delete
+// This is the inline implementation for all the "delete" methods
 static inline void p_vect_delete_at(const vector v, const zvect_index start,
                                    const zvect_index offset) {
 	zvect_index vsize = p_vect_size(v);
@@ -915,7 +913,7 @@ static void p_vect_destroy(vector v, uint32_t flags) {
 	// Clear the vector:
 	if ((p_vect_size(v) > 0) && (flags & 1)) {
 		// Secure Wipe the vector (or just free) depending on vector properties:
-		zvect_index i = p_vect_size(v); // if p_vect_size(v) is 200, then the first i below will be 199
+		zvect_index i = p_vect_size(v); // if p_vect_size(v) is 200, then the first "i" below will be 199
 		while (i--) {
 			if (v->data[v->begin + i] != NULL) {
 				if ((v->flags & ZV_SEC_WIPE))
@@ -944,7 +942,7 @@ static void p_vect_destroy(vector v, uint32_t flags) {
 
 	// Destroy it:
 	if ((v->status & ZVS_CUST_WIPE_ON)) {
-		free(v->SfWpFunc);
+		//free(v->SfWpFunc);
 		v->SfWpFunc = NULL;
 	}
 
@@ -1321,7 +1319,7 @@ void vect_delete_front(const vector v) {
 /*---------------------------------------------------------------------------*/
 
 /*---------------------------------------------------------------------------*/
-// Vector Data Manipoulation functions
+// Vector Data Manipulation functions
 #ifdef ZVECT_DMF_EXTENSIONS
 
 void vect_swap(const vector v, const zvect_index i1, const zvect_index i2) {
@@ -1421,7 +1419,7 @@ void vect_rotate_left(const vector v, const zvect_index i) {
 		if (new_data == NULL)
 			p_throw_error("Not enough memory to rotate the vector!");
 
-		// Rotate left the vector of i positions:
+		// Rotate left the vector of "i" positions:
 		p_vect_memcpy(new_data + v->begin, v->data + v->begin, sizeof(void *) * i);
 		vect_memmove(v->data + v->begin, v->data + v->begin + i, sizeof(void *) * (p_vect_size(v) - i));
 		p_vect_memcpy(v->data + v->begin + (p_vect_size(v) - i), new_data + v->begin, sizeof(void *) * i);
@@ -1463,7 +1461,7 @@ void vect_rotate_right(const vector v, const zvect_index i) {
 		if (new_data == NULL)
 			p_throw_error("Not enough memory to rotate the vector!");
 
-		// Rotate right the vector of i positions:
+		// Rotate right the vector of "i" positions:
 		p_vect_memcpy(new_data + v->begin, v->data + v->begin + (p_vect_size(v) - i), sizeof(void *) * i);
 		vect_memmove(v->data + v->begin + i, v->data + v->begin, sizeof(void *) * (p_vect_size(v) - i));
 		p_vect_memcpy(v->data + v->begin, new_data + v->begin, sizeof(void *) * i);
@@ -1508,8 +1506,8 @@ static void p_vect_qsort(vector v, zvect_index low, zvect_index high,
 #endif // TRADITIONAL_QSORT
 
 #ifndef TRADITIONAL_QSORT
-// This is my much faster imlementation of a quicksort algorithm
-// it foundamentally use the 3 ways partitioning adapted and improved
+// This is my much faster implementation of a quicksort algorithm
+// it fundamentally uses the 3 ways partitioning adapted and improved
 // to dela with arrays of pointers together with having a custom
 // compare function:
 static void p_vect_qsort(const vector v, zvect_index l, zvect_index r,
@@ -1620,7 +1618,7 @@ static bool p_standard_binary_search(vector v, const void *key,
 // This is my re-implementation of Igor van den Hoven's Adaptive
 // Binary Search algorithm. It has few improvements over the
 // original design, most notably the use of custom compare
-// fuction that makes it suitable also to search through strings
+// function that makes it suitable also to search through strings
 // and other types of vectors.
 static bool p_adaptive_binary_search(const vector v, const void *key,
                                     zvect_index *item_index,
@@ -1732,7 +1730,7 @@ bool vect_bsearch(const vector v, const void *key,
 }
 
 /*
- * Althought if the vect_add_* doesn't belong to this group of
+ * Although if the vect_add_* doesn't belong to this group of
  * functions, the vect_add_ordered is an exception because it
  * requires vect_bserach and vect_qsort to be available.
  */
@@ -1748,7 +1746,7 @@ void vect_add_ordered(const vector v, const void *value,
 	// Few tricks to make it faster:
 	if (p_vect_size(v) == 0) {
 		// If the vector is empty clearly we can just
-		// use vect_add and add the value normaly!
+		// use vect_add and add the value normally!
 		vect_add(v, value);
 		return;
 	}
@@ -1761,14 +1759,14 @@ void vect_add_ordered(const vector v, const void *value,
 		return;
 	}
 
-	// Ok previous checks didn't help us so we need
+	// Ok previous checks didn't help us, so we need
 	// to get "heavy weapons" out and find where in
 	// the vector we should add "value":
 	zvect_index item_index = 0;
 
 	// Here is another trick:
 	// I improved adaptive binary search to ALWAYS
-	// return a index (even when it doesn't find a
+	// return an index (even when it doesn't find a
 	// searched item), this works for both: regular
 	// searches which will also use the bool to
 	// know if we actually found the item in that
@@ -1972,7 +1970,7 @@ void vect_insert(const vector v1, const vector v2, const zvect_index s2,
 }
 
 /*
- * vect_move movess the specified number of elements
+ * vect_move moves the specified number of elements
  * from vector v2 (from position s2) in vector v1 (at
  * the end of it).
  *
