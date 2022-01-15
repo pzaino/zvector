@@ -6,7 +6,7 @@ Development branch status:
 
 [![Spectral Scan](https://github.com/pzaino/zvector/actions/workflows/spectral_scan.yml/badge.svg)](https://github.com/pzaino/zvector/actions)
 
-[![CI/CD](https://github.com/pzaino/zvector/actions/workflows/CI/badge.svg)](https://github.com/pzaino/zvector/actions) (Linux, macOS)
+[![CI/CD](https://github.com/pzaino/zvector/actions/workflows/ci.yml/badge.svg)](https://github.com/pzaino/zvector/actions) (Linux, macOS)
 
 
 # ZVector
