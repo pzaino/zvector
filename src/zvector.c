@@ -60,8 +60,8 @@
 #	if MUTEX_TYPE == 1
 #		include <pthread.h>
 #	elif MUTEX_TYPE == 2
-#		include <psapi.h>
 #		include <windows.h>
+#		include <psapi.h>
 #	endif // MUTEX_TYPE
 #endif // ZVECT_THREAD_SAFE
 
@@ -163,7 +163,9 @@ static uint32_t p_init_state = 0;
 /*---------------------------------------------------------------------------*/
 // Errors and messages handling:
 
+#if (ZVECT_COMPTYPE == 1) || (ZVECT_COMPTYPE == 3)
 __attribute__((noreturn))
+#endif
 static void p_throw_error(const char *error_message) {
 #if OS_TYPE == 1
 	fprintf(stderr, "Error: %s\n", error_message);
@@ -251,8 +253,8 @@ static inline void mutex_destroy(pthread_mutex_t *lock) {
 	pthread_mutex_unlock(lock);
 	pthread_mutex_destroy(lock);
 }
+
 #	elif MUTEX_TYPE == 2
-static volatile bool lock_enabled = true;
 
 static inline void mutex_lock(CRITICAL_SECTION *lock) {
 	EnterCriticalSection(lock);
