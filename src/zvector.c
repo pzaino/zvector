@@ -772,7 +772,7 @@ static inline void *p_vect_remove_at(const vector v, const zvect_index i) {
 	// "shift" left the array of one position:
 	uint16_t array_changed = 0;
 	if ( idx != 0 ) {
-		if ((idx < (vsize - 1)) && (vsize > 0)) {
+		if ((idx < (vsize - 1)) && (vsize != 0)) {
 			array_changed = 1;
 			free(v->data[base + idx]);
 #if (ZVECT_FULL_REENTRANT == 1)
