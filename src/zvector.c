@@ -772,7 +772,7 @@ static inline void *p_vect_remove_at(const vector v, const zvect_index i) {
 	// "shift" left the array of one position:
 	uint16_t array_changed = 0;
 	if ( idx != 0 ) {
-		if ((idx < (vsize - 1)) && (vsize != 0)) {
+		if ((idx < (vsize - 1)) && (vsize > 0)) {
 			array_changed = 1;
 			free(v->data[base + idx]);
 #if (ZVECT_FULL_REENTRANT == 1)
@@ -1587,12 +1587,13 @@ void vect_qsort(const vector v, int (*compare_func)(const void *, const void *))
 static bool p_standard_binary_search(vector v, const void *key,
                                     zvect_index *item_index,
                                     int (*f1)(const void *, const void *)) {
-	zvect_index bot, mid, top;
+	zvect_index bot, top;
 
 	bot = 0;
 	top = p_vect_size(v) - 1;
 
 	while (bot < top) {
+        zvect_index mid // mid-point
 		mid = top - (top - bot) / 2;
 
 		// key < array[mid]
