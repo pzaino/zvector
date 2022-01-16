@@ -60,8 +60,8 @@
 #	if MUTEX_TYPE == 1
 #		include <pthread.h>
 #	elif MUTEX_TYPE == 2
-#		include <psapi.h>
 #		include <windows.h>
+#		include <psapi.h>
 #	endif // MUTEX_TYPE
 #endif // ZVECT_THREAD_SAFE
 
@@ -253,8 +253,8 @@ static inline void mutex_destroy(pthread_mutex_t *lock) {
 	pthread_mutex_unlock(lock);
 	pthread_mutex_destroy(lock);
 }
+
 #	elif MUTEX_TYPE == 2
-static volatile bool lock_enabled = true;
 
 static inline void mutex_lock(CRITICAL_SECTION *lock) {
 	EnterCriticalSection(lock);
