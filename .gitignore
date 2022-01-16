@@ -6,6 +6,10 @@ tests/bin/
 /tests/bin/.*
 .fuse_*
 cppcheck_report.txt
+sonar-project.properties
+.scannerwork/*
+build_wrapper_output_directory/*
+bw-output/*
 .PVS-Studio/*
 
 ## Ignore Visual Studio temporary files, build results, and

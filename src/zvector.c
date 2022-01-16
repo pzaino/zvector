@@ -1587,12 +1587,13 @@ void vect_qsort(const vector v, int (*compare_func)(const void *, const void *))
 static bool p_standard_binary_search(vector v, const void *key,
                                     zvect_index *item_index,
                                     int (*f1)(const void *, const void *)) {
-	zvect_index bot, mid, top;
+	zvect_index bot, top;
 
 	bot = 0;
 	top = p_vect_size(v) - 1;
 
 	while (bot < top) {
+        zvect_index mid // mid-point
 		mid = top - (top - bot) / 2;
 
 		// key < array[mid]
