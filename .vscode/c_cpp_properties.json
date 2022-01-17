@@ -11,7 +11,8 @@
             "compilerPath": "/usr/bin/gcc",
             "cStandard": "c99",
             "cppStandard": "gnu++98",
-            "intelliSenseMode": "linux-gcc-x64"
+            "intelliSenseMode": "linux-gcc-x64",
+            "compileCommands": "${workspaceFolder}/x64/Debug/Zvector.ClangTidy/compile_commands.json"
         },
         {
             "name": "Mac",
