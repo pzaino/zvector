@@ -94,7 +94,7 @@ More features will be added over time as well as I constantly seek to improve it
 ## How does it works?
 It's very simple, it's an ANSI C99 library, no funky dependencies, so it should compile everywhere (let me know if you find any issue).
 
-ZVector uses a `_vector` struct to represent a dynamic array of arbitrary items. The library tries to hide the `_vector` data structure, this to make it easier to use the library and improve clean coding where possible.
+ZVector uses a `p_vector` struct (everything that begins with a `p_` in zvector is "private") to represent a dynamic array of arbitrary items. The library tries to hide the `p_vector` data structure (the public type is called `vector`), this to make it easier to use the library and improve clean coding where possible.
 
 The user decides which type of items (between regular base types or custom types or data structures, etc), the initial capacity of a vector and its properties.
 
@@ -103,7 +103,7 @@ Properties can be expressed as a set of flags, for example: ZV_BYREF | ZV_SEC_WI
 When a vector gets extended it may also gets its data copied into the new larger vector, however, to improve performances, ZVector only maintains and copies an array of pointers to such data (so the actual user data is untouched) and the functions that perform such copy are optimised for memory bandwidth to improve performance.
 
 ## How do I use it?
-To learn the API have a look at the `vector.h` file in src. To learn how to use it have a look at the Unit Test code in tests.
+To learn the API have a look at the `zvector.h` file in the `src` directory. To learn how to use it have a look at the Unit Test code in tests.
 
 As general rules:
 
