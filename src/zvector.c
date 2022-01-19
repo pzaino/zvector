@@ -104,6 +104,8 @@ enum {
 struct p_vector {
 	zvect_index init_capacity;	// - Initial Capacity (this is set at
 					//   creation time).
+					//   For the size of zvect_index check
+					//   zvector_conifg.h.
 	zvect_index cap_left;		// - Max capacity allocated on the left.
 	zvect_index cap_right;		// - Max capacity allocated on the right.
 	zvect_index begin;		// - First vector's Element Pointer
@@ -112,6 +114,11 @@ struct p_vector {
 					//   us the pointer to the last element
 					//   in the vector.
 	size_t data_size;		// - User DataType size.
+					//   This should be 2 bytes size on a
+					//   16 bit system, 4 bytes on a 32 bit,
+					//   8 bytes on a 64 bit. But check your
+					//   compiler for the actual size, it's
+					//   implementation dependent.
 	uint32_t flags;			// - If this flag set is used to
 					//   represent ALL Vector's properties.
 					//   It contains bits that set Secure
@@ -124,16 +131,23 @@ struct p_vector {
 					//   for this Vector.
 	void *lock;			// - Vector's mutex for thread safe
 					//   micro transactions or user locks.
+					//   This should be 2 bytes size on a
+					//   16 bit machine, 4 bytes on a 32 bit
+					//   4 bytes on a 64 bit.
 #	elif MUTEX_TYPE == 1
 	volatile uint8_t lock_type;	// - This field contains the lock used
 					//   for this Vector.
 	pthread_mutex_t lock;		// - Vector's mutex for thread safe
 					//   micro-transactions or user locks.
+					//   This should be 24 bytes on a 32bit
+					//   machine and 40 bytes on a 64bit.
 #	elif MUTEX_TYPE == 2
 	volatile uint8_t lock_type;	// - This field contains the lock used
 					//   for this Vector.
 	CRITICAL_SECTION lock;		// - Vector's mutex for thread safe
 					//   micro-transactions or user locks.
+					//   Check your WINNT.H to calculate the
+					//   size of this one.
 #	endif // MUTEX_TYPE
 #endif  // ZVECT_THREAD_SAFE
 #ifdef ZVECT_DMF_EXTENSIONS
