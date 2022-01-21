@@ -70,9 +70,8 @@
 // Declare Vector status flags:
 enum {
 	ZVS_NONE = 0,              // Set or Reset vector's status register.
-	ZVS_CUST_WIPE_ON = 1 << 0, // Sets the bit to indicate a custom secure wipe
+	ZVS_CUST_WIPE_ON = 1 << 0  // Sets the bit to indicate a custom secure wipe
 				   // function has been set.
-	ZVS_CUST_WIPE_OFF = 0 << 0 // Reset ZVS_CUST_WIPE bit to off.
 };
 
 #ifndef ZVECT_MEMX_METHOD
@@ -104,6 +103,8 @@ enum {
 struct p_vector {
 	zvect_index init_capacity;	// - Initial Capacity (this is set at
 					//   creation time).
+					//   For the size of zvect_index check
+					//   zvector_config.h.
 	zvect_index cap_left;		// - Max capacity allocated on the left.
 	zvect_index cap_right;		// - Max capacity allocated on the right.
 	zvect_index begin;		// - First vector's Element Pointer
@@ -112,6 +113,11 @@ struct p_vector {
 					//   us the pointer to the last element
 					//   in the vector.
 	size_t data_size;		// - User DataType size.
+					//   This should be 2 bytes size on a
+					//   16-bit system, 4 bytes on a 32 bit,
+					//   8 bytes on a 64 bit. But check your
+					//   compiler for the actual size, it's
+					//   implementation dependent.
 	uint32_t flags;			// - If this flag set is used to
 					//   represent ALL Vector's properties.
 					//   It contains bits that set Secure
@@ -120,21 +126,28 @@ struct p_vector {
 	uint32_t status;		// - Internal vector Status Flags
 #if (ZVECT_THREAD_SAFE == 1)
 #	if MUTEX_TYPE == 0
-	volatile uint8_t lock_type;	// - This field contains the lock used
+	volatile int32_t lock_type;	// - This field contains the lock used
 					//   for this Vector.
 	void *lock;			// - Vector's mutex for thread safe
-					//   micro transactions or user locks.
+					//   micro-transactions or user locks.
+					//   This should be 2 bytes size on a
+					//   16 bit machine, 4 bytes on a 32 bit
+					//   4 bytes on a 64 bit.
 #	elif MUTEX_TYPE == 1
-	volatile uint8_t lock_type;	// - This field contains the lock used
+	volatile int32_t lock_type;	// - This field contains the lock used
 					//   for this Vector.
 	pthread_mutex_t lock;		// - Vector's mutex for thread safe
 					//   micro-transactions or user locks.
+					//   This should be 24 bytes on a 32bit
+					//   machine and 40 bytes on a 64bit.
 #	elif MUTEX_TYPE == 2
-	volatile uint8_t lock_type;	// - This field contains the lock used
+	volatile int32_t lock_type;	// - This field contains the lock used
 					//   for this Vector.
 	CRITICAL_SECTION lock;		// - Vector's mutex for thread safe
 					//   micro-transactions or user locks.
-#	endif // MUTEX_TYPE
+					//   Check your WINNT.H to calculate the
+					//   size of this one.
+#	endif  // MUTEX_TYPE
 #endif  // ZVECT_THREAD_SAFE
 #ifdef ZVECT_DMF_EXTENSIONS
 	zvect_index balance;		// - Used by the Adaptive Binary Search
@@ -193,7 +206,6 @@ void *p_vect_memcpy(void *__restrict dst, const void *__restrict src, size_t siz
 #elif (ZVECT_MEMX_METHOD == 1)
 	// Using improved memcpy (where improved means for
 	// embedded systems only!):
-	register size_t i;
 	if (size > 0) {
 		if (((uintptr_t)dst % sizeof(ADDR_TYPE1) == 0) &&
 		    ((uintptr_t)src % sizeof(ADDR_TYPE1) == 0) &&
@@ -201,7 +213,7 @@ void *p_vect_memcpy(void *__restrict dst, const void *__restrict src, size_t siz
 			ADDR_TYPE1 *pExDst = (ADDR_TYPE1 *)dst;
 			ADDR_TYPE1 const *pExSrc = (ADDR_TYPE1 const *)src;
 			size_t end = size / sizeof(ADDR_TYPE1);
-			for (i = 0; i < end; i++) {
+			for (register size_t i = 0; i < end; i++) {
 				// The following should be compiled as: (-O2 on x86_64)
 				//         mov     rdi, QWORD PTR [rsi+rcx]
 				//         mov     QWORD PTR [rax+rcx], rdi
@@ -360,8 +372,7 @@ static void p_free_items(const vector v, zvect_index first, zvect_index offset) 
 	if (p_vect_size(v) == 0)
 		return;
 
-	register zvect_index j;
-	for (j = (first + offset); j >= first; j--) {
+	for (register zvect_index j = (first + offset); j >= first; j--) {
 		if (v->data[v->begin + j] != NULL) {
 			if (v->flags & ZV_SEC_WIPE)
 				p_item_safewipe(v, v->data[v->begin + j]);
@@ -374,7 +385,7 @@ static void p_free_items(const vector v, zvect_index first, zvect_index offset) 
 			break;	// this is required if we are using
 				// uint and the first element is element
 				// 0, because on GCC an uint will fail
-				// then check in the for ( j >= first )
+				// then check in the for loop if j >= first 
 				// in this particular case!
 	}
 }
@@ -391,7 +402,8 @@ static void p_vect_increase_capacity(const vector v, const zvect_index direction
 	zvect_index new_capacity;
 
 	void **new_data = NULL;
-	zvect_index nb = 0, ne = 0;
+	zvect_index nb = 0;
+	zvect_index ne = 0;
 	if (!direction)
 	{
 		// Increase capacity on the left side of the vector:
@@ -448,7 +460,8 @@ static void p_vect_decrease_capacity(const vector v, const zvect_index direction
 	zvect_index new_capacity;
 
 	void **new_data = NULL;
-	zvect_index nb = 0, ne = 0;
+	zvect_index nb = 0;
+        zvect_index ne = 0;
 	if (!direction)
 	{
 		// Decreasing on the left:
@@ -1375,12 +1388,12 @@ void vect_swap_range(const vector v, const zvect_index s1, const zvect_index e1,
 		return;
 
 	// Let's swap items:
-	register zvect_index j, i;
+	register zvect_index i;
 #if (ZVECT_THREAD_SAFE == 1)
 	check_mutex_lock(v, 1);
 #endif
 
-	for (j = s1; j <= (s1 + end); j++) {
+	for (register zvect_index j = s1; j <= (s1 + end); j++) {
 		i = j - s1;
 		void *temp = v->data[v->begin + j];
 		v->data[v->begin + j] = v->data[v->begin + (s2 + i)];
@@ -1486,8 +1499,7 @@ p_partition(vector v, zvect_index low, zvect_index high,
 	void *pivot = v->data[v->begin + high];
 	zvect_index i = (low - 1);
 
-	zvect_index j;
-	for (j = low; j <= (high - 1); j++) {
+	for (register zvect_index j = low; j <= (high - 1); j++) {
 		// v->data[j] <= pivot
 		if ((*compare_func)(v->data[v->begin + j], pivot) <= 0)
 			vect_swap(v, ++i, j);
@@ -1552,7 +1564,7 @@ static void p_vect_qsort(const vector v, zvect_index l, zvect_index r,
 	vect_swap(v, i, r);
 	j = i - 1;
 	i = i + 1;
-    register zvect_index k;
+    	register zvect_index k;
 	for (k = l; k < p; k++, j--)
 		vect_swap(v, k, j);
 	for (k = r - 1; k > q; k--, i++)
@@ -1796,12 +1808,11 @@ void vect_apply(const vector v, void (*f)(void *)) {
 		return;
 
 	// Process the vector:
-	register zvect_index i;
 #if (ZVECT_THREAD_SAFE == 1)
 	check_mutex_lock(v, 1);
 #endif
 
-	for (i = p_vect_size(v); i--;)
+	for (register zvect_index i = p_vect_size(v); i--;)
 		(*f)(v->data[v->begin + i]);
 
 #if (ZVECT_THREAD_SAFE == 1)
@@ -1835,12 +1846,11 @@ void vect_apply_range(const vector v, void (*f)(void *), const zvect_index x,
 	}
 
 	// Process the vector:
-	register zvect_index i;
 #if (ZVECT_THREAD_SAFE == 1)
 	check_mutex_lock(v, 1);
 #endif
 
-	for (i = start; i <= end; i++)
+	for (register zvect_index i = start; i <= end; i++)
 		(*f)(v->data[v->begin + i]);
 
 #if (ZVECT_THREAD_SAFE == 1)
@@ -1860,12 +1870,11 @@ void vect_apply_if(const vector v1, const vector v2, void (*f1)(void *),
 			    "items in vector 1!");
 
 	// Process vectors:
-	register zvect_index i;
 #if (ZVECT_THREAD_SAFE == 1)
 	check_mutex_lock(v1, 1);
 #endif
 
-	for (i = p_vect_size(v1); i--;)
+	for (register zvect_index i = p_vect_size(v1); i--;)
 		if ((*f2)(v1->data[v1->begin + i], v2->data[v2->begin + i]))
 			(*f1)(v1->data[v1->begin + i]);
 
@@ -1908,9 +1917,6 @@ void vect_copy(const vector v1, const vector v2, const zvect_index s2,
 		p_vect_increase_capacity(v1, 1);
 
 	// Copy v2 (from s2) in v1 at the end of v1:
-	// zvect_index i;
-	// for (i = s2; i <= s2+ee2; i++)
-	//   vect_add(v1, v2->data[i]);
 	p_vect_memcpy(v1->data + v1->begin + p_vect_size(v1), v2->data + v2->begin + s2, sizeof(void *) * ee2);
 
 	// Update v1 size:
@@ -1958,13 +1964,13 @@ void vect_insert(const vector v1, const vector v2, const zvect_index s2,
 		ee2 = e2;
 
 	// Process vectors:
-	register zvect_index i, j = 0;
+	register zvect_index j = 0;
 #if (ZVECT_THREAD_SAFE == 1)
 	check_mutex_lock(v1, 2);
 #endif
 
 	// Copy v2 items (from s2) in v1 (from s1):
-	for (i = s2; i <= s2 + ee2; i++, j++)
+	for (register zvect_index i = s2; i <= s2 + ee2; i++, j++)
 		vect_add_at(v1, v2->data[v2->begin + i], s1 + j);
 
 #if (ZVECT_THREAD_SAFE == 1)
@@ -2021,8 +2027,7 @@ void vect_move(const vector v1, vector v2, const zvect_index s2,
 	// Update v1 size:
 	v1->end += ee2;
 
-	zvect_index i;
-	for (i = s2; i <= s2 + ee2; i++)
+	for (register zvect_index i = s2; i <= s2 + ee2; i++)
 		vect_remove_at(v2, i);
 
 #if (ZVECT_THREAD_SAFE == 1)
@@ -2050,9 +2055,6 @@ void vect_merge(const vector v1, vector v2) {
 		p_vect_increase_capacity(v1, 1);
 
 	// Copy the whole v2 in v1 at the end of v1:
-	// zvect_index i;
-	// for (i = 0; i < p_vect_size(v2); i++)
-	//    vect_add(v1, v2->data[i]);
 	p_vect_memcpy(v1->data + v1->begin + p_vect_size(v1), v2->data + v2->begin, sizeof(void *) * p_vect_size(v2));
 
 	// Update v1 size:
