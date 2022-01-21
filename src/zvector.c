@@ -126,24 +126,20 @@ struct p_vector {
 					//   Ref etc.
 	uint32_t status;		// - Internal vector Status Flags
 #if (ZVECT_THREAD_SAFE == 1)
-#	if MUTEX_TYPE == 0
 	int32_t volatile lock_type;	// - This field contains the lock used
 					//   for this Vector.
+#	if MUTEX_TYPE == 0
 	void *lock;			// - Vector's mutex for thread safe
 					//   micro-transactions or user locks.
 					//   This should be 2 bytes size on a
 					//   16 bit machine, 4 bytes on a 32 bit
 					//   4 bytes on a 64 bit.
 #	elif MUTEX_TYPE == 1
-	int32_t volatile lock_type;	// - This field contains the lock used
-					//   for this Vector.
 	pthread_mutex_t lock;		// - Vector's mutex for thread safe
 					//   micro-transactions or user locks.
 					//   This should be 24 bytes on a 32bit
 					//   machine and 40 bytes on a 64bit.
 #	elif MUTEX_TYPE == 2
-	int32_t volatile lock_type;	// - This field contains the lock used
-					//   for this Vector.
 	CRITICAL_SECTION lock;		// - Vector's mutex for thread safe
 					//   micro-transactions or user locks.
 					//   Check your WINNT.H to calculate the
