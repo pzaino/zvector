@@ -34,9 +34,10 @@
 #if (OS_TYPE == 1)
 #	if (!defined(macOS))
 /*  Improve PThreads on Linux.
- *  macOS seems to be handling pthreads
- *  sligthely differently than Linux so
- * avoid using the same trick on macOS.
+ *  macOS seems  to be  handling pthreads
+ *  in a   slightly  different   way than
+ *  Linux, so, avoid using the same trick
+ *  on macOS.
  */
 #	ifndef _POSIX_C_SOURCE
 #		define _POSIX_C_SOURCE 200112L
@@ -125,24 +126,20 @@ struct p_vector {
 					//   Ref etc.
 	uint32_t status;		// - Internal vector Status Flags
 #if (ZVECT_THREAD_SAFE == 1)
-#	if MUTEX_TYPE == 0
-	volatile int32_t lock_type;	// - This field contains the lock used
+	int32_t volatile lock_type;	// - This field contains the lock used
 					//   for this Vector.
+#	if MUTEX_TYPE == 0
 	void *lock;			// - Vector's mutex for thread safe
 					//   micro-transactions or user locks.
 					//   This should be 2 bytes size on a
 					//   16 bit machine, 4 bytes on a 32 bit
 					//   4 bytes on a 64 bit.
 #	elif MUTEX_TYPE == 1
-	volatile int32_t lock_type;	// - This field contains the lock used
-					//   for this Vector.
 	pthread_mutex_t lock;		// - Vector's mutex for thread safe
 					//   micro-transactions or user locks.
 					//   This should be 24 bytes on a 32bit
 					//   machine and 40 bytes on a 64bit.
 #	elif MUTEX_TYPE == 2
-	volatile int32_t lock_type;	// - This field contains the lock used
-					//   for this Vector.
 	CRITICAL_SECTION lock;		// - Vector's mutex for thread safe
 					//   micro-transactions or user locks.
 					//   Check your WINNT.H to calculate the
@@ -301,21 +298,17 @@ static inline void mutex_destroy(CRITICAL_SECTION *lock) {
  *         uses ZVEctor primitives.
  * level 3 is the priority of the User's locks.
  */
-static inline void check_mutex_lock(vector v, volatile uint8_t lock_type) {
-	if (lock_enabled) {
-		if (lock_type >= v->lock_type) {
-			mutex_lock(&(v->lock));
-			v->lock_type = lock_type;
-		}
+static inline void check_mutex_lock(const vector v, const int32_t lock_type) {
+	if (lock_enabled && lock_type >= v->lock_type) {
+		mutex_lock(&(v->lock));
+		v->lock_type = lock_type;
 	}
 }
 
-static inline void check_mutex_unlock(vector v, volatile uint8_t lock_type) {
-	if (lock_enabled) {
-		if (lock_type == v->lock_type) {
-			v->lock_type = 0;
-			mutex_unlock(&(v->lock));
-		}
+static inline void check_mutex_unlock(const vector v, const int32_t lock_type) {
+	if (lock_enabled && lock_type == v->lock_type) {
+		v->lock_type = 0;
+		mutex_unlock(&(v->lock));
 	}
 }
 #endif // ZVECT_THREAD_SAFE
@@ -385,7 +378,7 @@ static void p_free_items(const vector v, zvect_index first, zvect_index offset) 
 			break;	// this is required if we are using
 				// uint and the first element is element
 				// 0, because on GCC an uint will fail
-				// then check in the for loop if j >= first 
+				// then check in the for loop if j >= first
 				// in this particular case!
 	}
 }
@@ -409,9 +402,6 @@ static void p_vect_increase_capacity(const vector v, const zvect_index direction
 		// Increase capacity on the left side of the vector:
 
 		// Get actual left capacity and double it
-		//if ( v->cap_left == 0 )
-		//	v->cap_left = v->init_capacity / 2;
-
 		new_capacity = v->cap_left * 2;
 
 		new_data = (void **)malloc(sizeof(void *) * (new_capacity + v->cap_right));
@@ -425,9 +415,6 @@ static void p_vect_increase_capacity(const vector v, const zvect_index direction
 		// Increase capacity on the right side of the vector:
 
 		// Get actual left capacity and double it
-		//if ( v->cap_right == 0 )
-		//	v->cap_right = v->init_capacity / 2;
-
 		new_capacity = v->cap_right * 2;
 
 		new_data = (void **)realloc(v->data, sizeof(void *) * (v->cap_left + new_capacity));
@@ -531,12 +518,8 @@ static void p_vect_shrink(const vector v) {
 		new_capacity = p_vect_size(v) + 2;
 
 	// shrink the vector:
-	/*
-	void **new_data = (void **)realloc(v->data, sizeof(void *) * new_capacity);
-	if (new_data == NULL)
-		p_throw_error("Not enough memory available to shrink the vector!");
-	*/
-
+	// Given that zvector supports vectors that can grow on the left and on the right
+	// I cannot use realloc here.
 	void **new_data = (void **)malloc(sizeof(void *) * new_capacity);
 	if (new_data == NULL)
 		p_throw_error("Not enough memory available to shrink the vector!");
@@ -735,11 +718,11 @@ static inline void p_vect_add_at(const vector v, const void *value,
 static inline void *p_vect_remove_at(const vector v, const zvect_index i) {
 	zvect_index idx = i;
 
-    // Get the vector size:
-    zvect_index vsize = p_vect_size(v);
+	// Get the vector size:
+	zvect_index vsize = p_vect_size(v);
 
-    // If the vector is empty just return null
-    if (vsize == 0)
+	// If the vector is empty just return null
+	if (vsize == 0)
 		return NULL;
 
 	// Check if the index is out of bounds:
@@ -821,8 +804,7 @@ static inline void *p_vect_remove_at(const vector v, const zvect_index i) {
 		v->data = new_data;
 	}
 #endif
-	if (!(v->flags & ZV_CIRCULAR))
-	{
+	if (!(v->flags & ZV_CIRCULAR)) {
 		v->prev_end = vsize;
 		if ( idx != 0 ) {
 			if (v->end > v->begin) {
@@ -901,15 +883,6 @@ static inline void p_vect_delete_at(const vector v, const zvect_index start,
 	// Check if we need to shrink the vector:
 	if ((4 * vsize) < p_vect_capacity(v))
 		p_vect_decrease_capacity(v, start);
-	/* if (!start) {
-		// Check if we need to expand on the left side:
-		if ( (v->begin * 4) < v->cap_left )
-			p_vect_decrease_capacity(v, 0);
-	} else {
-		// Check if we need to expand on thr right side:
-		if ( (v->end * 4) < v->cap_right )
-			p_vect_decrease_capacity(v, 1);
-	} */
 
 #if (ZVECT_THREAD_SAFE == 1)
 	check_mutex_unlock(v, 1);
@@ -1033,10 +1006,16 @@ zvect_index vect_max_size(const vector v) {
 }
 
 void *vect_begin(const vector v) {
+	// Check if the vector exists
+	p_vect_check(v);
+
 	return v->data[v->begin];
 }
 
 void *vect_end(const vector v) {
+	// Check if the vector exists
+	p_vect_check(v);
+
 	return v->data[v->end];
 }
 
@@ -2028,7 +2007,7 @@ void vect_move(const vector v1, vector v2, const zvect_index s2,
 	v1->end += ee2;
 
 	for (register zvect_index i = s2; i <= s2 + ee2; i++)
-		vect_remove_at(v2, i);
+		vect_delete_at(v2, i);
 
 #if (ZVECT_THREAD_SAFE == 1)
 	check_mutex_unlock(v1, 2);

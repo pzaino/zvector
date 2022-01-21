@@ -39,7 +39,7 @@ uint8_t testID = 1;
 
 #if ( ZVECT_THREAD_SAFE == 1 ) && ( OS_TYPE == 1 )
 
-// Initialise Random Gnerator
+// Initialise Random Generator
 static int mySeed = 25011984;
 int max_strLen = 64;
 
