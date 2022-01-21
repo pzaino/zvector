@@ -81,6 +81,7 @@ Arch="$(uname -m)"
 Platform=""
 [ "$Arch" == "x86_64" ] && Platform="unix64"
 [ "$Arch" == "x86" ] && Platform="unix32"
+[ "$Platform" == "" ] && Platform="native"
 
 # Detect GCC
 if [ "$OS_TYPE" != "macOS" ]; then
@@ -117,6 +118,13 @@ then
   fi
 fi
 
+## Determine include paths:
+include_paths=""
+if [ "$OS_TYPE" == "Linux" ];
+then
+   include_paths="-I/usr/include/ -I/usr/include/sys/ -I/usr/include/linux/ -I/usr/include/gnu/ -I/usr/include/bits/ -I${GCC_PATH} "
+fi
+
 ###############
 # Run CPPCheck:
 ###############
@@ -127,12 +135,7 @@ ${cppcheck_cmd} ${start_path}/src/*.c --bug-hunting \
              --platform=${Platform} \
              --std=c99 \
              --force \
-             -I/usr/include/ \
-             -I/usr/include/sys/ \
-             -I/usr/include/linux/ \
-             -I/usr/include/gnu/ \
-             -I/usr/include/bits/ \
-             -I${GCC_PATH} \
+             ${include_paths} \
              -I../ -I${start_path}/src/ \
              -io/ -ilib/ \
              --suppress=missingIncludeSystem -v 2>&1
