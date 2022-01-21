@@ -385,7 +385,7 @@ static void p_free_items(const vector v, zvect_index first, zvect_index offset) 
 			break;	// this is required if we are using
 				// uint and the first element is element
 				// 0, because on GCC an uint will fail
-				// then check in the for loop if j >= first 
+				// then check in the for loop if j >= first
 				// in this particular case!
 	}
 }
@@ -2028,7 +2028,7 @@ void vect_move(const vector v1, vector v2, const zvect_index s2,
 	v1->end += ee2;
 
 	for (register zvect_index i = s2; i <= s2 + ee2; i++)
-		vect_remove_at(v2, i);
+		vect_delete_at(v2, i);
 
 #if (ZVECT_THREAD_SAFE == 1)
 	check_mutex_unlock(v1, 2);
