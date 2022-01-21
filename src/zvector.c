@@ -103,37 +103,37 @@ enum {
 // This is ZVector core data structure, it is the structure of a ZVector vector :)
 struct p_vector {
 	zvect_index init_capacity;	// - Initial Capacity (this is set at
-					            //   creation time).
-					            //   For the size of zvect_index check
-					            //   zvector_config.h.
+					//   creation time).
+					//   For the size of zvect_index check
+					//   zvector_config.h.
 	zvect_index cap_left;		// - Max capacity allocated on the left.
 	zvect_index cap_right;		// - Max capacity allocated on the right.
-	zvect_index begin;		    // - First vector's Element Pointer
+	zvect_index begin;		// - First vector's Element Pointer
 	zvect_index prev_end;		// - Used when clearing a vector.
-	zvect_index end;		    // - Current Array size. size - 1 gives
-					            //   us the pointer to the last element
-					            //   in the vector.
-	size_t data_size;		    // - User DataType size.
-					            //   This should be 2 bytes size on a
-					            //   16-bit system, 4 bytes on a 32 bit,
-					            //   8 bytes on a 64 bit. But check your
-					            //   compiler for the actual size, it's
-					            //   implementation dependent.
-	uint32_t flags;			    // - If this flag set is used to
-					            //   represent ALL Vector's properties.
-					            //   It contains bits that set Secure
-					            //   Wipe, Auto Shrink, Pass Items By
-					            //   Ref etc.
-	uint32_t status;		    // - Internal vector Status Flags
+	zvect_index end;		// - Current Array size. size - 1 gives
+					//   us the pointer to the last element
+					//   in the vector.
+	size_t data_size;		// - User DataType size.
+					//   This should be 2 bytes size on a
+					//   16-bit system, 4 bytes on a 32 bit,
+					//   8 bytes on a 64 bit. But check your
+					//   compiler for the actual size, it's
+					//   implementation dependent.
+	uint32_t flags;			// - If this flag set is used to
+					//   represent ALL Vector's properties.
+					//   It contains bits that set Secure
+					//   Wipe, Auto Shrink, Pass Items By
+					//   Ref etc.
+	uint32_t status;		// - Internal vector Status Flags
 #if (ZVECT_THREAD_SAFE == 1)
 #	if MUTEX_TYPE == 0
 	volatile int32_t lock_type;	// - This field contains the lock used
-					            //   for this Vector.
-	void *lock;			        // - Vector's mutex for thread safe
-					            //   micro-transactions or user locks.
-					            //   This should be 2 bytes size on a
-					            //   16 bit machine, 4 bytes on a 32 bit
-					            //   4 bytes on a 64 bit.
+					//   for this Vector.
+	void *lock;			// - Vector's mutex for thread safe
+					//   micro-transactions or user locks.
+					//   This should be 2 bytes size on a
+					//   16 bit machine, 4 bytes on a 32 bit
+					//   4 bytes on a 64 bit.
 #	elif MUTEX_TYPE == 1
 	volatile int32_t lock_type;	// - This field contains the lock used
 					//   for this Vector.
@@ -152,17 +152,17 @@ struct p_vector {
 #endif  // ZVECT_THREAD_SAFE
 #ifdef ZVECT_DMF_EXTENSIONS
 	zvect_index balance;		// - Used by the Adaptive Binary Search
-					            //   to improve performance.
-	zvect_index bottom;	 	    // - Used to optimise Adaptive Binary
-					            //   Search.
+					//   to improve performance.
+	zvect_index bottom;	 	// - Used to optimise Adaptive Binary
+					//   Search.
 #endif  // ZVECT_DMF_EXTENSIONS
 	void (*SfWpFunc)(const void *item, size_t size);
-					            // - Pointer to a CUSTOM Safe Wipe
-					            //   function (optional) needed only
-					            //   for Secure Wiping special
-					            //   structures.
+					// - Pointer to a CUSTOM Safe Wipe
+					//   function (optional) needed only
+					//   for Secure Wiping special
+					//   structures.
 	void **data ZVECT_DATAALIGN;
-					            // - Vector's storage.
+					// - Vector's storage.
 } ZVECT_DATAALIGN;
 
 // Initialisation state:
