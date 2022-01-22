@@ -298,14 +298,14 @@ static inline void mutex_destroy(CRITICAL_SECTION *lock) {
  *         uses ZVEctor primitives.
  * level 3 is the priority of the User's locks.
  */
-static inline void check_mutex_lock(const vector v, volatile int32_t lock_type) {
+static inline void check_mutex_lock(const vector v, const int32_t lock_type) {
 	if (lock_enabled && lock_type >= v->lock_type) {
 		mutex_lock(&(v->lock));
 		v->lock_type = lock_type;
 	}
 }
 
-static inline void check_mutex_unlock(const vector v, volatile int32_t lock_type) {
+static inline void check_mutex_unlock(const vector v, const int32_t lock_type) {
 	if (lock_enabled && lock_type == v->lock_type) {
 		v->lock_type = 0;
 		mutex_unlock(&(v->lock));
