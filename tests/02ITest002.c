@@ -109,13 +109,11 @@ void *producer(void *arg) {
 			// Let's test if the value we have retrieved is correct:
 			printf("Produced Event %*d: ID (%*d) - Message: %s\n", 2, i, 2,
 				item.eventID, item.msg);
-			evt_counter++;
 			fflush(stdout);
+			evt_counter++;
 		}
 
 	printf("Producer done. Produced %d events.\n", evt_counter);
-	testID++;
-
 	fflush(stdout);
 
 	pthread_exit(NULL);
@@ -131,34 +129,36 @@ void *consumer(void *arg) {
 	fflush(stdout);
 
 		uint32_t i;
-		for (i = 0; i < MAX_ITEMS; i++)
+		for (i = 0; i < MAX_ITEMS;)
 		{
-			while (vect_is_empty(v))
-				;
+			// For beginners: this is how in C we convert back a void * into the original dtata_type
+			StackItem *item = (StackItem *)malloc(sizeof(StackItem *));
+			int fetched_item = 0;
+
 			vect_lock(v);
 
 			// Let's retrieve the value from the vector correctly:
-			// For beginners: this is how in C we convert back a void * into the original dtata_type
-			StackItem *item = (StackItem *)malloc(sizeof(StackItem *));
 			if (!vect_is_empty(v))
+			{
 				item = (StackItem *)vect_pop(v);
+				fetched_item = 1;
+			}
 
 			vect_unlock(v);
 
-			if (item != NULL)
+			if ( fetched_item == 1 )
 			{
 				// Let's test if the value we have retrieved is correct:
 				printf("Consumed Event %*d: ID (%*d) - Message: %s\n", 2, i, 2, item->eventID, item->msg);
-				evt_counter++;
 				fflush(stdout);
+				evt_counter++;
+				i++;
 			}
 
 			free(item);
 		}
 
 	printf("Consumer done. Consumed %d events.\n", evt_counter);
-	testID++;
-
 	fflush(stdout);
 
 	pthread_exit(NULL);

@@ -249,7 +249,7 @@ tests: test
 	$(info ===========================)
 	$(info Running all found tests... )
 	$(info ===========================)
-	for test in $(TESTBINS) ; do ./$(TESTBIN)$$test ; done
+	for test in $(TESTBINS) ; do time ./$(TESTBIN)$$test ; done
 
 .PHONY: debug
 debug: CFLAGS+= -ggdb3

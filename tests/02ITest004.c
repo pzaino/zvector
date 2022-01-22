@@ -116,9 +116,10 @@ void *producer(void *arg) {
 			// Let's test if the value we have retrieved is correct:
 			printf("T %*i produced Event %*d: ID (%*d) - Message: %s\n", 2, id, 2, i, 3,
 				item.eventID, item.msg);
-			evt_counter++;
 			fflush(stdout);
+			evt_counter++;
 		}
+
 	printf("Producer thread %i done. Produced %d events.\n", id, evt_counter);
 	fflush(stdout);
 
@@ -157,8 +158,8 @@ void *consumer(void *arg) {
 			{
 				// Let's test if the value we have retrieved is correct:
 				printf("T %*i consumed Event %*d: ID (%*d) - Message: %s\n", 2, id, 2, i, 3, item->eventID, item->msg);
-				evt_counter++;
 				fflush(stdout);
+				evt_counter++;
 				i++;
 			}
 
