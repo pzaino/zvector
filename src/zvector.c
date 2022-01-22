@@ -126,7 +126,7 @@ struct p_vector {
 					//   Ref etc.
 	uint32_t status;		// - Internal vector Status Flags
 #if (ZVECT_THREAD_SAFE == 1)
-	int32_t volatile lock_type;	// - This field contains the lock used
+	volatile int32_t lock_type;	// - This field contains the lock used
 					//   for this Vector.
 #	if MUTEX_TYPE == 0
 	void *lock;			// - Vector's mutex for thread safe
