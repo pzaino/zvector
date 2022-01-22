@@ -126,7 +126,7 @@ struct p_vector {
 					//   Ref etc.
 	uint32_t status;		// - Internal vector Status Flags
 #if (ZVECT_THREAD_SAFE == 1)
-	int32_t volatile lock_type;	// - This field contains the lock used
+	volatile int32_t lock_type;	// - This field contains the lock used
 					//   for this Vector.
 #	if MUTEX_TYPE == 0
 	void *lock;			// - Vector's mutex for thread safe
@@ -298,14 +298,14 @@ static inline void mutex_destroy(CRITICAL_SECTION *lock) {
  *         uses ZVEctor primitives.
  * level 3 is the priority of the User's locks.
  */
-static inline void check_mutex_lock(const vector v, const int32_t lock_type) {
+static inline void check_mutex_lock(const vector v, volatile int32_t lock_type) {
 	if (lock_enabled && lock_type >= v->lock_type) {
 		mutex_lock(&(v->lock));
 		v->lock_type = lock_type;
 	}
 }
 
-static inline void check_mutex_unlock(const vector v, const int32_t lock_type) {
+static inline void check_mutex_unlock(const vector v, volatile int32_t lock_type) {
 	if (lock_enabled && lock_type == v->lock_type) {
 		v->lock_type = 0;
 		mutex_unlock(&(v->lock));
