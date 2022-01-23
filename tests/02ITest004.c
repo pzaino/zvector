@@ -104,18 +104,18 @@ void *producer(void *arg) {
 			qi.priority = 0;
 
 			//printf("produced event message: %s\n", qi.msg);
-			vect_lock(v);
+			//vect_lock(v);
 
 			// Let's add a new item in the queue:
 			vect_add(v, &qi);
 
-			QueueItem item = *((QueueItem *)vect_get(v));
+			//QueueItem item = *((QueueItem *)vect_get(v));
 
-			vect_unlock(v);
+			//vect_unlock(v);
 
 			// Let's test if the value we have retrieved is correct:
 			printf("T %*i produced Event %*d: ID (%*d) - Message: %s\n", 2, id, 2, i, 3,
-				item.eventID, item.msg);
+				qi.eventID, qi.msg);
 			fflush(stdout);
 			evt_counter++;
 		}
@@ -144,7 +144,7 @@ void *consumer(void *arg) {
 			int fetched_item= 0;
 
 			// Let's retrieve the value from the vector correctly:
-			vect_lock(v);
+			//vect_lock(v);
 
 			if (!vect_is_empty(v))
 			{
@@ -152,9 +152,9 @@ void *consumer(void *arg) {
 				fetched_item=1;
 			}
 
-			vect_unlock(v);
+			//vect_unlock(v);
 
-			if ( fetched_item == 1 )
+			if ( fetched_item == 1 && item != NULL )
 			{
 				// Let's test if the value we have retrieved is correct:
 				printf("T %*i consumed Event %*d: ID (%*d) - Message: %s\n", 2, id, 2, i, 3, item->eventID, item->msg);

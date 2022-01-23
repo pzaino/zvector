@@ -58,6 +58,17 @@ enum ZVECT_PROPERTIES {
 	ZV_CIRCULAR   = 1 << 2, // Sets the vector to be a circular vector (so it will not grow in capacity automatically). Elements will be overwritten as in typical circular buffers!
 };
 
+enum ZVECT_ERR {
+	ZVERR_VECTUNDEF     = -1,
+	ZVERR_IDXOUTOFBOUND = -2,
+	ZVERR_OUTOFMEM      = -3,
+	ZVERR_VECTCORRUPTED = -4,
+	ZVERR_RACECOND      = -5,
+	ZVERR_VECTTOOSMALL  = -6,
+	ZVERR_VECTDATASIZE  = -7,
+	ZVERR_VECTEMPTY     = -8
+};
+
 /*****************************
  ** Public API declaration: **
  *****************************/
