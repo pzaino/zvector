@@ -45,7 +45,7 @@ int max_strLen = 64;
 
 #include <pthread.h>
 
-#define MAX_THREADS 10
+#define MAX_THREADS 32
 pthread_t tid[MAX_THREADS]; // threads IDs
 
 struct thread_args {
