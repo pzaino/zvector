@@ -97,7 +97,7 @@ void *producer(void *arg) {
 		for (i = 0; i < MAX_ITEMS; i++)
 		{
 			QueueItem qi;
-			qi.eventID = ((id*(MAX_THREADS/2))+1)+i;
+			qi.eventID = ((id*MAX_ITEMS)+1)+i;
 			// qi.msg = malloc(sizeof(char) * max_strLen);
 			clear_str(qi.msg, MAX_MSG_SIZE);
 			mk_rndstr(qi.msg, max_strLen - 1);
@@ -194,7 +194,7 @@ int main() {
 
 	fflush(stdout);
 
-	printf("Test %s_%d: Spin %i threads and use them to manipulate the Queue above.\n", testGrp, testID, MAX_THREADS);
+	printf("Test %s_%d: Spin %i threads (%i producers and %i consumers) and use them to manipulate the Queue above.\n", testGrp, testID, MAX_THREADS, MAX_THREADS / 2, MAX_THREADS / 2);
 	fflush(stdout);
 
 		int err = 0;
