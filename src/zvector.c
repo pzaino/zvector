@@ -101,11 +101,8 @@ enum {
 // Define the vector data structure:
 
 // This is ZVector core data structure, it is the structure of a ZVector vector :)
+// Please note: fields order is based on "most used fields" to help a bit with cache
 struct p_vector {
-	zvect_index init_capacity;	// - Initial Capacity (this is set at
-					//   creation time).
-					//   For the size of zvect_index check
-					//   zvector_config.h.
 	zvect_index cap_left;		// - Max capacity allocated on the left.
 	zvect_index cap_right;		// - Max capacity allocated on the right.
 	zvect_index begin;		// - First vector's Element Pointer
@@ -124,7 +121,6 @@ struct p_vector {
 					//   It contains bits that set Secure
 					//   Wipe, Auto Shrink, Pass Items By
 					//   Ref etc.
-	uint32_t status;		// - Internal vector Status Flags
 #if (ZVECT_THREAD_SAFE == 1)
 	volatile int32_t lock_type;	// - This field contains the lock used
 					//   for this Vector.
@@ -146,19 +142,23 @@ struct p_vector {
 					//   size of this one.
 #	endif  // MUTEX_TYPE
 #endif  // ZVECT_THREAD_SAFE
+	void **data ZVECT_DATAALIGN;	// - Vector's storage.
+	zvect_index init_capacity;	// - Initial Capacity (this is set at
+					//   creation time).
+					//   For the size of zvect_index check
+					//   zvector_config.h.
+	uint32_t status;		// - Internal vector Status Flags
+	void (*SfWpFunc)(const void *item, size_t size);
+					// - Pointer to a CUSTOM Safe Wipe
+					//   function (optional) needed only
+					//   for Secure Wiping special
+					//   structures.
 #ifdef ZVECT_DMF_EXTENSIONS
 	zvect_index balance;		// - Used by the Adaptive Binary Search
 					//   to improve performance.
 	zvect_index bottom;	 	// - Used to optimise Adaptive Binary
 					//   Search.
 #endif  // ZVECT_DMF_EXTENSIONS
-	void (*SfWpFunc)(const void *item, size_t size);
-					// - Pointer to a CUSTOM Safe Wipe
-					//   function (optional) needed only
-					//   for Secure Wiping special
-					//   structures.
-	void **data ZVECT_DATAALIGN;
-					// - Vector's storage.
 } ZVECT_DATAALIGN;
 
 // Initialisation state:
