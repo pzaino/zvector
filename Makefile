@@ -120,8 +120,19 @@ P_CFLAGS:=
 # Add Default flags for GCC if the user has not passed any:
 ifeq ($(CC),gcc)
 	ifeq ($(strip $(CFLAGS)),)
-		CFLAGS=-std=c99 -Wall -Wextra -I./src -I./tests -fstack-protector-strong
-		P_CFLAGS=-O3
+		CFLAGS:=-std=c99 -Wall -Wextra -I./src -I./tests -fstack-protector-strong
+		P_CFLAGS:=-O3 -flto
+	endif
+	ifeq ($(strip $(LDFLAGS)),)
+		LDFLAGS+=
+	endif
+endif
+
+# Add Default flags for CLANG if the user has not passed any:
+ifeq ($(CC),clang)
+	ifeq ($(strip $(CFLAGS)),)
+		CFLAGS:=-std=c99 -Wall -Wextra -I./src -I./tests -fstack-protector-strong
+		P_CFLAGS:=-O3 -flto
 	endif
 	ifeq ($(strip $(LDFLAGS)),)
 		LDFLAGS+=
@@ -219,7 +230,7 @@ LIBST:=$(LIBDIR)/lib$(LIBNAME).a
 # Targets:
 
 .PHONY: all
-all: CFLAGS+=$(P_CFLAGS)
+all: CFLAGS += $(P_CFLAGS)
 all: core test
 
 .PHONY: clean
@@ -266,7 +277,7 @@ $(OBJF): $(OSRCF)
 	$(info Building $@                )
 	$(info ===========================)
 #	. /opt/rh/devtoolset-10/enable
-	$(CC) -c -o $@ $< $(CFLAGS) -flto $(CODE_MACROS)
+	$(CC) -c -o $@ $< $(CFLAGS) $(CODE_MACROS)
 	@echo ""
 	@echo "Check if the objcode has been built:"
 	@ls -alh ./o/*
