@@ -264,7 +264,7 @@ tests: test
 	for test in $(TESTBINS) ; do time ./$(TESTBIN)$$test ; done
 
 .PHONY: debug
-debug: CFLAGS+= -Og -ggdb3
+debug: CFLAGS+= -ggdb3
 debug: CODE_MACROS+= -DDEBUG
 debug: core tests
 
