@@ -266,7 +266,7 @@ $(OBJF): $(OSRCF)
 	$(info Building $@                )
 	$(info ===========================)
 #	. /opt/rh/devtoolset-10/enable
-	$(CC) -c -o $@ $< $(CFLAGS) $(CODE_MACROS)
+	$(CC) -c -o $@ $< $(CFLAGS) -flto $(CODE_MACROS)
 	@echo ""
 	@echo "Check if the objcode has been built:"
 	@ls -alh ./o/*
