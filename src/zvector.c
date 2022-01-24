@@ -954,6 +954,7 @@ static zvect_retval p_vect_destroy(vector v, uint32_t flags) {
 
 	// Clear vector status flags:
 	v->status = 0;
+	v->flags = 0;
 
 #if (ZVECT_THREAD_SAFE == 1)
 	if (lock_owner)
