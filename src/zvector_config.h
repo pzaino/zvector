@@ -35,6 +35,15 @@ typedef uint32_t zvect_index;
 #define zvect_index_max 4294967295 // If you change zvect_index type make sure you update this value
 				   // it's the maximum number that can be stored in a zvect_index.
 
+// Default vector return type for
+// error codes.
+// Generally negative numbers identify
+// an error.
+// 0 identify completed successful
+// Positive numbers identify return
+// attributes, like 1 is generally true
+typedef int32_t zvect_retval;
+
 // Default vector storage size
 // This will be used when the user
 // specifies 0 (zero) as data type

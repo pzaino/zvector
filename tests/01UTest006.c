@@ -216,7 +216,7 @@ int main() {
 	for (i = 0; i < MAX_ITEMS; i++) {
 		// Let's retrieve the value from the vector correctly:
 		// For beginners: this is how in C we convert back a void * into the
-		// original dtata_type
+		// original data_type
 		QueueItem *item = (QueueItem *)vect_remove_front(v);
 
 		// Let's test if the value we have retrieved is correct:
