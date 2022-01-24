@@ -959,7 +959,7 @@ static zvect_retval p_vect_destroy(vector v, uint32_t flags) {
 	v->flags = 0;
 	v->begin = 0;
 	v->end = 0;
-	v->data_size = 4;
+	v->data_size = 0;
 	v->balance = 0;
 	v->bottom = 0;
 
@@ -972,10 +972,8 @@ static zvect_retval p_vect_destroy(vector v, uint32_t flags) {
 	// free the vector itself:
 	free(v);
 	v = NULL;
+
 	return 0;
-#if (ZVECT_THREAD_SAFE == 1)
-UNUSED(lock_owner);
-#endif
 }
 
 /*---------------------------------------------------------------------------*/
