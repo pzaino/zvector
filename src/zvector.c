@@ -956,13 +956,14 @@ static zvect_retval p_vect_destroy(vector v, uint32_t flags) {
 	v->status = 0;
 
 #if (ZVECT_THREAD_SAFE == 1)
-//	if (lock_owner)
-//	{
+	if (lock_owner)
+	{
 		check_mutex_unlock(v, 1);
-		mutex_destroy(&(v->lock));
-//	} else {
-//		return -1;
-//	}
+	} else {
+		if (lock_enabled)
+			return -1;
+	}
+	mutex_destroy(&(v->lock));
 #endif
 
 	// All done and freed, so we can safely
@@ -1164,7 +1165,6 @@ void vect_clear(const vector v) {
 	if (!p_vect_check(v))
 	{
 #if (ZVECT_THREAD_SAFE == 1)
-		printf("Booooo vector does not exists!\n");
 		if (lock_owner)
 			check_mutex_unlock(v, 1);
 #endif
