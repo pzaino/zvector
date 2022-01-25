@@ -42,6 +42,8 @@ CC:=gcc
 # Configure additional compiler and linker flags:
 CFLAGS+=
 LDFLAGS+=
+# Flags to be used only for release or production builds:
+P_CFLAGS:=-O3 -flto
 
 # If you want to pass some MACROS to your code you can use the following
 # variable just add your -D<MY_MACRO>:
@@ -115,13 +117,23 @@ SFMD_EXTENSIONS:=1
 # Automated part of th Makefile:
 
 RVAL0:=
-P_CFLAGS:=
 
 # Add Default flags for GCC if the user has not passed any:
 ifeq ($(CC),gcc)
 	ifeq ($(strip $(CFLAGS)),)
-		CFLAGS=-std=c99 -Wall -Wextra -I./src -I./tests -fstack-protector-strong
-		P_CFLAGS=-O3
+		CFLAGS+=-std=c99 -Wall -Wextra -I./src -I./tests -fstack-protector-strong
+		P_CFLAGS+=
+	endif
+	ifeq ($(strip $(LDFLAGS)),)
+		LDFLAGS+=
+	endif
+endif
+
+# Add Default flags for CLANG if the user has not passed any:
+ifeq ($(CC),clang)
+	ifeq ($(strip $(CFLAGS)),)
+		CFLAGS+=-std=c99 -Wall -Wextra -I./src -I./tests -fstack-protector-strong
+		P_CFLAGS+=
 	endif
 	ifeq ($(strip $(LDFLAGS)),)
 		LDFLAGS+=
@@ -219,7 +231,7 @@ LIBST:=$(LIBDIR)/lib$(LIBNAME).a
 # Targets:
 
 .PHONY: all
-all: CFLAGS+=$(P_CFLAGS)
+all: CFLAGS += $(P_CFLAGS)
 all: core test
 
 .PHONY: clean

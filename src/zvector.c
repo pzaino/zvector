@@ -910,6 +910,8 @@ static inline zvect_retval p_vect_delete_at(const vector v, const zvect_index st
 static zvect_retval p_vect_destroy(vector v, uint32_t flags) {
 #if (ZVECT_THREAD_SAFE == 1)
 	zvect_retval lock_owner = check_mutex_lock(v, 1);
+	if (!lock_owner && lock_enabled)
+		return ZVERR_RACECOND;
 #endif
 	// Clear the vector:
 	if ((p_vect_size(v) > 0) && (flags & 1)) {
@@ -954,25 +956,24 @@ static zvect_retval p_vect_destroy(vector v, uint32_t flags) {
 
 	// Clear vector status flags:
 	v->status = 0;
+	v->flags = 0;
+	v->begin = 0;
+	v->end = 0;
+	v->data_size = 0;
+	v->balance = 0;
+	v->bottom = 0;
 
 #if (ZVECT_THREAD_SAFE == 1)
-//	if (lock_owner)
-//	{
-		check_mutex_unlock(v, 1);
-		mutex_destroy(&(v->lock));
-//	} else {
-//		return -1;
-//	}
+	check_mutex_unlock(v, 1);
+	mutex_destroy(&(v->lock));
 #endif
 
 	// All done and freed, so we can safely
 	// free the vector itself:
 	free(v);
 	v = NULL;
+
 	return 0;
-#if (ZVECT_THREAD_SAFE == 1)
-UNUSED(lock_owner);
-#endif
 }
 
 /*---------------------------------------------------------------------------*/
@@ -1164,7 +1165,6 @@ void vect_clear(const vector v) {
 	if (!p_vect_check(v))
 	{
 #if (ZVECT_THREAD_SAFE == 1)
-		printf("Booooo vector does not exists!\n");
 		if (lock_owner)
 			check_mutex_unlock(v, 1);
 #endif
