@@ -158,8 +158,10 @@ struct p_vector {
 					//   Search.
 #endif  // ZVECT_DMF_EXTENSIONS
 #if (ZVECT_THREAD_SAFE == 1)		// - Leave this always at the end.
-	volatile int32_t lock_type;	// - This field contains the lock used
-					//   for this Vector.
+	volatile int32_t lock_type;	// - This field contains the lock type
+					//   used for this Vector. Because it's
+					//   a volatile field, it won't be cached
+					//   so leave it at the end of this struct
 #endif  // ZVECT_THREAD_SAFE
 } ZVECT_DATAALIGN;
 
