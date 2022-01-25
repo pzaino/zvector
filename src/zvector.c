@@ -401,7 +401,7 @@ static void p_free_items(const vector v, zvect_index first, zvect_index offset) 
 /*
  * This function increase the CAPACITY of a vector.
  */
-static void p_vect_increase_capacity(const vector v, const zvect_index direction) {
+static zvect_retval p_vect_increase_capacity(const vector v, const zvect_index direction) {
 	zvect_index new_capacity;
 
 	void **new_data = NULL;
@@ -416,7 +416,7 @@ static void p_vect_increase_capacity(const vector v, const zvect_index direction
 
 		new_data = (void **)malloc(sizeof(void *) * (new_capacity + v->cap_right));
 		if (new_data == NULL)
-			p_throw_error("Not enough memory to extend the vector capacity!");
+			return ZVERR_OUTOFMEM;
 
 		nb = v->cap_left;
 		ne = ( nb + (v->end - v->begin) );
@@ -429,7 +429,7 @@ static void p_vect_increase_capacity(const vector v, const zvect_index direction
 
 		new_data = (void **)realloc(v->data, sizeof(void *) * (v->cap_left + new_capacity));
 		if (new_data == NULL)
-			p_throw_error("Not enough memory to extend the vector capacity!");
+			return ZVERR_OUTOFMEM;
 	}
 
 	// Apply changes and release memory
@@ -444,15 +444,18 @@ static void p_vect_increase_capacity(const vector v, const zvect_index direction
 	} else {
 		v->cap_right = new_capacity;
 	}
+
+	// done
+	return 0;
 }
 
 /*
  * This function decrease the CAPACITY of a vector.
  */
-static void p_vect_decrease_capacity(const vector v, const zvect_index direction) {
+static zvect_retval p_vect_decrease_capacity(const vector v, const zvect_index direction) {
 	// Check if new capacity is smaller than initial capacity
 	if ( p_vect_capacity(v) <= v->init_capacity)
-		return;
+		return 0;
 
 	zvect_index new_capacity;
 
@@ -470,7 +473,7 @@ static void p_vect_decrease_capacity(const vector v, const zvect_index direction
 
 		new_data = (void **)malloc(sizeof(void *) * (new_capacity + v->cap_right));
 		if (new_data == NULL)
-			p_throw_error("Not enough memory to resize the vector!");
+			return ZVERR_OUTOFMEM;
 
 		nb = ( new_capacity / 2 );
 		ne = ( nb + (v->end - v->begin) );
@@ -485,7 +488,7 @@ static void p_vect_decrease_capacity(const vector v, const zvect_index direction
 
 		new_data = (void **)realloc(v->data, sizeof(void *) * (v->cap_left + new_capacity));
 		if (new_data == NULL)
-			p_throw_error("Not enough memory available to resize the vector!");
+			return ZVERR_OUTOFMEM;
 	}
 
 	// Apply changes and release memory:
@@ -501,6 +504,9 @@ static void p_vect_decrease_capacity(const vector v, const zvect_index direction
 	} else {
 		v->cap_right = new_capacity;
 	}
+
+	// done:
+	return 0;
 }
 
 /*
@@ -508,7 +514,7 @@ static void p_vect_decrease_capacity(const vector v, const zvect_index direction
  * not its size. To reduce the size of a vector we
  * need to remove items from it.
  */
-static void p_vect_shrink(const vector v) {
+static zvect_retval p_vect_shrink(const vector v) {
 	// Check if the vector exists:
 	p_vect_check(v);
 
@@ -516,10 +522,10 @@ static void p_vect_shrink(const vector v) {
 		v->init_capacity = 2;
 
 	if (p_vect_capacity(v) == v->init_capacity)
-		return;
+		return 0;
 
 	if (p_vect_capacity(v) <= p_vect_size(v))
-		return;
+		return 0;
 
 	// Determine the correct shrunk size:
 	zvect_index new_capacity;
@@ -533,7 +539,7 @@ static void p_vect_shrink(const vector v) {
 	// I cannot use realloc here.
 	void **new_data = (void **)malloc(sizeof(void *) * new_capacity);
 	if (new_data == NULL)
-		p_throw_error("Not enough memory available to shrink the vector!");
+		return ZVERR_OUTOFMEM;
 
 	zvect_index ne, nb;
 	nb = ( new_capacity / 2 );
@@ -547,6 +553,9 @@ static void p_vect_shrink(const vector v) {
 	v->begin = nb;
 	v->cap_left = new_capacity / 2;
 	v->cap_right = new_capacity / 2;
+
+	// done:
+	return 0;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -837,30 +846,16 @@ static inline zvect_retval p_vect_remove_at(const vector v, const zvect_index i,
 // This is the inline implementation for all the "delete" methods
 static inline zvect_retval p_vect_delete_at(const vector v, const zvect_index start,
                                    const zvect_index offset) {
-#if (ZVECT_THREAD_SAFE == 1)
-	zvect_retval lock_owner = check_mutex_lock(v, 1);
-#endif
+
 	zvect_index vsize = p_vect_size(v);
 
 	// Check if the index is out of bounds:
 	if ((start + offset) >= vsize)
-	{
-#if (ZVECT_THREAD_SAFE == 1)
-		if (lock_owner)
- 			check_mutex_unlock(v, 1);
-#endif
-		p_throw_error("Index out of bounds!");
-	}
+		return ZVERR_IDXOUTOFBOUND;
 
 	// If the vector is empty just return
 	if (vsize == 0)
-	{
-#if (ZVECT_THREAD_SAFE == 1)
-		if (lock_owner)
- 			check_mutex_unlock(v, 1);
-#endif
-		return -1;
-	}
+		return ZVERR_VECTEMPTY;
 
 	uint16_t array_changed = 0;
 
@@ -898,11 +893,7 @@ static inline zvect_retval p_vect_delete_at(const vector v, const zvect_index st
 	if ((4 * vsize) < p_vect_capacity(v))
 		p_vect_decrease_capacity(v, start);
 
-// All done, return control:
-#if (ZVECT_THREAD_SAFE == 1)
-	if (lock_owner)
-		check_mutex_unlock(v, 1);
-#endif
+	// All done, return control:
 	return 0;
 }
 
@@ -1474,29 +1465,85 @@ void *vect_remove_front(const vector v) {
 
 // Delete an item at the END of the vector
 void vect_delete(const vector v) {
+#if (ZVECT_THREAD_SAFE == 1)
+	zvect_retval lock_owner = check_mutex_lock(v, 1);
+#endif
+
+	zvect_retval rval = 0;
 	if (p_vect_check(v))
-		p_vect_delete_at(v, p_vect_size(v) - 1, 0);
+		rval = p_vect_delete_at(v, p_vect_size(v) - 1, 0);
+
+#if (ZVECT_THREAD_SAFE == 1)
+	if (lock_owner)
+		check_mutex_unlock(v, 1);
+#endif
+	if (rval)
+	{
+		// We had an error handle it here:
+	}
 }
 
 // Delete an item at position "i" on the vector
 void vect_delete_at(const vector v, const zvect_index i) {
+#if (ZVECT_THREAD_SAFE == 1)
+	zvect_retval lock_owner = check_mutex_lock(v, 1);
+#endif
+
+	zvect_retval rval = 0;
 	if (p_vect_check(v))
-		p_vect_delete_at(v, i, 0);
+		rval = p_vect_delete_at(v, i, 0);
+
+#if (ZVECT_THREAD_SAFE == 1)
+	if (lock_owner)
+		check_mutex_unlock(v, 1);
+#endif
+	if (rval)
+	{
+		// We had an error handle it here:
+	}
 }
 
 // Delete a range of items from "first_element" to "last_element" on the vector v
 void vect_delete_range(const vector v, const zvect_index first_element,
                        const zvect_index last_element) {
+#if (ZVECT_THREAD_SAFE == 1)
+	zvect_retval lock_owner = check_mutex_lock(v, 1);
+#endif
+
+	zvect_retval rval = 0;
 	if (p_vect_check(v)) {
 		zvect_index end = (last_element - first_element);
-		p_vect_delete_at(v, first_element, end);
+		rval = p_vect_delete_at(v, first_element, end);
+	}
+
+#if (ZVECT_THREAD_SAFE == 1)
+	if (lock_owner)
+		check_mutex_unlock(v, 1);
+#endif
+	if (rval)
+	{
+		// We had an error handle it here:
 	}
 }
 
 // Delete an item at the BEGINNING of a vector v
 void vect_delete_front(const vector v) {
+#if (ZVECT_THREAD_SAFE == 1)
+	zvect_retval lock_owner = check_mutex_lock(v, 1);
+#endif
+
+	zvect_retval rval = 0;
 	if (p_vect_check(v))
-		p_vect_delete_at(v, 0, 0);
+		rval = p_vect_delete_at(v, 0, 0);
+
+#if (ZVECT_THREAD_SAFE == 1)
+	if (lock_owner)
+		check_mutex_unlock(v, 1);
+#endif
+	if (rval)
+	{
+		// We had an error handle it here:
+	}
 }
 
 /*---------------------------------------------------------------------------*/
