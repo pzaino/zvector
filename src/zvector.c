@@ -116,14 +116,12 @@ struct p_vector {
 					//   8 bytes on a 64 bit. But check your
 					//   compiler for the actual size, it's
 					//   implementation dependent.
-	uint32_t flags;			// - If this flag set is used to
-					//   represent ALL Vector's properties.
+	uint32_t flags;			// - This flag set is used to store all
+					//   Vector's properties.
 					//   It contains bits that set Secure
 					//   Wipe, Auto Shrink, Pass Items By
 					//   Ref etc.
 #if (ZVECT_THREAD_SAFE == 1)
-	volatile int32_t lock_type;	// - This field contains the lock used
-					//   for this Vector.
 #	if MUTEX_TYPE == 0
 	void *lock;			// - Vector's mutex for thread safe
 					//   micro-transactions or user locks.
@@ -159,6 +157,10 @@ struct p_vector {
 	zvect_index bottom;	 	// - Used to optimise Adaptive Binary
 					//   Search.
 #endif  // ZVECT_DMF_EXTENSIONS
+#if (ZVECT_THREAD_SAFE == 1)		// - Leave this always at the end.
+	volatile int32_t lock_type;	// - This field contains the lock used
+					//   for this Vector.
+#endif  // ZVECT_THREAD_SAFE
 } ZVECT_DATAALIGN;
 
 // Initialisation state:
