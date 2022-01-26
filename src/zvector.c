@@ -191,7 +191,7 @@ static void p_throw_error(const int32_t error_code, const char *error_message) {
 		locally_allocated=-1;
 	} else {
 		msg_len = strlen(error_message);
-		message=(char *)malloc(sizeof(char) * msg_len);
+		message=(char *)malloc(sizeof(char) * (msg_len + 1));
 	}
 	if ( error_message == NULL ) {
 		switch (error_code)
