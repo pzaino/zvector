@@ -459,7 +459,8 @@ static zvect_retval p_vect_increase_capacity(const vector v, const zvect_index d
 		// Increase capacity on the left side of the vector:
 
 		// Get actual left capacity and double it
-		new_capacity = v->cap_left * 2;
+		// new_capacity = v->cap_left * 2;
+		new_capacity = v->cap_left << 1;
 
 		new_data = (void **)malloc(sizeof(void *) * (new_capacity + v->cap_right));
 		if (new_data == NULL)
@@ -472,7 +473,8 @@ static zvect_retval p_vect_increase_capacity(const vector v, const zvect_index d
 		// Increase capacity on the right side of the vector:
 
 		// Get actual left capacity and double it
-		new_capacity = v->cap_right * 2;
+		// new_capacity = v->cap_right * 2;
+		new_capacity = v->cap_right << 1;
 
 		new_data = (void **)realloc(v->data, sizeof(void *) * (v->cap_left + new_capacity));
 		if (new_data == NULL)
@@ -512,26 +514,36 @@ static zvect_retval p_vect_decrease_capacity(const vector v, const zvect_index d
 	if (!direction)
 	{
 		// Decreasing on the left:
-		new_capacity = v->cap_left / 2;
+		// new_capacity = v->cap_left / 2;
+		new_capacity = v->cap_left >> 1;
+		/* if (new_capacity < ( v->init_capacity / 2 ))
+			new_capacity = v->init_capacity / 2; */
 		if (new_capacity < ( v->init_capacity / 2 ))
-			new_capacity = v->init_capacity / 2;
+			new_capacity = v->init_capacity >> 1;
 
-		new_capacity = max( (p_vect_size(v) / 2), new_capacity);
+		// new_capacity = max( (p_vect_size(v) / 2), new_capacity);
+		new_capacity = max( (p_vect_size(v) >> 1), new_capacity);
 
 		new_data = (void **)malloc(sizeof(void *) * (new_capacity + v->cap_right));
 		if (new_data == NULL)
 			return ZVERR_OUTOFMEM;
 
-		nb = ( new_capacity / 2 );
+		// nb = ( new_capacity / 2 );
+		nb = ( new_capacity >> 1 );
 		ne = ( nb + (v->end - v->begin) );
 		p_vect_memcpy(new_data + nb, v->data + v->begin, sizeof(void *) * (v->end - v->begin) );
 	} else {
 		// Decreasing on the right:
-		new_capacity = v->cap_right / 2;
-		if (new_capacity < ( v->init_capacity / 2 ))
-			new_capacity = v->init_capacity / 2;
+		// new_capacity = v->cap_right / 2;
+		new_capacity = v->cap_right >> 1;
 
-		new_capacity = max( (p_vect_size(v) / 2), new_capacity);
+		/* if (new_capacity < ( v->init_capacity / 2 ))
+			new_capacity = v->init_capacity / 2; */
+		if (new_capacity < ( v->init_capacity >> 1 ))
+			new_capacity = v->init_capacity >> 1;
+
+		// new_capacity = max( (p_vect_size(v) / 2), new_capacity);
+		new_capacity = max( (p_vect_size(v) >> 1), new_capacity);
 
 		new_data = (void **)realloc(v->data, sizeof(void *) * (v->cap_left + new_capacity));
 		if (new_data == NULL)
@@ -568,10 +580,7 @@ static zvect_retval p_vect_shrink(const vector v) {
 	if (v->init_capacity < 2)
 		v->init_capacity = 2;
 
-	if (p_vect_capacity(v) == v->init_capacity)
-		return 0;
-
-	if (p_vect_capacity(v) <= p_vect_size(v))
+	if (p_vect_capacity(v) == v->init_capacity || p_vect_capacity(v) <= p_vect_size(v))
 		return 0;
 
 	// Determine the correct shrunk size:
@@ -589,7 +598,8 @@ static zvect_retval p_vect_shrink(const vector v) {
 		return ZVERR_OUTOFMEM;
 
 	zvect_index ne, nb;
-	nb = ( new_capacity / 2 );
+	// nb = ( new_capacity / 2 );
+	nb = ( new_capacity >> 1 );
 	ne = ( nb + (v->end - v->begin) );
 	p_vect_memcpy(new_data + nb, v->data + v->begin, sizeof(void *) * (v->end - v->begin) );
 
@@ -598,8 +608,10 @@ static zvect_retval p_vect_shrink(const vector v) {
 	v->data = new_data;
 	v->end = ne;
 	v->begin = nb;
-	v->cap_left = new_capacity / 2;
-	v->cap_right = new_capacity / 2;
+	//v->cap_left = new_capacity / 2;
+	v->cap_left = new_capacity >> 1;
+	//v->cap_right = new_capacity / 2;
+	v->cap_right = new_capacity >> 1;
 
 	// done:
 	return 0;
@@ -655,11 +667,10 @@ static inline zvect_retval p_vect_add_at(const vector v, const void *value,
 	// Check if the provided index is out of bounds:
 	if (idx > vsize)
 	{
-		if (action == 0) {
+		if (action == 0)
 			return ZVERR_IDXOUTOFBOUND;
-		} else {
+		else
 			idx = vsize - 1;
-		}
 	}
 
 #if (ZVECT_FULL_REENTRANT == 1)
@@ -790,11 +801,10 @@ static inline zvect_retval p_vect_remove_at(const vector v, const zvect_index i,
 	{
 		if (idx >= vsize)
 		{
-			if (action == 0) {
+			if (action == 0)
 				return ZVERR_IDXOUTOFBOUND;
-			} else {
+			else
 				idx = vsize - 1;
-			}
 		}
 	} else {
 		if (idx >= vsize)
@@ -892,7 +902,7 @@ static inline zvect_retval p_vect_remove_at(const vector v, const zvect_index i,
 
 // This is the inline implementation for all the "delete" methods
 static inline zvect_retval p_vect_delete_at(const vector v, const zvect_index start,
-                                   const zvect_index offset) {
+                                   	    const zvect_index offset) {
 
 	zvect_index vsize = p_vect_size(v);
 
