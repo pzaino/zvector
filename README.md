@@ -47,7 +47,7 @@ The library is relatively small, however it comes with some nice features:
 
    The library should be fully reentrant, so changes are applied when we are ready for, and all the library functions do not use global state.
 
-- **Configurable featureset**
+- **Configurable feature-set**
 
    For example: if you are working on a single threaded application, you can easily disable the extra thread safe code, making so the library smaller and faster. To configure the library, check the zvector_config.h and the Makefile.
 
@@ -59,7 +59,7 @@ The library is relatively small, however it comes with some nice features:
 
    For low memory devices the library supports also a vector shrinking function to avoid any possible memory waste.
 
-- **Stack and Queue behaviour support**
+- **Stack and Queue behavior support**
 
    We can also use the vector as a dynamic stack (FIFO) structure. Or we can use it to create Queues (LIFO) structures (including priority queues)
 
