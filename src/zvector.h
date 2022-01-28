@@ -436,7 +436,7 @@ void vect_qsort(vector const v, int (*compare_func)(const void *, const void*));
  * called v using a compare function called "my_compare"
  * use:
  * int i = 5;
- * vect_absearch(v, &i, my_compare);
+ * vect_bsearch(v, &i, my_compare);
  */
 bool vect_bsearch(vector const v, const void *key, int (*f1)(const void *, const void *), zvect_index *item_index);
 
