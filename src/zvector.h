@@ -99,7 +99,7 @@ void vect_destroy(vector);
  * the vector capacity to match the actual used size, to
  * save unused memory locations.
  */
-void vect_shrink(vector);
+void vect_shrink(vector const v);
 #define vect_shrink_to_fit(x) vect_shrink(x)
 
 /*
@@ -107,7 +107,7 @@ void vect_shrink(vector);
  * function (of your creation) to securely wipe data from the vector v
  * when automatic safe wipe is called.
  */
-void vect_set_wipefunct(vector v, void (*f1)(const void *item, size_t size));
+void vect_set_wipefunct(vector const v, void (*f1)(const void *item, size_t size));
 
 // Vector state checks:
 
@@ -115,19 +115,19 @@ void vect_set_wipefunct(vector v, void (*f1)(const void *item, size_t size));
  * vect_is_empty returns true if the vector is empty
  * and false if the vector is NOT empty.
  */
-bool vect_is_empty(vector);
+bool vect_is_empty(vector const v);
 
 /*
  * vect_size returns the actual size (the number of)
  * USED slots in the vector storage.
  */
-zvect_index vect_size(vector);
+zvect_index vect_size(vector const v);
 
 /*
  * vect_clear clears out a vector and also resizes it
  * to its initial capacity.
  */
-void vect_clear(vector);
+void vect_clear(vector const v);
 
 #if ( ZVECT_THREAD_SAFE == 1 )
 // Vector Thread Safe functions:
@@ -164,7 +164,7 @@ void vect_lock_disable(void);
  * Example of use: To lock a vector called v
  * vect_lock(v);
  */
-void vect_lock(vector v);
+void vect_lock(vector const v);
 
 /*
  * vect_lock allows you to unlock the given vector that
@@ -173,7 +173,7 @@ void vect_lock(vector v);
  * Example of use: To unlock a vector called v
  * vect_unlock(v);
  */
-void vect_unlock(vector v);
+void vect_unlock(vector const v);
 #endif  // ( ZVECT_THREAD_SAFE == 1 )
 
 /////////////////////////////////////////////////////
@@ -189,7 +189,7 @@ void vect_unlock(vector v);
  * 			corresponds  to  the top of a
  * 			Stack.
  */
-void vect_push(vector, const void *);
+void vect_push(vector const v, const void *item);
 
 /*
  * vect_pop(v)          "pops" (returns) the  element
@@ -201,7 +201,7 @@ void vect_push(vector, const void *);
  *                      receive is also removed from
  *                      the vector!
  */
-void *vect_pop(vector);
+void *vect_pop(vector const v);
 #define vect_pop_back(x) vect_pop(x)
 
 /*
@@ -213,7 +213,7 @@ void *vect_pop(vector);
  *                       the vector  v  at  the  end
  *                       (or back) of the  vector v.
  */
-void vect_add(vector, const void *);
+void vect_add(vector const v, const void *item);
 #define vect_push_back(x, y) vect_add(x, y)
 
 /*
@@ -225,20 +225,20 @@ void vect_add(vector, const void *);
  * 			 of a position to  make space
  * 			 for the new item 4.
  */
-void vect_add_at(vector, const void *, zvect_index);
+void vect_add_at(vector const v, const void *item, zvect_index index);
 
 /*
  * int i = 5;
  * vect_add_front(v, &i) will add the new  item  5 at
- * 			             the beginning  of the vector
- *                       v  (or front)  and will also
- * 			             move   all   the   existing
- * 			             elements of one position  in
- * 			             the vector to make space for
- * 			             the new item 5 at  the front
- *			             of vector v.
+ * 			 the beginning  of the vector
+ *                     	 v  (or front)  and will also
+ * 			 move   all   the   existing
+ * 			 elements of one position  in
+ * 			 the vector to make space for
+ * 			 the new item 5 at  the front
+ *			 of vector v.
  */
-void vect_add_front(vector, const void *);
+void vect_add_front(vector const v, const void *item);
 #define vect_push_front(x, y) vect_add_front(x, y)
 
 /*
@@ -249,7 +249,7 @@ void vect_add_front(vector, const void *);
  *                      the  element  as  it  happens  in
  *                      vect_pop(v)).
  */
-void *vect_get(vector v);
+void *vect_get(vector const v);
 #define vect_back(v)  vect_get(v)
 
 /*
@@ -257,14 +257,14 @@ void *vect_get(vector v);
  * vect_get_at(v, 3)    will return the element at location
  *                      3 in the vector v.
  */
-void *vect_get_at(vector v, const zvect_index i);
+void *vect_get_at(vector const v, const zvect_index i);
 #define vect_at(v, x)  vect_get_at(v, x)
 
 /*
  * vect_get_front(v)    will return the first element in
  *                      the vector v.
  */
-void *vect_get_front(vector v);
+void *vect_get_front(vector const v);
 #define vect_front(v)  vect_get_front(v)
 
 /*
@@ -275,7 +275,7 @@ void *vect_get_front(vector v);
  * vect_put(v, &i)       will replace the last element
  *                       in the vector with 3.
  */
-void vect_put(vector, const void *);
+void vect_put(vector const v, const void *item);
 
 /*
  *
@@ -285,7 +285,7 @@ void vect_put(vector, const void *);
  *                       starts at v[0]) with the
  *                       item 4.
  */
-void vect_put_at(vector v, const void *item, const zvect_index i);
+void vect_put_at(vector const v, const void *item, const zvect_index i);
 
 /*
  *
@@ -294,7 +294,7 @@ void vect_put_at(vector v, const void *item, const zvect_index i);
  *                       of the vector with the item
  *                       5.
  */
-void vect_put_front(vector v, const void *item);
+void vect_put_front(vector const v, const void *item);
 
 /*
  * vect_remove removes an item from the vector
@@ -305,19 +305,19 @@ void vect_put_front(vector v, const void *item);
  * vect_remove(v)       will remove and return the
  *                      last item in the vector.
  */
-void *vect_remove(vector v);
+void *vect_remove(vector const v);
 
 /*
  * vect_remove_at(v, 3) will remove the 3rd item in
  *                      the vector and return it.
  */
-void *vect_remove_at(vector v, const zvect_index i);
+void *vect_remove_at(vector const v, const zvect_index i);
 
 /*
  * vect_remove_front(v) will remove the 1st item in
  *                      the vector and return it.
  */
-void *vect_remove_front(vector v);
+void *vect_remove_front(vector const v);
 
 /*
  * vect_delete deletes an item from the vector
@@ -327,13 +327,13 @@ void *vect_remove_front(vector v);
  * vect_delete(v)       will delete and the last
  *                      item in the vector.
  */
-void vect_delete(vector v);
+void vect_delete(vector const v);
 
 /*
  * vect_delete_at(v, 3) will delete the 3rd item in
  *                      the vector.
  */
-void vect_delete_at(vector v, const zvect_index i);
+void vect_delete_at(vector const v, const zvect_index i);
 
 /*
  * vect_delete_range(v, 20, 30)
@@ -341,14 +341,14 @@ void vect_delete_at(vector v, const zvect_index i);
  *                      20 to item 30 in the vector
  *                      v.
  */
-void vect_delete_range(vector v, const zvect_index first_element, const zvect_index last_element);
+void vect_delete_range(vector const v, const zvect_index first_element, const zvect_index last_element);
 
 /*
  *
  * vect_delete_front(v) will delete the 1st item in
  *                      the vector.
  */
-void vect_delete_front(vector v);
+void vect_delete_front(vector const v);
 
 ////////////
 // Vector Data manipulation functions:
@@ -367,7 +367,7 @@ void vect_delete_front(vector v);
  * use:
  * vect_swap(v, 3, 22);
  */
-void vect_swap(vector v, const zvect_index s, const zvect_index e);
+void vect_swap(vector const v, const zvect_index s, const zvect_index e);
 
 /*
  * vect_swap_range is a function that allows to swap
@@ -380,7 +380,7 @@ void vect_swap(vector v, const zvect_index s, const zvect_index e);
  * from 30 to 40 on vector v, use:
  * vect_swap_range(v, 10, 20, 30);
  */
-void vect_swap_range(vector v, const zvect_index s1, const zvect_index e1, const zvect_index s2);
+void vect_swap_range(vector const v, const zvect_index s1, const zvect_index e1, const zvect_index s2);
 
 /*
  * vect_rotate_left is a function that allows to rotate
@@ -391,7 +391,7 @@ void vect_swap_range(vector v, const zvect_index s1, const zvect_index e1, const
  * to the left, use:
  * vect_rotate_left(v, 5);
  */
-void vect_rotate_left(vector v, const zvect_index i);
+void vect_rotate_left(vector const v, const zvect_index i);
 
 /*
  * vect_rotate_right is a function that allows to rotate
@@ -402,7 +402,7 @@ void vect_rotate_left(vector v, const zvect_index i);
  * to the right, use:
  * vect_rotate_right(v, 5);
  */
-void vect_rotate_right(vector v, const zvect_index i);
+void vect_rotate_right(vector const v, const zvect_index i);
 
 /*
  * vect_qsort allows you to sort a given vector.
@@ -418,7 +418,7 @@ void vect_rotate_right(vector v, const zvect_index i);
  * pointers to your datastructures stored in the vector.
  *
  */
-void vect_qsort(vector v, int (*compare_func)(const void *, const void*));
+void vect_qsort(vector const v, int (*compare_func)(const void *, const void*));
 
 /*
  * vect_bsearch is a function that allows to perform
@@ -438,7 +438,7 @@ void vect_qsort(vector v, int (*compare_func)(const void *, const void*));
  * int i = 5;
  * vect_absearch(v, &i, my_compare);
  */
-bool vect_bsearch(vector v, const void *key, int (*f1)(const void *, const void *), zvect_index *item_index);
+bool vect_bsearch(vector const v, const void *key, int (*f1)(const void *, const void *), zvect_index *item_index);
 
 /*
  * vect_add_ordered allows the insertion of new items in
@@ -457,7 +457,7 @@ bool vect_bsearch(vector v, const void *key, int (*f1)(const void *, const void 
  *
  * vect_Add_ordered(v, 3, my_compare);
  */
-void vect_add_ordered(vector v, const void *value, int (*f1)(const void *, const void *));
+void vect_add_ordered(vector const v, const void *value, int (*f1)(const void *, const void *));
 
 #endif  // ZVECT_DMF_EXTENSIONS
 
@@ -478,7 +478,7 @@ void vect_add_ordered(vector v, const void *value, int (*f1)(const void *, const
  * to deal with return values especially when you'll be
  * using complex data structures as item of the vector.
  */
-void vect_apply(vector, void (*f1)(void *));
+void vect_apply(vector const v, void (*f1)(void *));
 
 /*
  * vect_apply_if is a function that will apply "f1" C function
@@ -508,7 +508,7 @@ void vect_apply(vector, void (*f1)(void *));
  *  return false;
  * }
  */
-void vect_apply_if(vector v1, vector v2, void (*f1)(void *), bool (*f2)(void *, void *));
+void vect_apply_if(vector const v1, vector const v2, void (*f1)(void *), bool (*f2)(void *, void *));
 
 // Operations with multiple vectors:
 
@@ -527,7 +527,7 @@ void vect_apply_if(vector v1, vector v2, void (*f1)(void *), bool (*f2)(void *, 
  *                              of the process you'll have such
  *                              items copied at the end of v1.
  */
-void vect_copy(vector v1, vector v2, zvect_index start, zvect_index max_elements);
+void vect_copy(vector const v1, vector const v2, zvect_index start, zvect_index max_elements);
 
 /*
  * vect_move is a function that allows to move a specified
@@ -541,7 +541,7 @@ void vect_copy(vector v1, vector v2, zvect_index start, zvect_index max_elements
  *                              3rd item in v2 till the 5th at
  *                              the end of v1.
  */
-void vect_move(vector v1, vector v2, zvect_index start, zvect_index max_elements);
+void vect_move(vector const v1, vector const v2, zvect_index start, zvect_index max_elements);
 
 /*
  * vect_merge is a function that merges together 2 vectors of
@@ -553,7 +553,7 @@ void vect_move(vector v1, vector v2, zvect_index start, zvect_index max_elements
  *                              v1 will contain the old v1 items +
  *                              all v2 items.
  */
-void vect_merge(vector v1, vector v2);
+void vect_merge(vector const v1, vector v2);
 
 #endif  // ZVECT_SFMD_EXTENSIONS
 

@@ -180,10 +180,10 @@ static uint32_t p_init_state = 0;
 #if (ZVECT_COMPTYPE == 1) || (ZVECT_COMPTYPE == 3)
 __attribute__((noreturn))
 #endif
-static void p_throw_error(const int32_t error_code, const char *error_message) {
+static void p_throw_error(const zvect_retval error_code, const char *error_message) {
 	int32_t locally_allocated = 0;
 	char *message;
-	int32_t msg_len = 0;
+	unsigned long msg_len = 0;
 	if ( error_message == NULL )
 	{
 		msg_len = sizeof(char)*255;
@@ -396,36 +396,36 @@ void p_init_zvect(void) {
 /*---------------------------------------------------------------------------*/
 // Vector's Utilities:
 
-static inline zvect_retval p_vect_check(const vector x) {
+static inline zvect_retval p_vect_check(vector const x) {
 	if (x == NULL)
 		return ZVERR_VECTUNDEF;
 	else
 		return 0;
 }
 
-static inline zvect_index p_vect_capacity(const vector v) {
+static inline zvect_index p_vect_capacity(vector const v) {
 	return ( v->cap_left + v->cap_right );
 }
 
-static inline zvect_index p_vect_size(const vector v) {
+static inline zvect_index p_vect_size(vector const v) {
 	return ( v->end - v->begin );
 }
 
-static inline void p_item_safewipe(const vector v, const void *item) {
+static inline void p_item_safewipe(vector const v, void *const item) {
 	if (item != NULL) {
 		if (!(v->status & ZVS_CUST_WIPE_ON)) {
-			memset((void *)item, 0, v->data_size);
+			memset(item, 0, v->data_size);
 		} else {
 			(*(v->SfWpFunc))(item, v->data_size);
 		}
 	}
 }
 
-static void p_free_items(const vector v, zvect_index first, zvect_index offset) {
+static void p_free_items(vector const v, zvect_index first, zvect_index offset) {
 	if (p_vect_size(v) == 0)
 		return;
 
-	for (register zvect_index j = (first + offset); j >= first; j--) {
+	for (register zvect_index j = (first + offset); j--;) {
 		if (v->data[v->begin + j] != NULL) {
 			if (v->flags & ZV_SEC_WIPE)
 				p_item_safewipe(v, v->data[v->begin + j]);
@@ -451,7 +451,7 @@ static void p_free_items(const vector v, zvect_index first, zvect_index offset) 
 /*
  * This function increase the CAPACITY of a vector.
  */
-static zvect_retval p_vect_increase_capacity(const vector v, const zvect_index direction) {
+static zvect_retval p_vect_increase_capacity(vector const v, const zvect_index direction) {
 	zvect_index new_capacity;
 
 	void **new_data = NULL;
@@ -462,7 +462,9 @@ static zvect_retval p_vect_increase_capacity(const vector v, const zvect_index d
 		// Increase capacity on the left side of the vector:
 
 		// Get actual left capacity and double it
-		// new_capacity = v->cap_left * 2;
+		// Note: "<< 1" is the same as "* 2"
+		//       this is an optimisation for old
+		//       compilers.
 		new_capacity = v->cap_left << 1;
 
 		new_data = (void **)malloc(sizeof(void *) * (new_capacity + v->cap_right));
@@ -476,7 +478,9 @@ static zvect_retval p_vect_increase_capacity(const vector v, const zvect_index d
 		// Increase capacity on the right side of the vector:
 
 		// Get actual left capacity and double it
-		// new_capacity = v->cap_right * 2;
+		// Note: "<< 1" is the same as "* 2"
+		//       this is an optimisation for old
+		//       compilers.
 		new_capacity = v->cap_right << 1;
 
 		new_data = (void **)realloc(v->data, sizeof(void *) * (v->cap_left + new_capacity));
@@ -504,7 +508,7 @@ static zvect_retval p_vect_increase_capacity(const vector v, const zvect_index d
 /*
  * This function decrease the CAPACITY of a vector.
  */
-static zvect_retval p_vect_decrease_capacity(const vector v, const zvect_index direction) {
+static zvect_retval p_vect_decrease_capacity(vector const v, const zvect_index direction) {
 	// Check if new capacity is smaller than initial capacity
 	if ( p_vect_capacity(v) <= v->init_capacity)
 		return 0;
@@ -517,35 +521,33 @@ static zvect_retval p_vect_decrease_capacity(const vector v, const zvect_index d
 	if (!direction)
 	{
 		// Decreasing on the left:
-		// new_capacity = v->cap_left / 2;
+		// Note: ">> 1" is the same as "/ 2"
+		//       this is an optimisation for old
+		//       compilers.
 		new_capacity = v->cap_left >> 1;
-		/* if (new_capacity < ( v->init_capacity / 2 ))
-			new_capacity = v->init_capacity / 2; */
-		if (new_capacity < ( v->init_capacity / 2 ))
+
+		if (new_capacity < ( v->init_capacity >> 1 ))
 			new_capacity = v->init_capacity >> 1;
 
-		// new_capacity = max( (p_vect_size(v) / 2), new_capacity);
 		new_capacity = max( (p_vect_size(v) >> 1), new_capacity);
 
 		new_data = (void **)malloc(sizeof(void *) * (new_capacity + v->cap_right));
 		if (new_data == NULL)
 			return ZVERR_OUTOFMEM;
 
-		// nb = ( new_capacity / 2 );
 		nb = ( new_capacity >> 1 );
 		ne = ( nb + (v->end - v->begin) );
 		p_vect_memcpy(new_data + nb, v->data + v->begin, sizeof(void *) * (v->end - v->begin) );
 	} else {
 		// Decreasing on the right:
-		// new_capacity = v->cap_right / 2;
+		// Note: ">> 1" is the same as "/ 2"
+		//       this is an optimisation for old
+		//       compilers.
 		new_capacity = v->cap_right >> 1;
 
-		/* if (new_capacity < ( v->init_capacity / 2 ))
-			new_capacity = v->init_capacity / 2; */
 		if (new_capacity < ( v->init_capacity >> 1 ))
 			new_capacity = v->init_capacity >> 1;
 
-		// new_capacity = max( (p_vect_size(v) / 2), new_capacity);
 		new_capacity = max( (p_vect_size(v) >> 1), new_capacity);
 
 		new_data = (void **)realloc(v->data, sizeof(void *) * (v->cap_left + new_capacity));
@@ -576,7 +578,7 @@ static zvect_retval p_vect_decrease_capacity(const vector v, const zvect_index d
  * not its size. To reduce the size of a vector we
  * need to remove items from it.
  */
-static zvect_retval p_vect_shrink(const vector v) {
+static zvect_retval p_vect_shrink(vector const v) {
 	if (v->init_capacity < 2)
 		v->init_capacity = 2;
 
@@ -597,8 +599,11 @@ static zvect_retval p_vect_shrink(const vector v) {
 	if (new_data == NULL)
 		return ZVERR_OUTOFMEM;
 
-	zvect_index ne, nb;
-	// nb = ( new_capacity / 2 );
+	zvect_index ne;
+	zvect_index nb;
+	// Note: ">> 1" is the same as "/ 2"
+	//       this is an optimisation for old
+	//       compilers.
 	nb = ( new_capacity >> 1 );
 	ne = ( nb + (v->end - v->begin) );
 	p_vect_memcpy(new_data + nb, v->data + v->begin, sizeof(void *) * (v->end - v->begin) );
@@ -608,9 +613,7 @@ static zvect_retval p_vect_shrink(const vector v) {
 	v->data = new_data;
 	v->end = ne;
 	v->begin = nb;
-	//v->cap_left = new_capacity / 2;
 	v->cap_left = new_capacity >> 1;
-	//v->cap_right = new_capacity / 2;
 	v->cap_right = new_capacity >> 1;
 
 	// done:
@@ -623,7 +626,7 @@ static zvect_retval p_vect_shrink(const vector v) {
 // Vector data storage primitives:
 
 // inline implementation for all put:
-static inline zvect_retval p_vect_put_at(const vector v, const void *value,
+static inline zvect_retval p_vect_put_at(vector const v, const void *value,
                                 const zvect_index i) {
 	// Check if the index passed is out of bounds:
 	zvect_index idx = i;
@@ -652,7 +655,7 @@ static inline zvect_retval p_vect_put_at(const vector v, const void *value,
 }
 
 // inline implementation for all add(s):
-static inline zvect_retval p_vect_add_at(const vector v, const void *value,
+static inline zvect_retval p_vect_add_at(vector const v, const void *value,
                                 const zvect_index i, const int32_t action) {
 	// If the vector is circular then use vect_put_at
 	// instead:
@@ -705,13 +708,11 @@ static inline zvect_retval p_vect_add_at(const vector v, const void *value,
 			if (v->data[base] == NULL)
 				return ZVERR_OUTOFMEM;
 		}
-	} else if (idx == vsize) {
+	} else if (idx == vsize && !(v->flags & ZV_BYREF)) {
 		// Prepare right side of the vector:
-		if (!(v->flags & ZV_BYREF)) {
-			v->data[base + vsize] = (void *)malloc(v->data_size);
-			if (v->data[base + vsize] == NULL)
-				return ZVERR_OUTOFMEM;
-		}
+		v->data[base + vsize] = (void *)malloc(v->data_size);
+		if (v->data[base + vsize] == NULL)
+			return ZVERR_OUTOFMEM;
 	}
 
 	// "Shift" right the array of one position to make space for the new item:
@@ -753,7 +754,7 @@ static inline zvect_retval p_vect_add_at(const vector v, const void *value,
 	if (array_changed && !(v->flags & ZV_BYREF)) {
 		// We moved chunks of memory, so we need to
 		// allocate new memory for the item at position i:
-		v->data[base + idx] = (void *)malloc(v->data_size);
+		v->data[base + idx] = malloc(v->data_size);
 		if (v->data[base + idx] == NULL)
 			return ZVERR_OUTOFMEM;
 	}
@@ -786,7 +787,7 @@ static inline zvect_retval p_vect_add_at(const vector v, const void *value,
 }
 
 // This is the inline implementation for all the remove and pop
-static inline zvect_retval p_vect_remove_at(const vector v, const zvect_index i, const int32_t action, void **item) {
+static inline zvect_retval p_vect_remove_at(vector const v, const zvect_index i, const int32_t action, void **item) {
 	zvect_index idx = i;
 
 	// Get the vector size:
@@ -901,7 +902,7 @@ static inline zvect_retval p_vect_remove_at(const vector v, const zvect_index i,
 }
 
 // This is the inline implementation for all the "delete" methods
-static inline zvect_retval p_vect_delete_at(const vector v, const zvect_index start,
+static inline zvect_retval p_vect_delete_at(vector const v, const zvect_index start,
                                    	    const zvect_index offset) {
 
 	zvect_index vsize = p_vect_size(v);
@@ -1041,7 +1042,7 @@ static zvect_retval p_vect_destroy(vector v, uint32_t flags) {
  * Public method to request ZVector to
  * shrink a vector.
  */
-void vect_shrink(const vector v) {
+void vect_shrink(vector const v) {
 #if (ZVECT_THREAD_SAFE == 1)
 	zvect_retval lock_owner = check_mutex_lock(v, 1);
 #endif
@@ -1061,35 +1062,35 @@ void vect_shrink(const vector v) {
 /*---------------------------------------------------------------------------*/
 // Vector Structural Information report:
 
-bool vect_is_empty(const vector v) {
+bool vect_is_empty(vector const v) {
 	// Check if the vector exists
 	if (!p_vect_check(v))
 		return p_vect_size(v) == 0;
 	return ZVERR_VECTUNDEF;
 }
 
-zvect_index vect_size(const vector v) {
+zvect_index vect_size(vector const v) {
 	// Check if the vector exists
 	if (!p_vect_check(v))
 		return p_vect_size(v);
 	return 0;
 }
 
-zvect_index vect_max_size(const vector v) {
+zvect_index vect_max_size(vector const v) {
 	// Check if the vector exists
 	if (!p_vect_check(v))
 		return zvect_index_max;
 	return 0;
 }
 
-void *vect_begin(const vector v) {
+void *vect_begin(vector const v) {
 	// Check if the vector exists
 	if (!p_vect_check(v))
 		return v->data[v->begin];
 	return NULL;
 }
 
-void *vect_end(const vector v) {
+void *vect_end(vector const v) {
 	// Check if the vector exists
 	if (!p_vect_check(v))
 		return v->data[v->end];
@@ -1196,11 +1197,11 @@ void vect_lock_disable(void) {
 	lock_enabled = false;
 }
 
-inline void vect_lock(vector v) {
+inline void vect_lock(vector const v) {
 	check_mutex_lock(v, 3);
 }
 
-inline void vect_unlock(vector v) {
+inline void vect_unlock(vector const v) {
 	check_mutex_unlock(v, 3);
 }
 #endif
@@ -1210,7 +1211,7 @@ inline void vect_unlock(vector v) {
 /*---------------------------------------------------------------------------*/
 // Vector Data Storage functions:
 
-void vect_clear(const vector v) {
+void vect_clear(vector const v) {
 #if (ZVECT_THREAD_SAFE == 1)
 	zvect_retval lock_owner = check_mutex_lock(v, 1);
 #endif
@@ -1218,7 +1219,7 @@ void vect_clear(const vector v) {
 	// check if the vector exists:
 	zvect_retval rval = p_vect_check(v);
 	if (rval)
-		goto done;
+		goto DONE_PROCESSING;
 
 	// Clear the vector:
 	if (!vect_is_empty(v))
@@ -1233,7 +1234,7 @@ void vect_clear(const vector v) {
 	// p_vect_shrink(v); //commented this out to make vect_clear behave more like the clear method in C++
 
 	// Done.
-done:
+DONE_PROCESSING:
 #if (ZVECT_THREAD_SAFE == 1)
 	if (lock_owner)
 		check_mutex_unlock(v, 1);
@@ -1308,7 +1309,7 @@ void vect_add_at(const vector v, const void *value, const zvect_index i) {
 }
 
 // Add an item at the FRONT of the vector
-void vect_add_front(const vector v, const void *value) {
+void vect_add_front(vector const v, const void *value) {
 #if (ZVECT_THREAD_SAFE == 1)
 	zvect_retval lock_owner = check_mutex_lock(v, 1);
 #endif
@@ -1326,7 +1327,7 @@ void vect_add_front(const vector v, const void *value) {
 }
 
 // inline implementation for all get(s):
-static inline void *p_vect_get_at(const vector v, const zvect_index i) {
+static inline void *p_vect_get_at(vector const v, const zvect_index i) {
 	// Check if passed index is out of bounds:
 	if (i >= p_vect_size(v))
 		p_throw_error(ZVERR_IDXOUTOFBOUND, NULL);
@@ -1335,7 +1336,7 @@ static inline void *p_vect_get_at(const vector v, const zvect_index i) {
 	return v->data[v->begin + i];
 }
 
-void *vect_get(const vector v) {
+void *vect_get(vector const v) {
 	// check if the vector exists:
 	zvect_retval rval = p_vect_check(v);
 	if (!rval)
@@ -1346,7 +1347,7 @@ void *vect_get(const vector v) {
 	return NULL;
 }
 
-void *vect_get_at(const vector v, const zvect_index i) {
+void *vect_get_at(vector const v, const zvect_index i) {
 	// check if the vector exists:
 	zvect_retval rval = p_vect_check(v);
 	if (!rval)
@@ -1357,7 +1358,7 @@ void *vect_get_at(const vector v, const zvect_index i) {
 	return NULL;
 }
 
-void *vect_get_front(const vector v) {
+void *vect_get_front(vector const v) {
 	// check if the vector exists:
 	zvect_retval rval = p_vect_check(v);
 	if (!rval)
@@ -1368,7 +1369,7 @@ void *vect_get_front(const vector v) {
 	return NULL;
 }
 
-void vect_put(const vector v, const void *value) {
+void vect_put(vector const v, const void *value) {
 #if (ZVECT_THREAD_SAFE == 1)
 	zvect_retval lock_owner = check_mutex_lock(v, 1);
 #endif
@@ -1385,7 +1386,7 @@ void vect_put(const vector v, const void *value) {
 		p_throw_error(rval, NULL);
 }
 
-void vect_put_at(const vector v, const void *value, const zvect_index i) {
+void vect_put_at(vector const v, const void *value, const zvect_index i) {
 #if (ZVECT_THREAD_SAFE == 1)
 	zvect_retval lock_owner = check_mutex_lock(v, 1);
 #endif
@@ -1402,7 +1403,7 @@ void vect_put_at(const vector v, const void *value, const zvect_index i) {
 		p_throw_error(rval, NULL);
 }
 
-void vect_put_front(const vector v, const void *value) {
+void vect_put_front(vector const v, const void *value) {
 #if (ZVECT_THREAD_SAFE == 1)
 	zvect_retval lock_owner = check_mutex_lock(v, 1);
 #endif
@@ -1419,7 +1420,7 @@ void vect_put_front(const vector v, const void *value) {
 		p_throw_error(rval, NULL);
 }
 
-inline void *vect_pop(const vector v) {
+inline void *vect_pop(vector const v) {
 #if (ZVECT_THREAD_SAFE == 1)
 	zvect_retval lock_owner = check_mutex_lock(v, 1);
 #endif
@@ -1439,7 +1440,7 @@ inline void *vect_pop(const vector v) {
 	return item;
 }
 
-void *vect_remove(const vector v) {
+void *vect_remove(vector const v) {
 #if (ZVECT_THREAD_SAFE == 1)
 	zvect_retval lock_owner = check_mutex_lock(v, 1);
 #endif
@@ -1459,7 +1460,7 @@ void *vect_remove(const vector v) {
 	return item;
 }
 
-void *vect_remove_at(const vector v, const zvect_index i) {
+void *vect_remove_at(vector const v, const zvect_index i) {
 #if (ZVECT_THREAD_SAFE == 1)
 	zvect_retval lock_owner = check_mutex_lock(v, 1);
 #endif
@@ -1479,7 +1480,7 @@ void *vect_remove_at(const vector v, const zvect_index i) {
 	return item;
 }
 
-void *vect_remove_front(const vector v) {
+void *vect_remove_front(vector const v) {
 #if (ZVECT_THREAD_SAFE == 1)
 	zvect_retval lock_owner = check_mutex_lock(v, 1);
 #endif
@@ -1500,7 +1501,7 @@ void *vect_remove_front(const vector v) {
 }
 
 // Delete an item at the END of the vector
-void vect_delete(const vector v) {
+void vect_delete(vector const v) {
 #if (ZVECT_THREAD_SAFE == 1)
 	zvect_retval lock_owner = check_mutex_lock(v, 1);
 #endif
@@ -1536,7 +1537,7 @@ void vect_delete_at(const vector v, const zvect_index i) {
 }
 
 // Delete a range of items from "first_element" to "last_element" on the vector v
-void vect_delete_range(const vector v, const zvect_index first_element,
+void vect_delete_range(vector const v, const zvect_index first_element,
                        const zvect_index last_element) {
 #if (ZVECT_THREAD_SAFE == 1)
 	zvect_retval lock_owner = check_mutex_lock(v, 1);
@@ -1557,7 +1558,7 @@ void vect_delete_range(const vector v, const zvect_index first_element,
 }
 
 // Delete an item at the BEGINNING of a vector v
-void vect_delete_front(const vector v) {
+void vect_delete_front(vector const v) {
 #if (ZVECT_THREAD_SAFE == 1)
 	zvect_retval lock_owner = check_mutex_lock(v, 1);
 #endif
@@ -1580,30 +1581,30 @@ void vect_delete_front(const vector v) {
 // Vector Data Manipulation functions
 #ifdef ZVECT_DMF_EXTENSIONS
 
-void vect_swap(const vector v, const zvect_index i1, const zvect_index i2) {
+void vect_swap(vector const v, const zvect_index i1, const zvect_index i2) {
 #if (ZVECT_THREAD_SAFE == 1)
 	zvect_retval lock_owner = check_mutex_lock(v, 1);
 #endif
 	// check if the vector exists:
 	zvect_retval rval = p_vect_check(v);
 	if (rval)
-		goto done;
+		goto DONE_PROCESSING;
 
 	// Check parameters:
 	if (i1 > p_vect_size(v) || i2 > p_vect_size(v)) {
 		rval = ZVERR_IDXOUTOFBOUND;
-		goto done;
+		goto DONE_PROCESSING;
 	}
 
 	if (i1 == i2)
-		goto done;
+		goto DONE_PROCESSING;
 
 	// Let's swap items:
 	void *temp = v->data[v->begin + i2];
 	v->data[v->begin + i2] = v->data[v->begin + i1];
 	v->data[v->begin + i1] = temp;
 
-done:
+DONE_PROCESSING:
 #if (ZVECT_THREAD_SAFE == 1)
 	if (lock_owner)
 		check_mutex_unlock(v, 1);
@@ -1612,7 +1613,7 @@ done:
 		p_throw_error(rval, NULL);
 }
 
-void vect_swap_range(const vector v, const zvect_index s1, const zvect_index e1,
+void vect_swap_range(vector const v, const zvect_index s1, const zvect_index e1,
                      const zvect_index s2) {
 #if (ZVECT_THREAD_SAFE == 1)
 	zvect_retval lock_owner = check_mutex_lock(v, 1);
@@ -1621,7 +1622,7 @@ void vect_swap_range(const vector v, const zvect_index s1, const zvect_index e1,
 	// check if the vector exists:
 	zvect_retval rval = p_vect_check(v);
 	if (rval)
-		goto done;
+		goto DONE_PROCESSING;
 
 	// Check parameters:
 	zvect_index end = e1;
@@ -1630,11 +1631,11 @@ void vect_swap_range(const vector v, const zvect_index s1, const zvect_index e1,
 
 	if ((s1 + end) > p_vect_size(v) || (s2 + end) > p_vect_size(v) || s2 < (s1 + end)) {
 		rval = ZVERR_IDXOUTOFBOUND;
-		goto done;
+		goto DONE_PROCESSING;
 	}
 
 	if (s1 == s2)
-		goto done;
+		goto DONE_PROCESSING;
 
 	// Let's swap items:
 	register zvect_index i;
@@ -1645,7 +1646,7 @@ void vect_swap_range(const vector v, const zvect_index s1, const zvect_index e1,
 		v->data[v->begin + (s2 + i)] = temp;
 	}
 
-done:
+DONE_PROCESSING:
 #if (ZVECT_THREAD_SAFE == 1)
 	if (lock_owner)
 		check_mutex_unlock(v, 1);
@@ -1654,22 +1655,22 @@ done:
 		p_throw_error(rval, NULL);
 }
 
-void vect_rotate_left(const vector v, const zvect_index i) {
+void vect_rotate_left(vector const v, const zvect_index i) {
 #if (ZVECT_THREAD_SAFE == 1)
 	zvect_retval lock_owner = check_mutex_lock(v, 1);
 #endif
 	// check if the vector exists:
 	zvect_retval rval = p_vect_check(v);
 	if (rval)
-		goto done;
+		goto DONE_PROCESSING;
 
 	// Check parameters:
 	if (i == 0 || i == p_vect_size(v))
-		goto done;
+		goto DONE_PROCESSING;
 
 	if (i > p_vect_size(v)) {
 		rval = ZVERR_IDXOUTOFBOUND;
-		goto done;
+		goto DONE_PROCESSING;
 	}
 
 	// Process the vector
@@ -1682,7 +1683,7 @@ void vect_rotate_left(const vector v, const zvect_index i) {
 		void **new_data = (void **)malloc(sizeof(void *) * p_vect_capacity(v));
 		if (new_data == NULL) {
 			rval = ZVERR_OUTOFMEM;
-			goto done;
+			goto DONE_PROCESSING;
 		}
 		// Rotate left the vector of "i" positions:
 		p_vect_memcpy(new_data + v->begin, v->data + v->begin, sizeof(void *) * i);
@@ -1692,7 +1693,7 @@ void vect_rotate_left(const vector v, const zvect_index i) {
 		free(new_data);
 	}
 
-done:
+DONE_PROCESSING:
 #if (ZVECT_THREAD_SAFE == 1)
 	if (lock_owner)
 		check_mutex_unlock(v, 1);
@@ -1701,22 +1702,22 @@ done:
 		p_throw_error(rval, NULL);
 }
 
-void vect_rotate_right(const vector v, const zvect_index i) {
+void vect_rotate_right(vector const v, const zvect_index i) {
 #if (ZVECT_THREAD_SAFE == 1)
 	zvect_retval lock_owner = check_mutex_lock(v, 1);
 #endif
 	// check if the vector exists:
 	zvect_retval rval = p_vect_check(v);
 	if (rval)
-		goto done;
+		goto DONE_PROCESSING;
 
 	// Check parameters:
 	if (i == 0 || i == p_vect_size(v))
-		goto done;
+		goto DONE_PROCESSING;
 
 	if (i > p_vect_size(v)) {
 		rval = ZVERR_IDXOUTOFBOUND;
-		goto done;
+		goto DONE_PROCESSING;
 	}
 
 	// Process the vector
@@ -1729,7 +1730,7 @@ void vect_rotate_right(const vector v, const zvect_index i) {
 		void **new_data = (void **)malloc(sizeof(void *) * p_vect_capacity(v));
 		if (new_data == NULL) {
 			rval = ZVERR_OUTOFMEM;
-			goto done;
+			goto DONE_PROCESSING;
 		}
 
 		// Rotate right the vector of "i" positions:
@@ -1740,7 +1741,7 @@ void vect_rotate_right(const vector v, const zvect_index i) {
 		free(new_data);
 	}
 
-done:
+DONE_PROCESSING:
 #if (ZVECT_THREAD_SAFE == 1)
 	if (lock_owner)
 		check_mutex_unlock(v, 1);
@@ -1784,7 +1785,7 @@ static void p_vect_qsort(vector v, zvect_index low, zvect_index high,
 // it fundamentally uses the 3 ways partitioning adapted and improved
 // to deal with arrays of pointers together with having a custom
 // compare function:
-static void p_vect_qsort(const vector v, zvect_index l, zvect_index r,
+static void p_vect_qsort(vector const v, zvect_index l, zvect_index r,
                         int (*compare_func)(const void *, const void *)) {
 	if (r <= l)
 	    return;
@@ -1834,23 +1835,23 @@ static void p_vect_qsort(const vector v, zvect_index l, zvect_index r,
 }
 #endif // ! TRADITIONAL_QSORT
 
-void vect_qsort(const vector v, int (*compare_func)(const void *, const void *)) {
+void vect_qsort(vector const v, int (*compare_func)(const void *, const void *)) {
 #if (ZVECT_THREAD_SAFE == 1)
 	zvect_retval lock_owner = check_mutex_lock(v, 1);
 #endif
 	// check if the vector v1 exists:
 	zvect_retval rval = p_vect_check(v);
 	if (rval)
-		goto done;
+		goto DONE_PROCESSING;
 
 	// Check parameters:
 	if (p_vect_size(v) <= 1 || compare_func == NULL)
-		goto done;
+		goto DONE_PROCESSING;
 
 	// Process the vector:
 	p_vect_qsort(v, 0, p_vect_size(v) - 1, compare_func);
 
-done:
+DONE_PROCESSING:
 #if (ZVECT_THREAD_SAFE == 1)
 	if (lock_owner)
 		check_mutex_unlock(v, 1);
@@ -1897,7 +1898,7 @@ static bool p_standard_binary_search(vector v, const void *key,
 // original design, most notably the use of custom compare
 // function that makes it suitable also to search through strings
 // and other types of vectors.
-static bool p_adaptive_binary_search(const vector v, const void *key,
+static bool p_adaptive_binary_search(vector const v, const void *key,
                                     zvect_index *item_index,
                                     int (*f1)(const void *, const void *)) {
 	zvect_index bot, top, mid;
@@ -1971,17 +1972,17 @@ static bool p_adaptive_binary_search(const vector v, const void *key,
 }
 #endif // ! TRADITIONAL_BINARY_SEARCH
 
-bool vect_bsearch(const vector v, const void *key,
+bool vect_bsearch(vector const v, const void *key,
                   int (*f1)(const void *, const void *),
                   zvect_index *item_index) {
 	// check if the vector exists:
 	zvect_retval rval = p_vect_check(v);
 	if (rval)
-		goto done;
+		goto DONE_PROCESSING;
 
 	// Check parameters:
 	if (key == NULL || f1 == NULL || p_vect_size(v) == 0)
-		goto done;
+		goto DONE_PROCESSING;
 
 	*item_index = 0;
 #ifdef TRADITIONAL_BINARY_SEARCH
@@ -2001,7 +2002,7 @@ bool vect_bsearch(const vector v, const void *key,
 	}
 #endif // ! TRADITIONAL_BINARY_SEARCH
 
-done:
+DONE_PROCESSING:
 	if (rval)
 		p_throw_error(rval, NULL);
 
@@ -2013,7 +2014,7 @@ done:
  * functions, the vect_add_ordered is an exception because it
  * requires vect_bserach and vect_qsort to be available.
  */
-void vect_add_ordered(const vector v, const void *value,
+void vect_add_ordered(vector const v, const void *value,
                       int (*f1)(const void *, const void *)) {
 #if (ZVECT_THREAD_SAFE == 1)
 	zvect_retval lock_owner = check_mutex_lock(v, 2);
@@ -2021,18 +2022,18 @@ void vect_add_ordered(const vector v, const void *value,
 	// check if the vector exists:
 	zvect_retval rval = p_vect_check(v);
 	if (rval)
-		goto done;
+		goto DONE_PROCESSING;
 
 	// Check parameters:
 	if (value == NULL)
-		goto done;
+		goto DONE_PROCESSING;
 
 	// Few tricks to make it faster:
 	if (p_vect_size(v) == 0) {
 		// If the vector is empty clearly we can just
 		// use vect_add and add the value normally!
 		vect_add(v, value);
-		goto done;
+		goto DONE_PROCESSING;
 	}
 
 	if ((*f1)(value, v->data[v->begin + (p_vect_size(v) - 1)]) > 0) {
@@ -2040,7 +2041,7 @@ void vect_add_ordered(const vector v, const void *value,
 		// the value passed should go after the
 		// last value in the vector, just do so!
 		vect_add(v, value);
-		goto done;
+		goto DONE_PROCESSING;
 	}
 
 	// Ok previous checks didn't help us, so we need
@@ -2062,7 +2063,7 @@ void vect_add_ordered(const vector v, const void *value,
 
 	vect_add_at(v, value, item_index);
 
-done:
+DONE_PROCESSING:
 #if (ZVECT_THREAD_SAFE == 1)
 	if (lock_owner)
 		check_mutex_unlock(v, 2);
@@ -2076,24 +2077,24 @@ done:
 #ifdef ZVECT_SFMD_EXTENSIONS
 // Single Function Call Multiple Data operations extensions:
 
-void vect_apply(const vector v, void (*f)(void *)) {
+void vect_apply(vector const v, void (*f)(void *)) {
 #if (ZVECT_THREAD_SAFE == 1)
 	zvect_retval lock_owner = check_mutex_lock(v, 1);
 #endif
 
 	zvect_retval rval = p_vect_check(v);
 	if (rval)
-		goto done;
+		goto DONE_PROCESSING;
 
 	// Check parameters:
 	if (f == NULL)
-		goto done;
+		goto DONE_PROCESSING;
 
 	// Process the vector:
 	for (register zvect_index i = p_vect_size(v); i--;)
 		(*f)(v->data[v->begin + i]);
 
-done:
+DONE_PROCESSING:
 #if (ZVECT_THREAD_SAFE == 1)
 	if (lock_owner)
 		check_mutex_unlock(v, 1);
@@ -2102,7 +2103,7 @@ done:
 		p_throw_error(rval, NULL);
 }
 
-void vect_apply_range(const vector v, void (*f)(void *), const zvect_index x,
+void vect_apply_range(vector const v, void (*f)(void *), const zvect_index x,
                       const zvect_index y) {
 #if (ZVECT_THREAD_SAFE == 1)
 	zvect_retval lock_owner = check_mutex_lock(v, 1);
@@ -2111,16 +2112,16 @@ void vect_apply_range(const vector v, void (*f)(void *), const zvect_index x,
 	// check if the vector exists:
 	zvect_retval rval = p_vect_check(v);
 	if (rval)
-		goto done;
+		goto DONE_PROCESSING;
 
 	// Check parameters:
 	if (f == NULL)
-		goto done;
+		goto DONE_PROCESSING;
 
 	if (x > p_vect_size(v) || y > p_vect_size(v))
 	{
 		rval = ZVERR_IDXOUTOFBOUND;
-		goto done;
+		goto DONE_PROCESSING;
 	}
 
 	zvect_index start;
@@ -2137,7 +2138,7 @@ void vect_apply_range(const vector v, void (*f)(void *), const zvect_index x,
 	for (register zvect_index i = start; i <= end; i++)
 		(*f)(v->data[v->begin + i]);
 
-done:
+DONE_PROCESSING:
 #if (ZVECT_THREAD_SAFE == 1)
 	if (lock_owner)
 		check_mutex_unlock(v, 1);
@@ -2146,7 +2147,7 @@ done:
 		p_throw_error(rval, NULL);
 }
 
-void vect_apply_if(const vector v1, const vector v2, void (*f1)(void *),
+void vect_apply_if(vector const v1, vector const v2, void (*f1)(void *),
                    bool (*f2)(void *, void *)) {
 #if (ZVECT_THREAD_SAFE == 1)
 	zvect_retval lock_owner = check_mutex_lock(v1, 1);
@@ -2155,12 +2156,12 @@ void vect_apply_if(const vector v1, const vector v2, void (*f1)(void *),
 	// check if the vector exists:
 	zvect_retval rval = p_vect_check(v1) | p_vect_check(v2);
 	if (rval)
-		goto done;
+		goto DONE_PROCESSING;
 
 	// Check parameters:
 	if (p_vect_size(v1) > p_vect_size(v2)) {
 		rval = ZVERR_VECTTOOSMALL;
-		goto done;
+		goto DONE_PROCESSING;
 	}
 
 	// Process vectors:
@@ -2168,7 +2169,7 @@ void vect_apply_if(const vector v1, const vector v2, void (*f1)(void *),
 		if ((*f2)(v1->data[v1->begin + i], v2->data[v2->begin + i]))
 			(*f1)(v1->data[v1->begin + i]);
 
-done:
+DONE_PROCESSING:
 #if (ZVECT_THREAD_SAFE == 1)
 	if (lock_owner)
 		check_mutex_unlock(v1, 1);
@@ -2177,7 +2178,7 @@ done:
 		p_throw_error(rval, NULL);
 }
 
-void vect_copy(const vector v1, const vector v2, const zvect_index s2,
+void vect_copy(vector const v1, vector const v2, const zvect_index s2,
                const zvect_index e2) {
 #if (ZVECT_THREAD_SAFE == 1)
 	zvect_retval lock_owner = check_mutex_lock(v1, 2);
@@ -2186,19 +2187,19 @@ void vect_copy(const vector v1, const vector v2, const zvect_index s2,
 	// check if the vectors v1 and v2 exist:
 	zvect_retval rval = p_vect_check(v1) | p_vect_check(v2);
 	if (rval)
-		goto done;
+		goto DONE_PROCESSING;
 
 	// We can only copy vectors with the same data_size!
 	if (v1->data_size != v2->data_size) {
 		rval = ZVERR_VECTDATASIZE;
-		goto done;
+		goto DONE_PROCESSING;
 	}
 
 	// Let's check if the indexes provided are correct for
 	// v2:
 	if (e2 > p_vect_size(v2) || s2 > p_vect_size(v2)) {
 		rval = ZVERR_IDXOUTOFBOUND;
-		goto done;
+		goto DONE_PROCESSING;
 	}
 
 	// If the user specified 0 max_elements then
@@ -2220,7 +2221,7 @@ void vect_copy(const vector v1, const vector v2, const zvect_index s2,
 	// Update v1 size:
 	v1->end += ee2;
 
-done:
+DONE_PROCESSING:
 #if (ZVECT_THREAD_SAFE == 1)
 	if (lock_owner)
 		check_mutex_unlock(v1, 2);
@@ -2239,7 +2240,7 @@ done:
  *          position 5, use:
  * vect_insert(v1, v2, 10, 10, 5);
  */
-void vect_insert(const vector v1, const vector v2, const zvect_index s2,
+void vect_insert(vector const v1, vector const v2, const zvect_index s2,
                  const zvect_index e2, const zvect_index s1) {
 #if (ZVECT_THREAD_SAFE == 1)
 	zvect_retval lock_owner = check_mutex_lock(v1, 2);
@@ -2248,19 +2249,19 @@ void vect_insert(const vector v1, const vector v2, const zvect_index s2,
 	// check if the vectors v1 and v2 exist:
 	zvect_retval rval = p_vect_check(v1) | p_vect_check(v2);
 	if (rval)
-		goto done;
+		goto DONE_PROCESSING;
 
 	// We can only copy vectors with the same data_size!
 	if (v1->data_size != v2->data_size) {
 		rval = ZVERR_VECTDATASIZE;
-		goto done;
+		goto DONE_PROCESSING;
 	}
 
 	// Let's check if the indexes provided are correct for
 	// v2:
 	if ((e2 > p_vect_size(v2)) || (s2 > p_vect_size(v2))) {
 		rval = ZVERR_IDXOUTOFBOUND;
-		goto done;
+		goto DONE_PROCESSING;
 	}
 
 	// If the user specified 0 max_elements then
@@ -2279,7 +2280,7 @@ void vect_insert(const vector v1, const vector v2, const zvect_index s2,
 	for (register zvect_index i = s2; i <= s2 + ee2; i++, j++)
 		vect_add_at(v1, v2->data[v2->begin + i], s1 + j);
 
-done:
+DONE_PROCESSING:
 #if (ZVECT_THREAD_SAFE == 1)
 	if (lock_owner)
 		check_mutex_unlock(v1, 2);
@@ -2297,7 +2298,7 @@ done:
  *          position 10) into vector v1, use:
  * vect_move(v1, v2, 10, 10, 5);
  */
-void vect_move(const vector v1, vector v2, const zvect_index s2,
+void vect_move(vector const v1, vector v2, const zvect_index s2,
                const zvect_index e2) {
 #if (ZVECT_THREAD_SAFE == 1)
 	zvect_retval lock_owner = check_mutex_lock(v1, 2);
@@ -2306,19 +2307,19 @@ void vect_move(const vector v1, vector v2, const zvect_index s2,
 	// check if the vectors v1 and v2 exist:
 	zvect_retval rval = p_vect_check(v1) | p_vect_check(v2);
 	if (rval)
-		goto done;
+		goto DONE_PROCESSING;
 
 	// We can only copy vectors with the same data_size!
 	if (v1->data_size != v2->data_size) {
 		rval = ZVERR_VECTDATASIZE;
-		goto done;
+		goto DONE_PROCESSING;
 	}
 
 	// Let's check if the indexes provided are correct for
 	// v2:
 	if ((e2 > v2->data_size) || (s2 > p_vect_size(v2))) {
 		rval = ZVERR_IDXOUTOFBOUND;
-		goto done;
+		goto DONE_PROCESSING;
 	}
 
 	// If the user specified 0 max_elements then
@@ -2343,7 +2344,7 @@ void vect_move(const vector v1, vector v2, const zvect_index s2,
 	for (register zvect_index i = s2; i <= s2 + ee2; i++)
 		vect_delete_at(v2, i);
 
-done:
+DONE_PROCESSING:
 #if (ZVECT_THREAD_SAFE == 1)
 	if (lock_owner)
 		check_mutex_unlock(v1, 2);
@@ -2352,7 +2353,7 @@ done:
 		p_throw_error(rval, NULL);
 }
 
-void vect_merge(const vector v1, vector v2) {
+void vect_merge(vector const v1, vector v2) {
 #if (ZVECT_THREAD_SAFE == 1)
 	zvect_retval lock_owner = check_mutex_lock(v1, 2);
 #endif
@@ -2360,12 +2361,12 @@ void vect_merge(const vector v1, vector v2) {
 	// check if the vector v1 exists:
 	zvect_retval rval = p_vect_check(v1) | p_vect_check(v2);
 	if (rval)
-		goto done;
+		goto DONE_PROCESSING;
 
 	// We can only copy vectors with the same data_size!
 	if (v1->data_size != v2->data_size) {
 		rval = ZVERR_VECTDATASIZE;
-		goto done;
+		goto DONE_PROCESSING;
 	}
 
 	// Set the correct capacity for v1 to get the whole v2:
@@ -2378,11 +2379,14 @@ void vect_merge(const vector v1, vector v2) {
 	// Update v1 size:
 	v1->end += p_vect_size(v2);
 
-done:
+DONE_PROCESSING:
 #if (ZVECT_THREAD_SAFE == 1)
 	if (lock_owner)
 		check_mutex_unlock(v1, 2);
 #endif
+
+	if(rval)
+		p_throw_error(rval, NULL);
 
 	// Because we are merging two vectors in one
 	// after merged v2 to v1 there is no need for
