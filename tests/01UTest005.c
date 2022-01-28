@@ -25,7 +25,7 @@
 #define MAX_ITEMS 100
 #define MAX_MSG_SIZE 72
 
-// Initialise Random Gnerator
+// Initialise Random Generator
 static uint32_t mySeed = 25011984;
 
 
@@ -138,7 +138,7 @@ int main()
 
 		for (i = 0; i < MAX_ITEMS; i++) {
 			// Let's retrieve the value from the vector correctly:
-			// For beginners: this is how in C we convert back a void * into the original dtata_type
+			// For beginners: this is how in C we convert back a void * into the original data_type
 			QueueItem *item = (QueueItem *)vect_remove_front(v);
 
 			// Let's test if the value we have retrieved is correct:
