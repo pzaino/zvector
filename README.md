@@ -147,6 +147,16 @@ I'll add support for other compilers when I'll have time.
 
 For more details, pre-requisites and whatnot please check the User Guide [here](https://paolozaino.wordpress.com/2021/07/27/software-development-zvector-an-ansi-c-open-source-vector-library/)
 
+## Performance
+ZVector is already really fast, however if one wants to gain even more performance out o fit you can try to use it in conjunction with jemalloc or other fast memory allocation algorithms like tcmalloc etc.
+
+To have an idea of the performance you can use th efollowing tests that come with ZVector:
+
+- 02ITest004 This test spinds 32 threads, 16 producers and 16 consumers and they all work in concurrency. If you have a look at the test code, ZVector handles all the complexity of using multi-threading, so one can simply use local structures and let ZVector deal with locking mechanisms and concurrency complexity. When you run this test using jemalloc or tcmalloc you reduce the critical sections time even more improving both performance and parallelism.
+             You can easly increase th enumber of threads in this test to your like, need. Look at the source for more details.
+
+- 04PTestX All the tests thatstarts with 04PTest are generic performance tests and they try to measure specific costs of each activity in the library.
+
 ## Can I use it in my own commercial applications?
 Yes, absolutely. The library is distributed with the MIT license, so please have a look at the [LICENSE](./LICENSE) file for details.
 
