@@ -425,7 +425,7 @@ static void p_free_items(vector const v, zvect_index first, zvect_index offset) 
 	if (p_vect_size(v) == 0)
 		return;
 
-	for (register zvect_index j = (first + offset); j--;) {
+	for (register zvect_index j = (first + offset); j >= first; j--) {
 		if (v->data[v->begin + j] != NULL) {
 			if (v->flags & ZV_SEC_WIPE)
 				p_item_safewipe(v, v->data[v->begin + j]);
@@ -535,7 +535,7 @@ static zvect_retval p_vect_decrease_capacity(vector const v, const zvect_index d
 		if (new_data == NULL)
 			return ZVERR_OUTOFMEM;
 
-		nb = ( new_capacity >> 1 );
+		nb = ( new_capacity >> 1);
 		ne = ( nb + (v->end - v->begin) );
 		p_vect_memcpy(new_data + nb, v->data + v->begin, sizeof(void *) * (v->end - v->begin) );
 	} else {
@@ -1785,7 +1785,7 @@ static void p_vect_qsort(vector v, zvect_index low, zvect_index high,
 // it fundamentally uses the 3 ways partitioning adapted and improved
 // to deal with arrays of pointers together with having a custom
 // compare function:
-static void p_vect_qsort(vector const v, zvect_index l, zvect_index r,
+static void p_vect_qsort(const vector v, zvect_index l, zvect_index r,
                         int (*compare_func)(const void *, const void *)) {
 	if (r <= l)
 	    return;
@@ -1835,7 +1835,7 @@ static void p_vect_qsort(vector const v, zvect_index l, zvect_index r,
 }
 #endif // ! TRADITIONAL_QSORT
 
-void vect_qsort(vector const v, int (*compare_func)(const void *, const void *)) {
+void vect_qsort(const vector v, int (*compare_func)(const void *, const void *)) {
 #if (ZVECT_THREAD_SAFE == 1)
 	zvect_retval lock_owner = check_mutex_lock(v, 1);
 #endif
