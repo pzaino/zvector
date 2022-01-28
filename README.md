@@ -98,7 +98,7 @@ The user decides which type of items (between regular base types or custom types
 
 Properties can be expressed as a set of flags, for example: ZV_BYREF | ZV_SEC_WIPE will set a vector with both these two properties on. Turning on a property simply means asking ZVector to automatically deal with that specific property. So enabling ZV_SEC_WIPE means that ZVector itself will handle secure data wipe of the data stored in a vector when such data is no longer needed.
 
-When a vector gets extended it may also gets its data copied into the new larger vector, however, to improve performances, ZVector only maintains and copies an array of pointers to such data (so the actual user data is untouched) and the functions that perform such copy are optimised for memory bandwidth to improve performance.
+When a vector gets extended it may also gets its data copied into the new larger vector, however, to improve performances, ZVector only maintains and copies an array of pointers to such data (so the actual user data is untouched) and the functions that perform such copy are optimized for memory bandwidth to improve performance.
 
 ## How do I use it?
 To learn the API have a look at the `zvector.h` file in the `src` directory. To learn how to use it have a look at the Unit Test code in tests.
@@ -148,14 +148,18 @@ I'll add support for other compilers when I'll have time.
 For more details, pre-requisites and whatnot please check the User Guide [here](https://paolozaino.wordpress.com/2021/07/27/software-development-zvector-an-ansi-c-open-source-vector-library/)
 
 ## Performance
-ZVector is already really fast, however if one wants to gain even more performance out o fit you can try to use it in conjunction with jemalloc or other fast memory allocation algorithms like tcmalloc etc.
+ZVector is already really fast, however if one wants to gain even more performance out of it you can try to use it in conjunction with jemalloc or other fast memory allocation algorithms like tcmalloc etc.
 
-To have an idea of the performance you can use th efollowing tests that come with ZVector:
+To have an idea of the performance you can use the following tests that come with ZVector:
 
-- 02ITest004 This test spinds 32 threads, 16 producers and 16 consumers and they all work in concurrency. If you have a look at the test code, ZVector handles all the complexity of using multi-threading, so one can simply use local structures and let ZVector deal with locking mechanisms and concurrency complexity. When you run this test using jemalloc or tcmalloc you reduce the critical sections time even more improving both performance and parallelism.
-             You can easly increase th enumber of threads in this test to your like, need. Look at the source for more details.
+- 02ITest004 This test spins 32 threads, 16 producers and 16 consumers and they all work in concurrency. If you have a look at the test code, ZVector handles all the complexity of using multi-threading, so one can simply use local structures and let ZVector deal with locking mechanisms and concurrency complexity. When you run this test using jemalloc or tcmalloc you reduce the critical sections time even more improving both performance and parallelism.
+             You can easily increase the number of threads in this test to your like, need. Look at the source for more details.
 
-- 04PTestX All the tests thatstarts with 04PTest are generic performance tests and they try to measure specific costs of each activity in the library.
+- 04PTestX All the tests that starts with 04PTest are generic performance tests and they try to measure specific costs of each activity in the library.
+
+If you do not need the Thread Safe code in your own projects, then you can disable it from the Makefile (have a look at the file for details). Disabling the Thread Safe code will make the library even faster.
+
+If you do not need all the features offered by the library you can disable subsets of the features. This will allow the library binary to be even smaller than it is now (on an ARM it's roughly 40KB) and that can help with caching the entire library.
 
 ## Can I use it in my own commercial applications?
 Yes, absolutely. The library is distributed with the MIT license, so please have a look at the [LICENSE](./LICENSE) file for details.
