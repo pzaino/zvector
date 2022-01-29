@@ -142,7 +142,11 @@ Don't worry, in both cases the actual data contained in your reference will be c
 For the complete and up-to-date User Guide please click [here](https://paolozaino.wordpress.com/2021/07/27/software-development-zvector-an-ansi-c-open-source-vector-library/).
 
 ## How do I build it?
-if you have GCC installed then use the Makefile provided, to build:
+
+### GCC or CLang
+This has been tested on different Linux distributions, Apple macOS, FreeBSD, NetBSD, OpenBSD. It should also work on Free RTOS and ARM Embed OS.
+
+if you have GCC or CLang installed then use the Makefile provided, to build:
 
 ```
 make
@@ -159,6 +163,14 @@ To install the static library and headers use:
 ```
 make install
 ```
+
+Note for CLang users on Linux: please check the Makefile before trying to build with clang and replace the value of variable `CC:=gcc` with `CC:=clang`.
+
+### Visual Studio
+If you use Microsoft Windows, then you can open the project in Visual Studio 2019 or 2022 and build it using Visual Studio Build function.
+
+### Other C Compilers
+At the moment I started to add support for different compilers which include NORCROFT C, HPC, IBM C and quite few others which should also allow to use ZVector on Operating Systems like OS/2 (Arka OS), Haiku OS, RISC OS, old Windows, Amiga OS, Atari TOS / EmuTOS, OS-9, IBM AIX and AS-400 and more.
 
 I'll add support for other compilers when I'll have time.
 
