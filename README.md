@@ -163,6 +163,15 @@ If you do not need the Thread Safe code in your own projects, then you can disab
 
 If you do not need all the features offered by the library you can disable subsets of the features. This will allow the library binary to be even smaller than it is now (on an ARM it's roughly 40KB) and that can help with caching the entire library.
 
+## How small can I make this library?
+So, if you want to use it for embedded software developments and IoT, I have shrunk release 1.0.0 RC7 down to 17KB on ARM AArch64.
+
+To achieve similar results, you just need to configure the Makefile as follows:
+
+- Replace the values in P_CFLAGS with just -Os if you're using GCC or clang
+- Disable ALL the extensions in the extension section of the Makefile
+- Compile as explained above and check the results
+
 ## Can I use it in my own commercial applications?
 Yes, absolutely. The library is distributed with the MIT license, so please have a look at the [LICENSE](./LICENSE) file for details.
 
