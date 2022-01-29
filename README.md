@@ -139,6 +139,8 @@ One important note for beginners is that whenever you try to store some data in 
 
 Don't worry, in both cases the actual data contained in your reference will be copied (aka stored) in the vector (unless you've specified as your vector's property ZV_BYREF), so if you free your reference or leave the function that defined it (as long as the vector scope is above such function), the data you've stored in the vector will persist.
 
+For the complete and up-to-date User Guide please click [here](https://paolozaino.wordpress.com/2021/07/27/software-development-zvector-an-ansi-c-open-source-vector-library/).
+
 ## How do I build it?
 if you have GCC installed then use the Makefile provided, to build:
 
@@ -165,7 +167,7 @@ For more details, pre-requisites and whatnot please check the User Guide [here](
 ## Performance
 ZVector is already really fast, however, if one wants to gain even more performance out of it, you can try to use it in conjunction with jemalloc or other fast memory allocation algorithms like tcmalloc etc.
 
-Please note: when using libraries like jemalloc and similar, performance improvements will depends a lot on the system architecture you're using to test your code. So, do not expect the same performance improvements on an old Atom CPU compared to a more modern AMD Zen3 ;)
+Please note: when using libraries like jemalloc and similar, performance improvements will depend a lot on the system architecture you're using to test your code. So, do not expect the same performance improvements on an old Atom CPU compared to a more modern AMD Zen3 ;)
 
 To have an idea of the performance you can use the following tests that come with ZVector:
 
