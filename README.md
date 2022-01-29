@@ -139,6 +139,8 @@ One important note for beginners is that whenever you try to store some data in 
 
 Don't worry, in both cases the actual data contained in your reference will be copied (aka stored) in the vector (unless you've specified as your vector's property ZV_BYREF), so if you free your reference or leave the function that defined it (as long as the vector scope is above such function), the data you've stored in the vector will persist.
 
+For the complete and up-to-date User Guide please click [here](https://paolozaino.wordpress.com/2021/07/27/software-development-zvector-an-ansi-c-open-source-vector-library/).
+
 ## How do I build it?
 if you have GCC installed then use the Makefile provided, to build:
 
