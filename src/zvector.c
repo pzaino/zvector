@@ -455,11 +455,11 @@ static zvect_retval p_vect_increase_capacity(vector const v, const zvect_index d
 	zvect_index new_capacity;
 
 	void **new_data = NULL;
-	zvect_index nb = 0;
-	zvect_index ne = 0;
 	if (!direction)
 	{
 		// Increase capacity on the left side of the vector:
+		zvect_index nb;
+		zvect_index ne;
 
 		// Get actual left capacity and double it
 		// Note: "<< 1" is the same as "* 2"
@@ -474,7 +474,15 @@ static zvect_retval p_vect_increase_capacity(vector const v, const zvect_index d
 		nb = v->cap_left;
 		ne = ( nb + (v->end - v->begin) );
 		p_vect_memcpy(new_data + nb, v->data + v->begin, sizeof(void *) * (v->end - v->begin) );
+
+		// Reconfigure vector:
+		v->cap_left = new_capacity;
+		v->end = ne;
+		v->begin = nb;
+		free(v->data);
+
 	} else {
+
 		// Increase capacity on the right side of the vector:
 
 		// Get actual left capacity and double it
@@ -486,19 +494,12 @@ static zvect_retval p_vect_increase_capacity(vector const v, const zvect_index d
 		new_data = (void **)realloc(v->data, sizeof(void *) * (v->cap_left + new_capacity));
 		if (new_data == NULL)
 			return ZVERR_OUTOFMEM;
-	}
 
-	// Apply changes and release memory
-	if (direction == 0)
-	{
-		v->cap_left = new_capacity;
-		v->end = ne;
-		v->begin = nb;
-		free(v->data);
-	} else {
+		// Reconfigure Vector:
 		v->cap_right = new_capacity;
 	}
 
+	// Apply changes
 	v->data = new_data;
 
 	// done
@@ -516,11 +517,12 @@ static zvect_retval p_vect_decrease_capacity(vector const v, const zvect_index d
 	zvect_index new_capacity;
 
 	void **new_data = NULL;
-	zvect_index nb = 0;
-        zvect_index ne = 0;
 	if (!direction)
 	{
 		// Decreasing on the left:
+		zvect_index nb;
+        	zvect_index ne;
+
 		// Note: ">> 1" is the same as "/ 2"
 		//       this is an optimisation for old
 		//       compilers.
@@ -538,7 +540,15 @@ static zvect_retval p_vect_decrease_capacity(vector const v, const zvect_index d
 		nb = ( new_capacity >> 1);
 		ne = ( nb + (v->end - v->begin) );
 		p_vect_memcpy(new_data + nb, v->data + v->begin, sizeof(void *) * (v->end - v->begin) );
+
+		// Reconfigure Vector:
+		v->cap_left = new_capacity;
+		v->end = ne;
+		v->begin = nb;
+		free(v->data);
+
 	} else {
+
 		// Decreasing on the right:
 		// Note: ">> 1" is the same as "/ 2"
 		//       this is an optimisation for old
@@ -553,19 +563,12 @@ static zvect_retval p_vect_decrease_capacity(vector const v, const zvect_index d
 		new_data = (void **)realloc(v->data, sizeof(void *) * (v->cap_left + new_capacity));
 		if (new_data == NULL)
 			return ZVERR_OUTOFMEM;
-	}
 
-	// Apply changes and release memory:
-	if (direction == 0)
-	{
-		v->cap_left = new_capacity;
-		v->end = ne;
-		v->begin = nb;
-		free(v->data);
-	} else {
+		// Reconfigure vector:
 		v->cap_right = new_capacity;
 	}
 
+	// Apply changes
 	v->data = new_data;
 
 	// done:
