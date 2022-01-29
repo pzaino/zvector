@@ -489,17 +489,17 @@ static zvect_retval p_vect_increase_capacity(vector const v, const zvect_index d
 	}
 
 	// Apply changes and release memory
-	if (!direction)
-		free(v->data);
-	v->data = new_data;
 	if (direction == 0)
 	{
 		v->cap_left = new_capacity;
 		v->end = ne;
 		v->begin = nb;
+		free(v->data);
 	} else {
 		v->cap_right = new_capacity;
 	}
+
+	v->data = new_data;
 
 	// done
 	return 0;
@@ -556,18 +556,17 @@ static zvect_retval p_vect_decrease_capacity(vector const v, const zvect_index d
 	}
 
 	// Apply changes and release memory:
-	if (!direction)
-		free(v->data);
-	v->data = new_data;
-
 	if (direction == 0)
 	{
 		v->cap_left = new_capacity;
 		v->end = ne;
 		v->begin = nb;
+		free(v->data);
 	} else {
 		v->cap_right = new_capacity;
 	}
+
+	v->data = new_data;
 
 	// done:
 	return 0;
