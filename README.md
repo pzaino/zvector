@@ -115,7 +115,22 @@ I wrote a full User Guide [here](https://paolozaino.wordpress.com/2021/07/27/sof
 
 When compile make sure you link your code to the libvector.a as shown in the Makefile for the Unit Tests (in `tests`).
 
-Before you can use a vector you need to create one using the function `vect_create([initial elements], sizeof([your data structure]), secure_wipe_true|false)`
+Before you can use a vector you need to create one using the function `vect_create([initial elements], sizeof([your data structure]), [property flags list])`
+
+Where:
+
+- `[initial elements]` is an integer number, for example 16
+
+- `[your data structure]` is the name of your data structure that you want to store in the vector and correct C modifiers to ensure sizeof returns the correct size of your data structure or base type.
+
+- `[property flags list]` is a set of flags that will set the properties of your vector in a typical C flag set fashion, fo rexample: `ZV_BYREF | ZV_SEC_WIPE`
+
+Example:
+```
+vector v = vect_create(8, sizeof(int), ZV_SEC_WIPE);
+```
+
+Will create a vector with an initial size of 8 elements, that can store integer values and that has as property secure wipe set, so whenever you'll remove a number from your vector that original location will be securely wiped.
 
 One important note for beginners is that whenever you try to store some data in the vector, please remember:
 
