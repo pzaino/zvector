@@ -167,7 +167,7 @@ For more details, pre-requisites and whatnot please check the User Guide [here](
 ## Performance
 ZVector is already really fast, however, if one wants to gain even more performance out of it, you can try to use it in conjunction with jemalloc or other fast memory allocation algorithms like tcmalloc etc.
 
-Please note: when using libraries like jemalloc and similar, performance improvements will depends a lot on the system architecture you're using to test your code. So, do not expect the same performance improvements on an old Atom CPU compared to a more modern AMD Zen3 ;)
+Please note: when using libraries like jemalloc and similar, performance improvements will depend a lot on the system architecture you're using to test your code. So, do not expect the same performance improvements on an old Atom CPU compared to a more modern AMD Zen3 ;)
 
 To have an idea of the performance you can use the following tests that come with ZVector:
 
