@@ -2021,11 +2021,7 @@ void vect_add_ordered(vector const v, const void *value,
 #endif
 	// check if the vector exists:
 	zvect_retval rval = p_vect_check(v);
-	if (rval)
-		goto DONE_PROCESSING;
-
-	// Check parameters:
-	if (value == NULL)
+	if (rval || value == NULL)
 		goto DONE_PROCESSING;
 
 	// Few tricks to make it faster:
@@ -2083,11 +2079,7 @@ void vect_apply(vector const v, void (*f)(void *)) {
 #endif
 
 	zvect_retval rval = p_vect_check(v);
-	if (rval)
-		goto DONE_PROCESSING;
-
-	// Check parameters:
-	if (f == NULL)
+	if (rval || f == NULL)
 		goto DONE_PROCESSING;
 
 	// Process the vector:
@@ -2111,11 +2103,7 @@ void vect_apply_range(vector const v, void (*f)(void *), const zvect_index x,
 
 	// check if the vector exists:
 	zvect_retval rval = p_vect_check(v);
-	if (rval)
-		goto DONE_PROCESSING;
-
-	// Check parameters:
-	if (f == NULL)
+	if (rval || f == NULL)
 		goto DONE_PROCESSING;
 
 	if (x > p_vect_size(v) || y > p_vect_size(v))
@@ -2155,7 +2143,7 @@ void vect_apply_if(vector const v1, vector const v2, void (*f1)(void *),
 
 	// check if the vector exists:
 	zvect_retval rval = p_vect_check(v1) | p_vect_check(v2);
-	if (rval)
+	if (rval || f1 == NULL || f2 == NULL)
 		goto DONE_PROCESSING;
 
 	// Check parameters:
