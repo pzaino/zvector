@@ -192,6 +192,11 @@ If you do not need the Thread Safe code in your own projects, then you can disab
 
 If you do not need all the features offered by the library you can disable subsets of the features. This will allow the library binary to be even smaller than it is now (on an ARM it's roughly 40KB) and that can help with caching the entire library.
 
+## How much data can I store in this?
+ZVector by default uses unsigned int 32 bit (`uint32_t`)for the vector index (`vect_index`), so the amount of possible storage available per each vector is huge. If needed you can also reconfigure this using unsigned integers 64bit have a look at the file `zvect_config.h` for this.
+
+Of course for IoT, embedded devices and retrocomputing Operating Systems, you can change the default behavior to use smaller indexes too, for instance using unsigned int 16bit for old 16bit Architectures. Again changing this is really simple, just redefine the typedef for `zvect_index` in the `zvect_config.h`
+
 ## How small can I make this library?
 So, if you want to use it for embedded software developments and IoT, I have shrunk release 1.0.0 RC7 down to 17KB on ARM AArch64.
 

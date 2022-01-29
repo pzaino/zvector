@@ -78,3 +78,4 @@ typedef int32_t zvect_retval;
 #define ZVECT_SFMD_EXTENSIONS 1
 
 #endif  // SRC_ZVECTOR_CONFIG_H_
+
