@@ -52,8 +52,12 @@ int max_strLen = 16;
 
 #include <pthread.h>
 
-#define TOTAL_ITEMS 10000000
+// Please note: Increase the number of threads here below
+//              to measure scalability of ZVector on your
+//              system when using multi-threaded queues.
 #define MAX_THREADS 8
+
+#define TOTAL_ITEMS 10000000
 #define MAX_ITEMS TOTAL_ITEMS / ( MAX_THREADS / 2)
 #define MAX_MSG_SIZE 72
 pthread_t tid[MAX_THREADS]; // threads IDs
