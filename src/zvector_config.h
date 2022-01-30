@@ -21,8 +21,10 @@
 // Data alignement configuration
 #if ( ZVECT_COMPTYPE == 1 )
 #define ZVECT_DATAALIGN __attribute__((aligned))
+#define ZVECT_PACKING __attribute__((__packed__))
 #else
 #define ZVECT_DATAALIGN
+#define ZVECT_PACKING
 #endif
 
 // Default vector Index type

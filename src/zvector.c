@@ -102,7 +102,7 @@ enum {
 
 // This is ZVector core data structure, it is the structure of a ZVector vector :)
 // Please note: fields order is based on "most used fields" to help a bit with cache
-struct p_vector {
+struct ZVECT_PACKING p_vector {
 	zvect_index cap_left;		// - Max capacity allocated on the left.
 	zvect_index cap_right;		// - Max capacity allocated on the right.
 	zvect_index begin;		// - First vector's Element Pointer
