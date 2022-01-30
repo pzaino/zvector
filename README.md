@@ -177,7 +177,11 @@ I'll add support for other compilers when I'll have time.
 For more details, pre-requisites and whatnot please check the User Guide [here](https://paolozaino.wordpress.com/2021/07/27/software-development-zvector-an-ansi-c-open-source-vector-library/)
 
 ## Performance
-ZVector is already really fast, however, if one wants to gain even more performance out of it, you can try to use it in conjunction with jemalloc or other fast memory allocation algorithms like tcmalloc etc.
+ZVector is already really fast, however, if one wants to gain even more performance out of it, you can:
+
+* Create large arrays from the beginning
+* If your app is multi-threaded and does a lot of sequential calls to vect_add or vect_remove then try to use the user locks before starting your loop of calls to vect_add or vect_remove. To use the user locks have a look at the User Guide for the function vect_lock() and vect_unlock().
+* Try to use ZVector in conjunction with jemalloc or other fast memory allocation algorithms like tcmalloc etc.
 
 Please note: when using libraries like jemalloc and similar, performance improvements will depend a lot on the system architecture you're using to test your code. So, do not expect the same performance improvements on an old Atom CPU compared to a more modern AMD Zen3 ;)
 
