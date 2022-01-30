@@ -185,7 +185,7 @@ ZVector is already really fast, however, if one wants to gain even more performa
 
 Please note: when using libraries like jemalloc and similar, performance improvements will depend a lot on the system architecture you're using to test your code. So, do not expect the same performance improvements on an old Atom CPU compared to a more modern AMD Zen3 ;)
 
-To have an idea of the performance you can use the following tests that come with ZVector:
+To have an idea of the performance, you can use the following tests that come with ZVector:
 
 - 02ITest004 This test spins 32 threads, 16 producers and 16 consumers and they all work in concurrency. If you have a look at the test code, ZVector handles all the complexity of using multi-threading, so one can simply use local structures and let ZVector deal with locking mechanisms and concurrency complexity. When you run this test using jemalloc or tcmalloc you reduce the critical sections time even more improving both performance and parallelism.
              You can easily increase the number of threads in this test to your like, need. Look at the source for more details.
