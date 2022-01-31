@@ -658,7 +658,7 @@ static inline zvect_retval p_vect_put_at(vector const v, const void *value,
 
 // inline implementation for all add(s):
 static inline zvect_retval p_vect_add_at(vector const v, const void *value,
-                                const zvect_index i, const int32_t action) {
+                                const zvect_index i) {
 	// If the vector is circular then use vect_put_at
 	// instead:
 	if (v->flags & ZV_CIRCULAR)
@@ -668,15 +668,6 @@ static inline zvect_retval p_vect_add_at(vector const v, const void *value,
 
 	// Get vector size:
 	zvect_index vsize = p_vect_size(v);
-
-	// Check if the provided index is out of bounds:
-	if (idx > vsize)
-	{
-		if (action == 0)
-			return ZVERR_IDXOUTOFBOUND;
-		else
-			idx = vsize - 1;
-	}
 
 #if (ZVECT_FULL_REENTRANT == 1)
 	// If we are in FULL_REENTRANT MODE prepare for potential
@@ -726,7 +717,7 @@ static inline zvect_retval p_vect_add_at(vector const v, const void *value,
 		if (idx > 0)
 			p_vect_memcpy(new_data + base, v->data + base, sizeof(void *) * idx);
 		p_vect_memcpy(new_data + base + (idx + 1), v->data + base + idx,
-			    sizeof(void *) * (p_vect_size(v) - idx));
+			    sizeof(void *) * (vsize - idx));
 #else
 		// We can't use the vect_memcpy when not in full reentrant code
 		// because it's not safe to use it on the same src and dst.
@@ -789,26 +780,17 @@ static inline zvect_retval p_vect_add_at(vector const v, const void *value,
 }
 
 // This is the inline implementation for all the remove and pop
-static inline zvect_retval p_vect_remove_at(vector const v, const zvect_index i, const int32_t action, void **item) {
+static inline zvect_retval p_vect_remove_at(vector const v, const zvect_index i, void **item) {
 	zvect_index idx = i;
 
 	// Get the vector size:
 	zvect_index vsize = p_vect_size(v);
 
-	// If the vector is empty just return null
-	if (vsize == 0)
-		return 0;
-
 	// Check if the index is out of bounds:
 	if (!(v->flags & ZV_CIRCULAR))
 	{
 		if (idx >= vsize)
-		{
-			if (action == 0)
-				return ZVERR_IDXOUTOFBOUND;
-			else
-				idx = vsize - 1;
-		}
+			return ZVERR_IDXOUTOFBOUND;
 	} else {
 		if (idx >= vsize)
 			idx = idx % vsize;
@@ -1264,7 +1246,7 @@ inline void vect_push(const vector v, const void *value) {
 
 	zvect_retval rval = p_vect_check(v);
 	if (!rval)
-		rval = p_vect_add_at(v, value, p_vect_size(v), -1);
+		rval = p_vect_add_at(v, value, p_vect_size(v));
 
 #if (ZVECT_THREAD_SAFE == 1)
 	if (lock_owner)
@@ -1282,7 +1264,7 @@ void vect_add(const vector v, const void *value) {
 
 	zvect_retval rval = p_vect_check(v);
 	if (!rval)
-		rval = p_vect_add_at(v, value, p_vect_size(v), -1);
+		rval = p_vect_add_at(v, value, p_vect_size(v));
 
 #if (ZVECT_THREAD_SAFE == 1)
 	if (lock_owner)
@@ -1299,8 +1281,13 @@ void vect_add_at(const vector v, const void *value, const zvect_index i) {
 #endif
 
 	zvect_retval rval = p_vect_check(v);
-	if (!rval)
-		rval = p_vect_add_at(v, value, i, 0);
+	if (!rval) {
+		// Check if the provided index is out of bounds:
+		if (i > p_vect_size(v))
+			rval = ZVERR_IDXOUTOFBOUND;
+		else
+			rval = p_vect_add_at(v, value, i);
+	}
 
 #if (ZVECT_THREAD_SAFE == 1)
 	if (lock_owner)
@@ -1318,7 +1305,7 @@ void vect_add_front(vector const v, const void *value) {
 
 	zvect_retval rval = p_vect_check(v);
 	if (!rval)
-		rval = p_vect_add_at(v, value, 0, -1);
+		rval = p_vect_add_at(v, value, 0);
 
 #if (ZVECT_THREAD_SAFE == 1)
 	if (lock_owner)
@@ -1429,8 +1416,8 @@ inline void *vect_pop(vector const v) {
 
 	void *item = NULL;
 	zvect_retval rval = p_vect_check(v);
-	if (!rval)
-		rval = p_vect_remove_at(v, p_vect_size(v) - 1, -1, &item);
+	if (!rval && (p_vect_size(v) != 0))
+		rval = p_vect_remove_at(v, p_vect_size(v) - 1, &item);
 
 #if (ZVECT_THREAD_SAFE == 1)
 	if (lock_owner)
@@ -1449,8 +1436,8 @@ void *vect_remove(vector const v) {
 
 	void *item = NULL;
 	zvect_retval rval = p_vect_check(v);
-	if (!rval)
-		rval = p_vect_remove_at(v, p_vect_size(v) - 1, -1, &item);
+	if (!rval && (p_vect_size(v) != 0))
+		rval = p_vect_remove_at(v, p_vect_size(v) - 1, &item);
 
 #if (ZVECT_THREAD_SAFE == 1)
 	if (lock_owner)
@@ -1469,8 +1456,8 @@ void *vect_remove_at(vector const v, const zvect_index i) {
 
 	void *item = NULL;
 	zvect_retval rval = p_vect_check(v);
-	if (!rval)
-		rval = p_vect_remove_at(v, i, 0, &item);
+	if (!rval && (p_vect_size(v) != 0))
+		rval = p_vect_remove_at(v, i, &item);
 
 #if (ZVECT_THREAD_SAFE == 1)
 	if (lock_owner)
@@ -1489,8 +1476,8 @@ void *vect_remove_front(vector const v) {
 
 	void *item = NULL;
 	zvect_retval rval = p_vect_check(v);
-	if (!rval)
-		rval = p_vect_remove_at(v, 0, 0, &item);
+	if (!rval && (p_vect_size(v) != 0))
+		rval = p_vect_remove_at(v, 0, &item);
 
 #if (ZVECT_THREAD_SAFE == 1)
 	if (lock_owner)
