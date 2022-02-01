@@ -1258,7 +1258,7 @@ inline void vect_push(const vector v, const void *value) {
 	// If the vector is circular then use vect_put_at
 	// instead:
 	if (v->flags & ZV_CIRCULAR)
-		return p_vect_put_at(v, value, p_vect_size(v));
+		rval = p_vect_put_at(v, value, p_vect_size(v));
 
 #if (ZVECT_THREAD_SAFE == 1)
 	zvect_retval lock_owner = check_mutex_lock(v, 1);
@@ -1308,7 +1308,7 @@ void vect_add_at(const vector v, const void *value, const zvect_index i) {
 	// If the vector is circular then use vect_put_at
 	// instead:
 	if (v->flags & ZV_CIRCULAR)
-		return p_vect_put_at(v, value, i);
+		rval = p_vect_put_at(v, value, i);
 
 #if (ZVECT_THREAD_SAFE == 1)
 	zvect_retval lock_owner = check_mutex_lock(v, 1);
@@ -1352,7 +1352,7 @@ void vect_add_front(vector const v, const void *value) {
 	// If the vector is circular then use vect_put_at
 	// instead:
 	if (v->flags & ZV_CIRCULAR)
-		return p_vect_put_at(v, value, 0);
+		rval = p_vect_put_at(v, value, 0);
 
 #if (ZVECT_THREAD_SAFE == 1)
 	zvect_retval lock_owner = check_mutex_lock(v, 1);
