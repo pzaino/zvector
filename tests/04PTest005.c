@@ -40,6 +40,8 @@
 #endif
 #include ZVECTORH
 
+// #define DEBUG
+
 // Setup tests:
 char *testGrp = "005";
 uint8_t testID = 4;
@@ -58,7 +60,7 @@ int max_strLen = 16;
 #define MAX_THREADS 8
 
 #define TOTAL_ITEMS 10000000
-#define MAX_ITEMS TOTAL_ITEMS / ( MAX_THREADS / 2)
+#define MAX_ITEMS (TOTAL_ITEMS / ( MAX_THREADS / 2))
 #define MAX_MSG_SIZE 72
 pthread_t tid[MAX_THREADS]; // threads IDs
 
@@ -69,10 +71,9 @@ struct thread_args {
 
 typedef struct QueueItem {
 	uint32_t eventID;
-	char msg[MAX_MSG_SIZE];
 	uint32_t priority;
+	char msg[MAX_MSG_SIZE];
 } QueueItem;
-
 
 
 // Generates random strings of chars:
@@ -112,24 +113,35 @@ void *producer(void *arg) {
 		QueueItem qi;
 		memset(qi.msg, 65, MAX_MSG_SIZE);
 		qi.priority = 0;
-		vect_lock(v);
-		CCPAL_START_MEASURING;
+
+		vector v2 = vect_create(MAX_ITEMS, sizeof(struct QueueItem), ZV_NONE);
+
+		vect_lock(v2);
 		for (i = 0; i < MAX_ITEMS; i++)
 		{
 			qi.eventID = ((id*MAX_ITEMS)+1)+i;
 
 			// Let's add a new item in the queue:
-			vect_add(v, &qi);
+			vect_add(v2, &qi);
 		}
+		vect_unlock(v2);
+
+		vect_lock(v);
+		CCPAL_START_MEASURING;
+		vect_merge(v, v2);
 		CCPAL_STOP_MEASURING;
 		vect_unlock(v);
 
-	printf("Producer thread %i done. Produced %d events.\n", id, i);
-	fflush(stdout);
+		printf("Producer thread %i done. Produced %d events.\n", id, i);
+		printf("--- Events in the queue right now: %*i ---\n", 4, vect_size(v));
 
-	// Returns perf analysis results:
-	CCPAL_REPORT_ANALYSIS;
-	fflush(stdout);
+		// Returns perf analysis results:
+		printf("Time spent on shared vector operations:\n");
+		CCPAL_REPORT_ANALYSIS;
+
+		printf("\n\n");
+		fflush(stdout);
+
 
 	pthread_exit(NULL);
 	return NULL;
@@ -149,38 +161,70 @@ void *consumer(void *arg) {
 
 		uint32_t i;
 		QueueItem *item = (QueueItem *)malloc(sizeof(QueueItem *));
-		int fetched_item = 0;
-		int missed = 0;
-		vect_lock(v);
-		CCPAL_START_MEASURING;
-		for (i = 0; i < MAX_ITEMS;) {
+		vector v2 = vect_create(MAX_ITEMS*2, sizeof(struct QueueItem), ZV_NONE);
+		//uint64_t retry = 0;
+		//int x = 0;
+		zvect_index vsize = 0;
 
-			if (!vect_is_empty(v))
-			{
-				item = (QueueItem *)vect_remove_front(v);
-				fetched_item=1;
-			} else {
-				fetched_item= 0;
-				missed++;
-			}
-
-			if ( fetched_item == 1 )
-			{
-				evt_counter++;
-				i++;
-			} else if ( missed > 1000000 )
-				break;
-
+		// Wait for a chunk of messages to be available:
+		while (true) {
+			if (vect_trylock(v)) {
+				vsize = vect_size(v);
+				if ( vsize >= MAX_ITEMS )
+				{
+#ifdef DEBUG
+					printf("Boom!\n");
+					fflush(stdout);
+#endif
+					CCPAL_START_MEASURING;
+					vect_move(v2, v, 0, MAX_ITEMS);
+					CCPAL_STOP_MEASURING;
+#ifdef DEBUG
+					printf("About to start processing a chunk of messages\n");
+					fflush(stdout);
+#endif
+					vect_unlock(v);
+					// Ok, all good, we have our chunk of messages, let's
+					// start processing them:
+					goto START_JOB;
+				}
+				// No luck, let's remove the lock and repeat the process:
+				vect_unlock(v);
+			} /* else {
+				x=(x + 1) % 100;
+				if ( (x % 2) == 0 )
+					retry++;
+				if ( retry > TOTAL_ITEMS*10000 )
+					goto JOB_DONE;
+			}*/
 		}
-		CCPAL_STOP_MEASURING;
-		vect_unlock(v);
-		free(item);
+
+START_JOB:
+		printf("--- Consumer Thread %*i received a chunk of %*i messages ---\n\n", 3, id, 4, vect_size(v2));
+		//fflush(stdout);
+
+		evt_counter = 0;
+		vect_lock(v2);
+		for (i = 0; i++;) {
+			item  = (QueueItem *)vect_remove_front(v2);
+			if (item != NULL)
+				evt_counter++;
+			if (i >= MAX_ITEMS || vect_is_empty(v2))
+				break;
+		}
+		vect_unlock(v2);
+JOB_DONE:
+
+		if ( item != NULL )
+			free(item);
 
 	printf("Consumer thread %i done. Consumed %d events.\n", id, evt_counter);
-	fflush(stdout);
 
 	// Returns perf analysis results:
+	printf("Time spent on shared vector operations:\n");
 	CCPAL_REPORT_ANALYSIS;
+
+	printf("\n\n");
 	fflush(stdout);
 
 	pthread_exit(NULL);
@@ -191,12 +235,14 @@ int main() {
 	// Setup
 	srand((time(NULL) * max_strLen) + (++mySeed));
 
+	CCPAL_INIT_LIB;
+
 	printf("=== PTest%s ===\n", testGrp);
 	printf("Testing Dynamic QUEUES (MULTI thread, with many threads and passing complex data structures)\n");
 
 	fflush(stdout);
 
-	printf("Test %s_%d: Create a Queue of %*i initial elements capacity:\n", testGrp, testID, 8, TOTAL_ITEMS*2);
+	printf("Test %s_%d: Create a Queue of %*i initial capacity and use it with %*i messages:\n", testGrp, testID, 8, TOTAL_ITEMS*2, 8, TOTAL_ITEMS);
 	fflush(stdout);
 
 		vector v;
@@ -213,6 +259,7 @@ int main() {
 		int err = 0;
 		int i = 0;
 		struct thread_args *targs[MAX_THREADS+1];
+		CCPAL_START_MEASURING;
 		for (i=0; i < MAX_THREADS / 2; i++) {
 			targs[i]=(struct thread_args *)malloc(sizeof(struct thread_args));
 			targs[i]->id=i;
@@ -234,20 +281,26 @@ int main() {
 			pthread_join(tid[i], NULL);
 		}
 
+		CCPAL_STOP_MEASURING;
+
 		for(i=0; i < MAX_THREADS; i++) {
 			free(targs[i]);
 		}
 
-	printf("done.\n");
+	printf("Done.\n\nAll threads have completed their job.\n");
 	testID++;
 
+	fflush(stdout);
+
+	// Returns perf analysis results:
+	CCPAL_REPORT_ANALYSIS;
 	fflush(stdout);
 
 	// Allow the Producer and Consumer process
 	// To start properly:
 	//usleep(100);
 
-	printf("--- Events missed in the queue: %*i ---\n", 4, vect_size(v));
+	printf("--- Events missed in the queue: %*i ---\n\n", 4, vect_size(v));
 	fflush(stdout);
 
 	// Now wait until the Queue is empty:

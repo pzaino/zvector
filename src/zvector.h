@@ -164,7 +164,19 @@ void vect_lock_disable(void);
  * Example of use: To lock a vector called v
  * vect_lock(v);
  */
-void vect_lock(vector const v);
+int vect_lock(vector const v);
+
+/*
+ * vect_trylock will try to lock the given vector to
+ * have exclusive write access from your own thread.
+ * When you lock a vector directly then ZVector will
+ * NOT use its internal locking mechanism for that
+ * specific vector.
+ *
+ * Example of use: To lock a vector called v
+ * vect_trylock(v);
+ */
+int vect_trylock(vector const v);
 
 /*
  * vect_lock allows you to unlock the given vector that
@@ -173,7 +185,7 @@ void vect_lock(vector const v);
  * Example of use: To unlock a vector called v
  * vect_unlock(v);
  */
-void vect_unlock(vector const v);
+int vect_unlock(vector const v);
 #endif  // ( ZVECT_THREAD_SAFE == 1 )
 
 /////////////////////////////////////////////////////
