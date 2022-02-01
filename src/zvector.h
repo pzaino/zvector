@@ -201,7 +201,7 @@ int vect_unlock(vector const v);
  * 			corresponds  to  the top of a
  * 			Stack.
  */
-void vect_push(vector const v, const void *item);
+zvect_retval vect_push(vector const v, const void *item);
 
 /*
  * vect_pop(v)          "pops" (returns) the  element
@@ -225,7 +225,7 @@ void *vect_pop(vector const v);
  *                       the vector  v  at  the  end
  *                       (or back) of the  vector v.
  */
-void vect_add(vector const v, const void *item);
+zvect_retval vect_add(vector const v, const void *item);
 #define vect_push_back(x, y) vect_add(x, y)
 
 /*
@@ -237,7 +237,7 @@ void vect_add(vector const v, const void *item);
  * 			 of a position to  make space
  * 			 for the new item 4.
  */
-void vect_add_at(vector const v, const void *item, zvect_index index);
+zvect_retval vect_add_at(vector const v, const void *item, zvect_index index);
 
 /*
  * int i = 5;
@@ -250,7 +250,7 @@ void vect_add_at(vector const v, const void *item, zvect_index index);
  * 			 the new item 5 at  the front
  *			 of vector v.
  */
-void vect_add_front(vector const v, const void *item);
+zvect_retval vect_add_front(vector const v, const void *item);
 #define vect_push_front(x, y) vect_add_front(x, y)
 
 /*
