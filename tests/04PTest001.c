@@ -82,7 +82,7 @@ int main() {
 	fflush(stdout);
 
 		vector v;
-		v = vect_create(10, sizeof(int), ZV_BYREF);
+		v = vect_create(10, sizeof(int), ZV_BYREF | ZV_NOLOCKING);
 
 	printf("done.\n");
 	testID++;
@@ -91,13 +91,13 @@ int main() {
 
 	// Populate the vector and mesure how long it takes:
 #   if ( ZVECT_THREAD_SAFE == 1 )
-		vect_lock(v);
+		//vect_lock(v);
 #   endif
 
 		populate_vector(v);
 
 #   if ( ZVECT_THREAD_SAFE == 1 )
-    		vect_unlock(v);
+    		//vect_unlock(v);
 #   endif
 
 	printf("Test %s_%d: check if the size of the vector is now %d:\n", testGrp, testID, MAX_ITEMS);

@@ -56,6 +56,7 @@ enum ZVECT_PROPERTIES {
 	ZV_SEC_WIPE   = 1 << 0, // Sets the vector for automatic Secure Wipe of items.
 	ZV_BYREF      = 1 << 1, // Sets the vector to store items by reference instead of copying them as per default.
 	ZV_CIRCULAR   = 1 << 2, // Sets the vector to be a circular vector (so it will not grow in capacity automatically). Elements will be overwritten as in typical circular buffers!
+	ZV_NOLOCKING  = 1 << 3, // This Property means the vector will not use mutexes, be careful using it!
 };
 
 enum ZVECT_ERR {

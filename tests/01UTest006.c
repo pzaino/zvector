@@ -92,8 +92,8 @@ int main() {
 		"QueueItem for the vector data:\n",
 		testGrp, testID);
 
-		vector v1 = vect_create(2, sizeof(struct QueueItem), ZV_SEC_WIPE);
-		vector v2 = vect_create(2, sizeof(struct QueueItem), ZV_SEC_WIPE);
+		vector v1 = vect_create(2, sizeof(struct QueueItem), ZV_NONE | ZV_SEC_WIPE);
+		vector v2 = vect_create(2, sizeof(struct QueueItem), ZV_NONE | ZV_SEC_WIPE);
 
 	printf("done.\n");
 	testID++;

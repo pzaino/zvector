@@ -50,14 +50,14 @@ uint8_t testID = 4;
 
 // Initialise Random Generator
 static int mySeed = 25011984;
-int max_strLen = 16;
+int max_strLen = 32;
 
 #include <pthread.h>
 
 // Please note: Increase the number of threads here below
 //              to measure scalability of ZVector on your
 //              system when using multi-threaded queues.
-#define MAX_THREADS 8
+#define MAX_THREADS 6
 
 #define TOTAL_ITEMS 10000000
 #define MAX_ITEMS (TOTAL_ITEMS / ( MAX_THREADS / 2))
@@ -109,39 +109,45 @@ void *producer(void *arg) {
 	printf("Test %s_%d: Thread %*i, produce %*d events, store them in the queue and check if they are stored correctly:\n", testGrp, testID, 3, id, 4, MAX_ITEMS);
 	fflush(stdout);
 
+		CCPAL_START_MEASURING;
+
 		uint32_t i;
 		QueueItem qi;
-		memset(qi.msg, 65, MAX_MSG_SIZE);
 		qi.priority = 0;
 
-		vector v2 = vect_create(MAX_ITEMS, sizeof(struct QueueItem), ZV_NONE);
+		vector v2 = vect_create(MAX_ITEMS+(MAX_ITEMS/2), sizeof(struct QueueItem), ZV_NONE | ZV_NOLOCKING );
 
-		vect_lock(v2);
 		for (i = 0; i < MAX_ITEMS; i++)
 		{
+			// Generate message:
 			qi.eventID = ((id*MAX_ITEMS)+1)+i;
+			//clear_str(qi.msg, MAX_MSG_SIZE);
+			//mk_rndstr(qi.msg, max_strLen - 1);
+			memset(qi.msg, 65, max_strLen - 1);
 
-			// Let's add a new item in the queue:
+			// Enqueue message on the local queue:
 			vect_add(v2, &qi);
 		}
-		vect_unlock(v2);
 
 		vect_lock(v);
-		CCPAL_START_MEASURING;
-		vect_merge(v, v2);
-		CCPAL_STOP_MEASURING;
+
+			vect_merge(v, v2);
+
 		vect_unlock(v);
 
 		printf("Producer thread %i done. Produced %d events.\n", id, i);
 		printf("--- Events in the queue right now: %*i ---\n", 4, vect_size(v));
 
+		// No need to destroy v2, it was already destroyed automatically after the merge!
+
+		CCPAL_STOP_MEASURING;
+
 		// Returns perf analysis results:
-		printf("Time spent on shared vector operations:\n");
+		printf("Time spent to complete the thread vector operations:\n");
 		CCPAL_REPORT_ANALYSIS;
 
 		printf("\n\n");
 		fflush(stdout);
-
 
 	pthread_exit(NULL);
 	return NULL;
@@ -159,9 +165,11 @@ void *consumer(void *arg) {
 	printf("Test %s_%d: Thread %*i, consume %*d events from the queue in FIFO order:\n", testGrp, testID, 3, id, 4, MAX_ITEMS);
 	fflush(stdout);
 
+		CCPAL_START_MEASURING;
+
 		uint32_t i;
 		QueueItem *item = (QueueItem *)malloc(sizeof(QueueItem *));
-		vector v2 = vect_create(MAX_ITEMS*2, sizeof(struct QueueItem), ZV_NONE);
+		vector v2 = vect_create(MAX_ITEMS+(MAX_ITEMS/2), sizeof(struct QueueItem), ZV_NONE | ZV_NOLOCKING);
 		//uint64_t retry = 0;
 		//int x = 0;
 		zvect_index vsize = 0;
@@ -176,9 +184,9 @@ void *consumer(void *arg) {
 					printf("Boom!\n");
 					fflush(stdout);
 #endif
-					CCPAL_START_MEASURING;
+
 					vect_move(v2, v, 0, MAX_ITEMS);
-					CCPAL_STOP_MEASURING;
+
 #ifdef DEBUG
 					printf("About to start processing a chunk of messages\n");
 					fflush(stdout);
@@ -204,28 +212,32 @@ START_JOB:
 		//fflush(stdout);
 
 		evt_counter = 0;
-		vect_lock(v2);
-		for (i = 0; i++;) {
+		for (i = 0; i < MAX_ITEMS; i++) {
 			item  = (QueueItem *)vect_remove_front(v2);
 			if (item != NULL)
 				evt_counter++;
 			if (i >= MAX_ITEMS || vect_is_empty(v2))
 				break;
 		}
-		vect_unlock(v2);
-JOB_DONE:
 
+JOB_DONE:
+		printf("Last element in the queue for Consumer Thread %*i: ID (%*d) - Message: %s\n", 8, id, 8,
+				item->eventID, item->msg);
 		if ( item != NULL )
 			free(item);
 
 	printf("Consumer thread %i done. Consumed %d events.\n", id, evt_counter);
 
+	CCPAL_STOP_MEASURING;
+
 	// Returns perf analysis results:
-	printf("Time spent on shared vector operations:\n");
+	printf("Time spent to complete the thread work:\n");
 	CCPAL_REPORT_ANALYSIS;
 
 	printf("\n\n");
 	fflush(stdout);
+
+	vect_destroy(v2);
 
 	pthread_exit(NULL);
 	return NULL;
@@ -242,11 +254,11 @@ int main() {
 
 	fflush(stdout);
 
-	printf("Test %s_%d: Create a Queue of %*i initial capacity and use it with %*i messages:\n", testGrp, testID, 8, TOTAL_ITEMS*2, 8, TOTAL_ITEMS);
+	printf("Test %s_%d: Create a Queue of %*i initial capacity and use it with %*i messages:\n", testGrp, testID, 8, TOTAL_ITEMS+(TOTAL_ITEMS/2), 8, TOTAL_ITEMS);
 	fflush(stdout);
 
 		vector v;
-		v = vect_create(TOTAL_ITEMS*2, sizeof(struct QueueItem), ZV_NONE);
+		v = vect_create(TOTAL_ITEMS+(TOTAL_ITEMS/2), sizeof(struct QueueItem), ZV_NONE);
 
 	printf("done.\n");
 	testID++;
