@@ -59,9 +59,9 @@ int max_strLen = 32;
 //              system when using multi-threaded queues.
 #define MAX_THREADS 6
 
-#define TOTAL_ITEMS 10000000
+#define TOTAL_ITEMS 1000000
 #define MAX_ITEMS (TOTAL_ITEMS / ( MAX_THREADS / 2))
-#define MAX_MSG_SIZE 72
+#define MAX_MSG_SIZE 80
 pthread_t tid[MAX_THREADS]; // threads IDs
 
 struct thread_args {
@@ -115,8 +115,10 @@ void *producer(void *arg) {
 		QueueItem qi;
 		qi.priority = 0;
 
+		// Create a local vector (we'll use it as a partition)
 		vector v2 = vect_create(MAX_ITEMS+(MAX_ITEMS/2), sizeof(struct QueueItem), ZV_NONE | ZV_NOLOCKING );
 
+		// Populate the local vector with the messages:
 		for (i = 0; i < MAX_ITEMS; i++)
 		{
 			// Generate message:
@@ -129,12 +131,16 @@ void *producer(void *arg) {
 			vect_add(v2, &qi);
 		}
 
+		// Now merge the local partition to the shared vector:
 		vect_lock(v);
 
 			vect_merge(v, v2);
 
+			vect_send_signal(v);
+
 		vect_unlock(v);
 
+		// We're done, display some stats and terminate the thread:
 		printf("Producer thread %i done. Produced %d events.\n", id, i);
 		printf("--- Events in the queue right now: %*i ---\n", 4, vect_size(v));
 
@@ -170,27 +176,14 @@ void *consumer(void *arg) {
 		uint32_t i;
 		QueueItem *item = (QueueItem *)malloc(sizeof(QueueItem *));
 		vector v2 = vect_create(MAX_ITEMS+(MAX_ITEMS/2), sizeof(struct QueueItem), ZV_NONE | ZV_NOLOCKING);
-		//uint64_t retry = 0;
-		//int x = 0;
-		zvect_index vsize = 0;
 
 		// Wait for a chunk of messages to be available:
 		while (true) {
-			if (vect_trylock(v)) {
-				vsize = vect_size(v);
-				if ( vsize >= MAX_ITEMS )
+			if (vect_wait_for_signal(v)) {
+				vect_lock(v);
+				if ( vect_size(v) >= MAX_ITEMS )
 				{
-#ifdef DEBUG
-					printf("Boom!\n");
-					fflush(stdout);
-#endif
-
 					vect_move(v2, v, 0, MAX_ITEMS);
-
-#ifdef DEBUG
-					printf("About to start processing a chunk of messages\n");
-					fflush(stdout);
-#endif
 					vect_unlock(v);
 					// Ok, all good, we have our chunk of messages, let's
 					// start processing them:
@@ -198,31 +191,22 @@ void *consumer(void *arg) {
 				}
 				// No luck, let's remove the lock and repeat the process:
 				vect_unlock(v);
-			} /* else {
-				x=(x + 1) % 100;
-				if ( (x % 2) == 0 )
-					retry++;
-				if ( retry > TOTAL_ITEMS*10000 )
-					goto JOB_DONE;
-			}*/
+			}
 		}
 
 START_JOB:
 		printf("--- Consumer Thread %*i received a chunk of %*i messages ---\n\n", 3, id, 4, vect_size(v2));
-		//fflush(stdout);
 
 		evt_counter = 0;
 		for (i = 0; i < MAX_ITEMS; i++) {
 			item  = (QueueItem *)vect_remove_front(v2);
 			if (item != NULL)
 				evt_counter++;
-			if (i >= MAX_ITEMS || vect_is_empty(v2))
-				break;
 		}
 
-JOB_DONE:
-		printf("Last element in the queue for Consumer Thread %*i: ID (%*d) - Message: %s\n", 8, id, 8,
-				item->eventID, item->msg);
+		printf("Last element in the queue for Consumer Thread %*i: ID (%*d) - Message: %s\n",
+			8, id, 8, item->eventID, item->msg);
+
 		if ( item != NULL )
 			free(item);
 
