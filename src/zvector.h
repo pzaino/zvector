@@ -165,7 +165,7 @@ void vect_lock_disable(void);
  * Example of use: To lock a vector called v
  * vect_lock(v);
  */
-int vect_lock(vector const v);
+zvect_retval vect_lock(vector const v);
 
 /*
  * vect_trylock will try to lock the given vector to
@@ -177,7 +177,7 @@ int vect_lock(vector const v);
  * Example of use: To lock a vector called v
  * vect_trylock(v);
  */
-int vect_trylock(vector const v);
+zvect_retval vect_trylock(vector const v);
 
 /*
  * vect_lock allows you to unlock the given vector that
@@ -186,7 +186,12 @@ int vect_trylock(vector const v);
  * Example of use: To unlock a vector called v
  * vect_unlock(v);
  */
-int vect_unlock(vector const v);
+zvect_retval vect_unlock(vector const v);
+
+zvect_retval vect_wait_for_signal(const vector v);
+
+zvect_retval vect_send_signal(const vector v);
+
 #endif  // ( ZVECT_THREAD_SAFE == 1 )
 
 /////////////////////////////////////////////////////
