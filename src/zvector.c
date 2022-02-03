@@ -327,7 +327,7 @@ static inline void mutex_cond_init(pthread_cond_t *cond) {
 	pthread_condattr_setpshared(&Attr, PTHREAD_PROCESS_PRIVATE);
 	pthread_cond_init(cond, &Attr);
 #	else
-	pthread_mutex_init(lock, NULL);
+	pthread_mutex_init(cond, NULL);
 #	endif // macOS
 }
 
