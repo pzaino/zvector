@@ -50,18 +50,18 @@ uint8_t testID = 4;
 
 // Initialise Random Generator
 static int mySeed = 25011984;
-int max_strLen = 32;
+size_t max_strLen = 32;
 
 #include <pthread.h>
 
 // Please note: Increase the number of threads here below
 //              to measure scalability of ZVector on your
 //              system when using multi-threaded queues.
-#define MAX_THREADS 6
+#define MAX_THREADS 16
 
-#define TOTAL_ITEMS 1000000
+#define TOTAL_ITEMS 10000000
 #define MAX_ITEMS (TOTAL_ITEMS / ( MAX_THREADS / 2))
-#define MAX_MSG_SIZE 80
+#define MAX_MSG_SIZE 72
 pthread_t tid[MAX_THREADS]; // threads IDs
 
 struct thread_args {
@@ -118,27 +118,25 @@ void *producer(void *arg) {
 		// Create a local vector (we'll use it as a partition)
 		vector v2 = vect_create(MAX_ITEMS+(MAX_ITEMS/2), sizeof(struct QueueItem), ZV_NONE | ZV_NOLOCKING );
 
+		printf("Producer Thread %*i, address of v2 is: %p\n", 3, id, v2);
+		fflush(stdout);
+
 		// Populate the local vector with the messages:
 		for (i = 0; i < MAX_ITEMS; i++)
 		{
 			// Generate message:
 			qi.eventID = ((id*MAX_ITEMS)+1)+i;
-			//clear_str(qi.msg, MAX_MSG_SIZE);
-			//mk_rndstr(qi.msg, max_strLen - 1);
-			memset(qi.msg, 65, max_strLen - 1);
+			memset(qi.msg, 65+id, max_strLen - 1);
+			qi.msg[max_strLen]='\0';
 
 			// Enqueue message on the local queue:
 			vect_add(v2, &qi);
 		}
 
 		// Now merge the local partition to the shared vector:
-		vect_lock(v);
+		//vect_lock(v);
 
-			vect_merge(v, v2);
-
-			vect_send_signal(v);
-
-		vect_unlock(v);
+		vect_merge(v, v2);
 
 		// We're done, display some stats and terminate the thread:
 		printf("Producer thread %i done. Produced %d events.\n", id, i);
@@ -152,11 +150,24 @@ void *producer(void *arg) {
 		printf("Time spent to complete the thread vector operations:\n");
 		CCPAL_REPORT_ANALYSIS;
 
-		printf("\n\n");
+		//printf("Signal status %*i\n\n", 8, !vect_send_signal(v));
+		//printf("\n\n");
 		fflush(stdout);
+
+		//vect_unlock(v);
 
 	pthread_exit(NULL);
 	return NULL;
+}
+
+zvect_retval check_if_correct_size(void *v1, void *v2) {
+	vector v = (vector)v2;
+
+	if (vect_size((vector)v2) >= MAX_ITEMS )
+		return 1;
+
+	return 0;
+	(void)v1;
 }
 
 void *consumer(void *arg) {
@@ -174,41 +185,52 @@ void *consumer(void *arg) {
 		CCPAL_START_MEASURING;
 
 		uint32_t i;
-		QueueItem *item = (QueueItem *)malloc(sizeof(QueueItem *));
 		vector v2 = vect_create(MAX_ITEMS+(MAX_ITEMS/2), sizeof(struct QueueItem), ZV_NONE | ZV_NOLOCKING);
 
+		printf("Consumer Thread %*i, address of v2 is: %p\n", 3, id, v2);
+		fflush(stdout);
+
 		// Wait for a chunk of messages to be available:
+		//vect_wait_for_signal(v);
 		while (true) {
-			if (vect_wait_for_signal(v)) {
-				vect_lock(v);
-				if ( vect_size(v) >= MAX_ITEMS )
+			//if (vect_trylock(v))
+			//if (vect_wait_for_signal(v))
+			//{
+				//vect_lock(v);
+				//if ( vect_size(v) >= MAX_ITEMS )
+				if (!vect_move_if(v2, v, 0, MAX_ITEMS, check_if_correct_size))
 				{
-					vect_move(v2, v, 0, MAX_ITEMS);
-					vect_unlock(v);
+					//vect_move(v2, v, 0, MAX_ITEMS);
+					printf("Moved data from global vector to local, global vector size: %*i, local vector size: %*i\n", 8, vect_size(v), 8, vect_size(v2));
+					fflush(stdout);
+					//vect_unlock(v);
 					// Ok, all good, we have our chunk of messages, let's
 					// start processing them:
 					goto START_JOB;
 				}
+				//printf("Main Vector size: %*i\n", 8, vect_size(v));
+				//fflush(stdout);
 				// No luck, let's remove the lock and repeat the process:
-				vect_unlock(v);
-			}
+				//vect_unlock(v);
+			//}
 		}
 
 START_JOB:
 		printf("--- Consumer Thread %*i received a chunk of %*i messages ---\n\n", 3, id, 4, vect_size(v2));
 
+		QueueItem *item = (QueueItem *)malloc(sizeof(QueueItem *));
 		evt_counter = 0;
 		for (i = 0; i < MAX_ITEMS; i++) {
-			item  = (QueueItem *)vect_remove_front(v2);
+			item  = (QueueItem *)vect_remove(v2);
 			if (item != NULL)
 				evt_counter++;
+			//printf("thread %*i, item %*u\n", 10, id, 8, evt_counter);
 		}
 
 		printf("Last element in the queue for Consumer Thread %*i: ID (%*d) - Message: %s\n",
 			8, id, 8, item->eventID, item->msg);
 
-		if ( item != NULL )
-			free(item);
+		free(item);
 
 	printf("Consumer thread %i done. Consumed %d events.\n", id, evt_counter);
 

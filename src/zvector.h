@@ -190,6 +190,8 @@ zvect_retval vect_unlock(vector const v);
 
 zvect_retval vect_wait_for_signal(const vector v);
 
+zvect_retval vect_lock_after_signal(const vector v);
+
 zvect_retval vect_send_signal(const vector v);
 
 #endif  // ( ZVECT_THREAD_SAFE == 1 )
@@ -560,6 +562,24 @@ void vect_copy(vector const v1, vector const v2, zvect_index start, zvect_index 
  *                              the end of v1.
  */
 void vect_move(vector const v1, vector const v2, zvect_index start, zvect_index max_elements);
+
+/*
+ * vect_move_if is a function that allows to move a specified
+ * set of items from one vector to another if the condition
+ * returned by the function pointed by f2 function pointer
+ * is true.
+ * It will also re-organise the source vector and (obviously)
+ * expand the destination vector if needed.
+ * Please note: only vectors of the same data size can be moved
+ * one into the other!
+ *
+ * vect_move(v1, v2, 2, 2, check_data) will move items in v2 from the
+ *                              3rd item in v2 till the 5th at
+ *                              the end of v1 if check_data returns
+ * 				true.
+ */
+zvect_retval vect_move_if(vector const v1, vector v2, const zvect_index s2,
+               const zvect_index e2, zvect_retval (*f2)(void *, void *));
 
 /*
  * vect_merge is a function that merges together 2 vectors of
