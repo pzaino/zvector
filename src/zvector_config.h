@@ -18,13 +18,15 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-// Data alignement configuration
+// Data alignment configuration
 #if ( ZVECT_COMPTYPE == 1 )
 #define ZVECT_DATAALIGN __attribute__((aligned))
 #define ZVECT_PACKING __attribute__((__packed__))
+#define ZVECT_ALWAYSINLINE __attribute__ ((__always_inline__))
 #else
 #define ZVECT_DATAALIGN
 #define ZVECT_PACKING
+#define ZVECT_ALWAYSINLINE
 #endif
 
 // Default vector Index type
@@ -56,7 +58,7 @@ typedef int32_t zvect_retval;
 // This will be used when the user
 // does NOT specify an Initial Capacity
 // or set it to 0 (zero):
-#define ZVECT_INITIAL_CAPACITY 4
+#define ZVECT_INITIAL_CAPACITY 8
 
 // The following options are handled by Make
 // So you should not need to modify them here.
@@ -64,7 +66,7 @@ typedef int32_t zvect_retval;
 // Choose which type of memory functions you want
 // to use for your case:
 // 0 = Use Standard memcpy and memmove
-// 1 = Use Optimised memcpy and memove
+// 1 = Use Optimized memcpy and memmove
 #define ZVECT_MEMX_METHOD 0
 
 // Enable/Disable thread safe code:
@@ -80,4 +82,3 @@ typedef int32_t zvect_retval;
 #define ZVECT_SFMD_EXTENSIONS 1
 
 #endif  // SRC_ZVECTOR_CONFIG_H_
-

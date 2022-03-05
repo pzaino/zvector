@@ -102,7 +102,9 @@ enum {
 
 // This is ZVector core data structure, it is the structure of a ZVector vector :)
 // Please note: fields order is based on "most used fields" to help a bit with cache
-struct ZVECT_PACKING p_vector {
+// ZVECT_PACKING
+
+struct p_vector {
 	zvect_index cap_left;		// - Max capacity allocated on the left.
 	zvect_index cap_right;		// - Max capacity allocated on the right.
 	zvect_index begin;		// - First vector's Element Pointer
@@ -248,6 +250,7 @@ static void p_throw_error(const zvect_retval error_code, const char *error_messa
 // Memory management:
 
 #if (ZVECT_MEMX_METHOD == 0)
+ZVECT_ALWAYSINLINE
 static inline
 #endif // ZVECT_MEMX_METHOD
 void *p_vect_memcpy(void *__restrict dst, const void *__restrict src, size_t size) {
@@ -255,7 +258,11 @@ void *p_vect_memcpy(void *__restrict dst, const void *__restrict src, size_t siz
 	// Using regular memcpy
 	// If you are using ZVector on Linux/macOS/BSD/Windows
 	// you should stick to this one!
-	return memcpy(dst, src, size);
+	//if ( (src != NULL) && (dst != NULL) )
+		return memcpy(dst, src, size);
+	//else
+	//	return 0;
+
 #elif (ZVECT_MEMX_METHOD == 1)
 	// Using improved memcpy (where improved means for
 	// embedded systems only!):
@@ -280,6 +287,7 @@ void *p_vect_memcpy(void *__restrict dst, const void *__restrict src, size_t siz
 #endif // ZVECT_MEMX_METHOD
 }
 
+ZVECT_ALWAYSINLINE
 static inline void *p_vect_memmove(void *__restrict dst,
                                  const void *__restrict src, size_t size) {
 	return memmove(dst, src, size);
@@ -296,17 +304,17 @@ static volatile bool locking_disabled = false;
 #		define ZVECT_THREAD_SAFE 0
 #	elif MUTEX_TYPE == 1
 
-__attribute__ ((__always_inline__))
+ZVECT_ALWAYSINLINE
 static inline int mutex_lock(pthread_mutex_t *lock) {
 	return pthread_mutex_lock(lock);
 }
 
-__attribute__ ((__always_inline__))
+ZVECT_ALWAYSINLINE
 static inline int mutex_trylock(pthread_mutex_t *lock) {
 	return pthread_mutex_trylock(lock);
 }
 
-__attribute__ ((__always_inline__))
+ZVECT_ALWAYSINLINE
 static inline int mutex_unlock(pthread_mutex_t *lock) {
 	return pthread_mutex_unlock(lock);
 }
@@ -331,7 +339,7 @@ static inline void mutex_cond_init(pthread_cond_t *cond) {
 	pthread_condattr_setpshared(&Attr, PTHREAD_PROCESS_PRIVATE);
 	pthread_cond_init(cond, &Attr);
 #	else
-	pthread_mutex_init(cond, NULL);
+	pthread_cond_init(cond, NULL);
 #	endif // macOS
 }
 
@@ -459,6 +467,7 @@ void p_init_zvect(void) {
 /*---------------------------------------------------------------------------*/
 // Vector's Utilities:
 
+ZVECT_ALWAYSINLINE
 static inline zvect_retval p_vect_check(vector const x) {
 	if (x == NULL)
 		return ZVERR_VECTUNDEF;
@@ -466,10 +475,12 @@ static inline zvect_retval p_vect_check(vector const x) {
 		return 0;
 }
 
+ZVECT_ALWAYSINLINE
 static inline zvect_index p_vect_capacity(vector const v) {
 	return ( v->cap_left + v->cap_right );
 }
 
+ZVECT_ALWAYSINLINE
 static inline zvect_index p_vect_size(vector const v) {
 	if ( v->end > v->begin )
 		return ( v->end - v->begin );
@@ -762,6 +773,7 @@ static inline zvect_retval p_vect_add_at(vector const v, const void *value,
 
 	// "Shift" right the array of one position to make space for the new item:
 	int16_t array_changed = 0;
+
 	if ((idx < vsize) && (idx != 0)) {
 		array_changed = 1;
 #if (ZVECT_FULL_REENTRANT == 1)
@@ -871,11 +883,15 @@ static inline zvect_retval p_vect_remove_at(vector const v, const zvect_index i,
 		*item = v->data[base + idx];
 	} else {
 		*item = (void **)malloc(v->data_size);
-		p_vect_memcpy(*item, v->data[base + idx], v->data_size);
-		// If the vector is set for secure wipe, and we copied the item
-		// then we need to wipe the old copy:
-		if (v->flags & ZV_SEC_WIPE)
-			p_item_safewipe(v, v->data[base + idx]);
+		if ( v->data[base + idx] != NULL )
+		{
+			p_vect_memcpy(*item, v->data[base + idx], v->data_size);
+			// If the vector is set for secure wipe, and we copied the item
+			// then we need to wipe the old copy:
+			if (v->flags & ZV_SEC_WIPE)
+				p_item_safewipe(v, v->data[base + idx]);
+		} else
+			item = NULL;
 	}
 
 	// "shift" left the array of one position:
@@ -1357,15 +1373,19 @@ inline void vect_push(const vector v, const void *value) {
 	// when we use index 0 we may need to expand on the
 	// left. So let's check if we do for this vector:
 	zvect_index vsize = p_vect_size(v);
-	//if (!vsize) {
+	//if (vsize == 0) {
 		// Initial size is 0, so:
 		// Check if we need to expand on the left side:
 	//	if ( v->begin < 1 || v->cap_left <= 1 )
 	//		p_vect_increase_capacity(v, 0);
+		// Check if we need to expand on thr right side:
+	//	if ( v->end >= v->cap_right )
+	//		p_vect_increase_capacity(v, 1);
 	//} else {
 		// Check if we need to expand on thr right side:
 		if ( v->end >= v->cap_right )
-			p_vect_increase_capacity(v, 1);
+			if ((rval = p_vect_increase_capacity(v, 1)) !=0 )
+				goto JOB_DONE;
 	//}
 
 	rval = p_vect_add_at(v, value, vsize);
