@@ -89,7 +89,7 @@ int main() {
 
 	fflush(stdout);
 
-	// Populate the vector and mesure how long it takes:
+	// Populate the vector and measure how long it takes:
 #   if ( ZVECT_THREAD_SAFE == 1 )
 		//vect_lock(v);
 #   endif
