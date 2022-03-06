@@ -189,7 +189,7 @@ Please note: when using libraries like jemalloc and similar, performance improve
 
 To have an idea of the performance, you can use the following tests that come with ZVector:
 
-- 02ITest004 This test spins 32 threads, 16 producers and 16 consumers and they all work in concurrency. If you have a look at the test code, ZVector handles all the complexity of using multi-threading, so one can simply use local structures and let ZVector deal with locking mechanisms and concurrency complexity. When you run this test using jemalloc or tcmalloc you reduce the critical sections time even more improving both performance and parallelism.
+- 04ITest005 This test spins 16 threads, 8 producers and 8 consumers and they all work in parallel. This happens because each producer and consumer works on a local vector that is derived from the global vector in chunks. So the only concurrency is when a chunk of items (all at once) is either moved from a local vector to the global vector or is fetched from the global vector into a local vector. This technique helps a lot to improve Amdhal's law constraints on the matter of parallelism. If you have a look at the test code, ZVector handles all the complexity of using multi-threading, so one can simply use local structures and let ZVector deal with locking mechanisms and concurrency complexity. When you run this test using jemalloc or tcmalloc you reduce the critical sections time even more improving both performance and parallelism.
              You can easily increase the number of threads in this test to your like, need. Look at the source for more details.
 
 - 04PTestX All the tests that starts with 04PTest are generic performance tests and they try to measure specific costs of each activity in the library.
