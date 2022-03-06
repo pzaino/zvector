@@ -136,7 +136,7 @@ void *producer(void *arg) {
 		// Now merge the local partition to the shared vector:
 		//vect_lock(v);
 
-		vect_merge(v, v2);
+		vect_move(v, v2, 0, MAX_ITEMS);
 
 		// We're done, display some stats and terminate the thread:
 		printf("Producer thread %i done. Produced %d events.\n", id, i);
@@ -164,10 +164,7 @@ void *producer(void *arg) {
 }
 
 zvect_retval check_if_correct_size(void *v1, void *v2) {
-	if (vect_size((vector)v2) >= MAX_ITEMS )
-		return 1;
-
-	return 0;
+	return ( vect_size((vector)v2) >= MAX_ITEMS );
 	(void)v1;
 }
 
@@ -229,10 +226,10 @@ START_JOB:
 		for (i = 0; i < MAX_ITEMS; i++)
 		{
 			item  = (QueueItem *)vect_remove_front(v2);
-			if (item != NULL)
+			if ( item->msg != NULL )
 				evt_counter++;
 #ifdef DEBUG
-			printf("thread %*i, item %*u\n", 10, id, 8, evt_counter);
+			// printf("thread %*i, item %*u\n", 10, id, 8, evt_counter);
 #endif
 		}
 

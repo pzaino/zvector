@@ -67,7 +67,8 @@ enum ZVECT_ERR {
 	ZVERR_RACECOND      = -5,
 	ZVERR_VECTTOOSMALL  = -6,
 	ZVERR_VECTDATASIZE  = -7,
-	ZVERR_VECTEMPTY     = -8
+	ZVERR_VECTEMPTY     = -8,
+	ZVERR_OPNOTALLOWED  = -9
 };
 
 /*****************************

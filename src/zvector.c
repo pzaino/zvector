@@ -224,6 +224,9 @@ static void p_throw_error(const zvect_retval error_code, const char *error_messa
 			case ZVERR_VECTEMPTY:
 				strncpy(message, "Vector is empty.\n\0", msg_len);
 				break;
+			case ZVERR_OPNOTALLOWED:
+				strncpy(message, "Operation not allowed.\n\0", msg_len);
+				break;
 			default:
 				strncpy(message, "Unknown error.\n\0", msg_len);
 				break;
@@ -258,11 +261,7 @@ void *p_vect_memcpy(void *__restrict dst, const void *__restrict src, size_t siz
 	// Using regular memcpy
 	// If you are using ZVector on Linux/macOS/BSD/Windows
 	// you should stick to this one!
-	//if ( (src != NULL) && (dst != NULL) )
-		return memcpy(dst, src, size);
-	//else
-	//	return 0;
-
+	return memcpy(dst, src, size);
 #elif (ZVECT_MEMX_METHOD == 1)
 	// Using improved memcpy (where improved means for
 	// embedded systems only!):
@@ -469,10 +468,7 @@ void p_init_zvect(void) {
 
 ZVECT_ALWAYSINLINE
 static inline zvect_retval p_vect_check(vector const x) {
-	if (x == NULL)
-		return ZVERR_VECTUNDEF;
-	else
-		return 0;
+	return (x == NULL) ? ZVERR_VECTUNDEF : 0;
 }
 
 ZVECT_ALWAYSINLINE
@@ -482,10 +478,7 @@ static inline zvect_index p_vect_capacity(vector const v) {
 
 ZVECT_ALWAYSINLINE
 static inline zvect_index p_vect_size(vector const v) {
-	if ( v->end > v->begin )
-		return ( v->end - v->begin );
-	else
-		return ( v->begin - v->end );
+	return ( v->end > v->begin ) ? ( v->end - v->begin ) : ( v->begin - v->end );
 }
 
 static inline void p_item_safewipe(vector const v, void *const item) {
@@ -988,7 +981,9 @@ static inline zvect_retval p_vect_delete_at(vector const v, const zvect_index st
 		if (!array_changed)
 			p_free_items(v, ((vsize - 1) - offset), offset);
 	}
-	if ( start != 0 ) {
+	// Check if we need to increment begin or decrement end
+	// depending on the direction of the delete (left or right)
+	if ( start != 0 || array_changed ) {
 		if ((v->end - (offset + 1)) > v->begin) {
 			v->end -= (offset + 1);
 		} else {
@@ -1001,7 +996,8 @@ static inline zvect_retval p_vect_delete_at(vector const v, const zvect_index st
 			v->begin = v->end;
 		}
 	}
-	if ((v->begin == v->end) && p_vect_size(v) == 0)
+
+	if (v->begin == v->end)
 	{
 		v->begin = 0;
 		v->end = 0;
@@ -1326,9 +1322,8 @@ void vect_clear(vector const v) {
 	v->end = 0;
 
 	// Shrink Vector's capacity:
-	// p_vect_shrink(v); //commented this out to make vect_clear behave more like the clear method in C++
+	// p_vect_shrink(v); // commented this out to make vect_clear behave more like the clear method in C++
 
-	// Done.
 //DONE_PROCESSING:
 #if (ZVECT_THREAD_SAFE == 1)
 	if (lock_owner)
@@ -1373,23 +1368,15 @@ inline void vect_push(const vector v, const void *value) {
 	// when we use index 0 we may need to expand on the
 	// left. So let's check if we do for this vector:
 	zvect_index vsize = p_vect_size(v);
-	//if (vsize == 0) {
-		// Initial size is 0, so:
-		// Check if we need to expand on the left side:
-	//	if ( v->begin < 1 || v->cap_left <= 1 )
-	//		p_vect_increase_capacity(v, 0);
-		// Check if we need to expand on thr right side:
-	//	if ( v->end >= v->cap_right )
-	//		p_vect_increase_capacity(v, 1);
-	//} else {
-		// Check if we need to expand on thr right side:
-		if ( v->end >= v->cap_right )
-			if ((rval = p_vect_increase_capacity(v, 1)) !=0 )
-				goto JOB_DONE;
-	//}
+
+	// Check if we need to expand on thr right side:
+	if ( v->end >= v->cap_right )
+		if ( (rval = p_vect_increase_capacity(v, 1)) != 0 )
+			goto DONE_PROCESSING;
 
 	rval = p_vect_add_at(v, value, vsize);
 
+DONE_PROCESSING:
 #if (ZVECT_THREAD_SAFE == 1)
 	if (lock_owner)
 		get_mutex_unlock(v, 1);
@@ -1430,11 +1417,13 @@ void vect_add_at(const vector v, const void *value, const zvect_index i) {
 	if (!i) {
 		// Check if we need to expand on the left side:
 		if ( v->begin == 0 || v->cap_left <= 1 )
-			p_vect_increase_capacity(v, 0);
+			if ( (rval = p_vect_increase_capacity(v, 0)) != 0 )
+				goto DONE_PROCESSING;
 	} else {
 		// Check if we need to expand on thr right side:
 		if ( v->end >= v->cap_right )
-			p_vect_increase_capacity(v, 1);
+			if ( (rval = p_vect_increase_capacity(v, 1)) != 0 )
+				goto DONE_PROCESSING;
 	}
 	rval = p_vect_add_at(v, value, i);
 
@@ -1466,10 +1455,12 @@ void vect_add_front(vector const v, const void *value) {
 
 	// Check if we need to expand on the left side:
 	if ( v->begin == 0 || v->cap_left <= 1 )
-		p_vect_increase_capacity(v, 0);
+		if ( (rval = p_vect_increase_capacity(v, 0)) != 0 )
+			goto DONE_PROCESSING;
 
 	rval = p_vect_add_at(v, value, 0);
 
+DONE_PROCESSING:
 #if (ZVECT_THREAD_SAFE == 1)
 	if (lock_owner)
 		get_mutex_unlock(v, 1);
@@ -2596,7 +2587,17 @@ static inline zvect_retval p_vect_move(vector const v1, vector v2, const zvect_i
 	fflush(stdout);
 #endif
 	// Move v2 (from s2) in v1 at the end of v1:
-	p_vect_memmove(v1->data + (v1->begin + vsize1), v2->data + (v2->begin + s2), sizeof(void *) * ee2);
+	void *rptr = NULL;
+	if (v1 != v2)
+		rptr = p_vect_memcpy(v1->data + (v1->begin + vsize1), v2->data + (v2->begin + s2), sizeof(void *) * ee2);
+	else
+		rptr = p_vect_memmove(v1->data + (v1->begin + vsize1), v2->data + (v2->begin + s2), sizeof(void *) * ee2);
+
+	if (rptr == NULL)
+	{
+		rval = ZVERR_VECTCORRUPTED;
+		goto DONE_PROCESSING;
+	}
 
 	// Update v1 size:
 	v1->end += ee2;
@@ -2609,6 +2610,7 @@ static inline zvect_retval p_vect_move(vector const v1, vector v2, const zvect_i
 	// Clean up v2 memory slots that no longer belong to v2:
 	rval = p_vect_delete_at(v2, s2, ee2 - 1, 0);
 
+DONE_PROCESSING:
 #ifdef DEBUG
 	printf("move: v1 capacity = %*u, begin = %*u, end = %*u, size = %*u\n", 10, p_vect_capacity(v1), 10, v1->begin, 10, v1->end, 10, p_vect_size(v1));
 	fflush(stdout);
@@ -2682,8 +2684,8 @@ zvect_retval vect_move_if(vector const v1, vector v2, const zvect_index s2,
 	zvect_retval lock_owner2 = (locking_disabled | (v2->flags & ZV_NOLOCKING)) ? 0 : get_mutex_lock(v2, 1);
 #endif
 #ifdef DEBUG
-	printf("move_if: --- begin ---\n");
-	fflush(stdout);
+	//printf("move_if: --- begin ---\n");
+	//fflush(stdout);
 #endif
 
 	// We can only move vectors with the same data_size!
@@ -2699,9 +2701,10 @@ zvect_retval vect_move_if(vector const v1, vector v2, const zvect_index s2,
 
 DONE_PROCESSING:
 #ifdef DEBUG
-	printf("move_if: --- end ---\n");
-	fflush(stdout);
+	//printf("move_if: --- end ---\n");
+	//fflush(stdout);
 #endif
+
 #if (ZVECT_THREAD_SAFE == 1)
 	if (lock_owner2)
 		get_mutex_unlock(v2, 1);
@@ -2737,6 +2740,12 @@ void vect_merge(vector const v1, vector v2) {
 	// We can only copy vectors with the same data_size!
 	if (v1->data_size != v2->data_size) {
 		rval = ZVERR_VECTDATASIZE;
+		goto DONE_PROCESSING;
+	}
+
+	// Check if the user is trying to merge a vector to itself:
+	if (v1 == v2) {
+		rval = ZVERR_OPNOTALLOWED;
 		goto DONE_PROCESSING;
 	}
 

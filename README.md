@@ -4,6 +4,8 @@ Development branch status:
 
 [![CodeQL](https://github.com/pzaino/zvector/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/pzaino/zvector/actions)
 
+[![FlawFinder](https://github.com/pzaino/zvector/actions/workflows/flawfinder.yml/badge.svg)](https://github.com/pzaino/zvector/actions)
+
 [![CI/CD](https://github.com/pzaino/zvector/actions/workflows/ci.yml/badge.svg)](https://github.com/pzaino/zvector/actions) (Linux, macOS)
 
 
