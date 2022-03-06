@@ -184,7 +184,7 @@ ZVector is already really fast, however, if one wants to gain even more performa
 * Create large arrays from the beginning
 * If your app is multi-threaded:
   * If it does a lot of sequential calls to vect_add or vect_remove then try to use the user locks before starting your loop of calls to vect_add or vect_remove. To use the user locks have a look at the User Guide for the function vect_lock() and vect_unlock().
-  * If you can then use local vectors to your thread and when you're done then use vect_move or vect_merge to merge it to your global thread. This will reduce concurrency and increase parallelism. If you use this approach you can also improve performances even more by setting the local vector property VECT_NOLOCKING so each vect_add etc. operation will not lock on the local vector. See 04PTest005 for more details on how to use this technique.
+  * If you can, then use local vectors to your thread to process thread data, and when processing is completed, use vect_move or vect_merge to merge your local vector items to your global vector. This will reduce concurrency and increase parallelism. If you use this approach you can also improve performances even more by setting the local vector property VECT_NOLOCKING, so each vect_add etc. operation will not lock on the local vector. See 04PTest005 for more details on how to use this technique.
 * Try to use ZVector in conjunction with jemalloc or other fast memory allocation algorithms like tcmalloc etc.
   * To run a quick test with jemalloc for example, if you have it installed in `/usr/lib64/`, then run:
 ```
