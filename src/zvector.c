@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 
 // Include vector.h header
 #include "zvector.h"
@@ -181,6 +182,35 @@ static uint32_t p_init_state = 0;
 /*---------------------------------------------------------------------------*/
 // Errors and messages handling:
 
+enum ZVECT_LOGPRIORITY {
+	ZVLP_NONE       = 0,      // No priority
+	ZVLP_INFO       = 1 << 0, // This is an informational priority message.
+	ZVLP_LOW        = 1 << 1, //     "      low       "
+	ZVLP_MEDIUM     = 1 << 2, //     "      medium    "
+	ZVLP_HIGH       = 1 << 3, //     "      high      "
+	ZVLP_ERROR      = 1 << 4  // This is an error message.
+};
+
+// Set the message priority at which we log it:
+#ifdef DEBUG
+unsigned int LOG_PRIORITY = (ZVLP_ERROR | ZVLP_HIGH | ZVLP_MEDIUM | ZVLP_LOW | ZVLP_INFO);
+#endif
+#ifndef DEBUG
+unsigned int LOG_PRIORITY = (ZVLP_ERROR | ZVLP_HIGH | ZVLP_MEDIUM);
+#endif
+
+// This is a vprintf wrapper nothing special:
+void log_msg(int const priority, const char * const format, ...)
+{
+    va_list args;
+    va_start(args, format);
+
+    if ( priority & LOG_PRIORITY )
+            vprintf(format, args);
+
+    va_end(args);
+}
+
 #if (ZVECT_COMPTYPE == 1) || (ZVECT_COMPTYPE == 3)
 __attribute__((noreturn))
 #endif
@@ -188,15 +218,16 @@ static void p_throw_error(const zvect_retval error_code, const char *error_messa
 	int32_t locally_allocated = 0;
 	char *message;
 	unsigned long msg_len = 0;
+
 	if ( error_message == NULL )
 	{
 		msg_len = sizeof(char)*255;
-		message=(char *)malloc(msg_len);
 		locally_allocated=-1;
 	} else {
 		msg_len = strlen(error_message);
-		message=(char *)malloc(sizeof(char) * (msg_len + 1));
 	}
+	message=(char *)malloc(sizeof(char) * (msg_len + 1));
+
 	if ( error_message == NULL ) {
 		switch (error_code)
 		{
@@ -234,17 +265,11 @@ static void p_throw_error(const zvect_retval error_code, const char *error_messa
 	} else
 		strncpy(message, error_message, msg_len);
 
-#if OS_TYPE == 1
-	fprintf(stderr, "Error: %i, %s", error_code, message);
+	log_msg(ZVLP_ERROR, "Error: i%, %s\n", error_code, error_message);
 	if (locally_allocated)
-		free(message);
+		free((void *)message);
+
 	exit(error_code);
-#else
-	printf("Error: i%, %s\n", error_code, error_message);
-	if (locally_allocated)
-		free(error_message);
-	exit(error_code);
-#endif // OS_TYPE
 }
 
 /*---------------------------------------------------------------------------*/
@@ -2542,7 +2567,7 @@ static inline zvect_retval p_vect_move(vector const v1, vector v2, const zvect_i
 	zvect_retval rval = 0;
 
 #ifdef DEBUG
-	printf("move: move pointers set from v2 to v1\n");
+	log_msg(ZVLP_INFO, "move: move pointers set from v2 to v1\n");
 	fflush(stdout);
 #endif
 	// We can only copy vectors with the same data_size!
@@ -2566,10 +2591,10 @@ static inline zvect_retval p_vect_move(vector const v1, vector v2, const zvect_i
 		ee2 = e2;
 
 #ifdef DEBUG
-	printf("move: v2 capacity = %*u, begin = %*u, end = %*u, size = %*u, s2 = %*u, ee2 = %*u\n", 10, p_vect_capacity(v2), 10, v2->begin, 10, v2->end, 10, p_vect_size(v2), 10, s2, 10, ee2);
+	log_msg(ZVLP_INFO, "move: v2 capacity = %*u, begin = %*u, end = %*u, size = %*u, s2 = %*u, ee2 = %*u\n", 10, p_vect_capacity(v2), 10, v2->begin, 10, v2->end, 10, p_vect_size(v2), 10, s2, 10, ee2);
 	fflush(stdout);
 
-	printf("move: v1 capacity = %*u, begin = %*u, end = %*u, size = %*u\n", 10, p_vect_capacity(v1), 10, v1->begin, 10, v1->end, 10, p_vect_size(v1));
+	log_msg(ZVLP_INFO, "move: v1 capacity = %*u, begin = %*u, end = %*u, size = %*u\n", 10, p_vect_capacity(v1), 10, v1->begin, 10, v1->end, 10, p_vect_size(v1));
 	fflush(stdout);
 #endif
 
@@ -2580,10 +2605,10 @@ static inline zvect_retval p_vect_move(vector const v1, vector v2, const zvect_i
 		p_vect_increase_capacity(v1, 1);
 
 #ifdef DEBUG
-	printf("move: v1 capacity = %*u, begin = %*u, end = %*u, size = %*u\n", 10, p_vect_capacity(v1), 10, v1->begin, 10, v1->end, 10, p_vect_size(v1));
+	log_msg(ZVLP_INFO, "move: v1 capacity = %*u, begin = %*u, end = %*u, size = %*u\n", 10, p_vect_capacity(v1), 10, v1->begin, 10, v1->end, 10, p_vect_size(v1));
 	fflush(stdout);
 
-	printf("move: ready to copy pointers set\n");
+	log_msg(ZVLP_INFO, "move: ready to copy pointers set\n");
 	fflush(stdout);
 #endif
 	// Move v2 (from s2) in v1 at the end of v1:
@@ -2603,7 +2628,7 @@ static inline zvect_retval p_vect_move(vector const v1, vector v2, const zvect_i
 	v1->end += ee2;
 
 #ifdef DEBUG
-	printf("move: done copy pointers set\n");
+	log_msg(ZVLP_INFO, "move: done copy pointers set\n");
 	fflush(stdout);
 #endif
 
@@ -2612,9 +2637,9 @@ static inline zvect_retval p_vect_move(vector const v1, vector v2, const zvect_i
 
 DONE_PROCESSING:
 #ifdef DEBUG
-	printf("move: v1 capacity = %*u, begin = %*u, end = %*u, size = %*u\n", 10, p_vect_capacity(v1), 10, v1->begin, 10, v1->end, 10, p_vect_size(v1));
+	log_msg(ZVLP_INFO, "move: v1 capacity = %*u, begin = %*u, end = %*u, size = %*u\n", 10, p_vect_capacity(v1), 10, v1->begin, 10, v1->end, 10, p_vect_size(v1));
 	fflush(stdout);
-	printf("move: v2 capacity = %*u, begin = %*u, end = %*u, size = %*u\n", 10, p_vect_capacity(v2), 10, v2->begin, 10, v2->end, 10, p_vect_size(v2));
+	log_msg(ZVLP_INFO, "move: v2 capacity = %*u, begin = %*u, end = %*u, size = %*u\n", 10, p_vect_capacity(v2), 10, v2->begin, 10, v2->end, 10, p_vect_size(v2));
 	fflush(stdout);
 #endif
 
@@ -2638,7 +2663,7 @@ void vect_move(vector const v1, vector v2, const zvect_index s2,
 	zvect_retval lock_owner2 = (locking_disabled | (v2->flags & ZV_NOLOCKING)) ? 0 : get_mutex_lock(v2, 1);
 #endif
 #ifdef DEBUG
-	printf("move: --- begin ---\n");
+	log_msg(ZVLP_INFO, "move: --- begin ---\n");
 	fflush(stdout);
 #endif
 
@@ -2652,7 +2677,7 @@ void vect_move(vector const v1, vector v2, const zvect_index s2,
 
 DONE_PROCESSING:
 #ifdef DEBUG
-	printf("move: --- end ---\n");
+	log_msg(ZVLP_INFO, "move: --- end ---\n");
 	fflush(stdout);
 #endif
 #if (ZVECT_THREAD_SAFE == 1)
@@ -2684,7 +2709,7 @@ zvect_retval vect_move_if(vector const v1, vector v2, const zvect_index s2,
 	zvect_retval lock_owner2 = (locking_disabled | (v2->flags & ZV_NOLOCKING)) ? 0 : get_mutex_lock(v2, 1);
 #endif
 #ifdef DEBUG
-	//printf("move_if: --- begin ---\n");
+	//log_msg(ZVLP_INFO, "move_if: --- begin ---\n");
 	//fflush(stdout);
 #endif
 
@@ -2701,7 +2726,7 @@ zvect_retval vect_move_if(vector const v1, vector v2, const zvect_index s2,
 
 DONE_PROCESSING:
 #ifdef DEBUG
-	//printf("move_if: --- end ---\n");
+	//log_msg(ZVLP_INFO, "move_if: --- end ---\n");
 	//fflush(stdout);
 #endif
 
@@ -2733,7 +2758,7 @@ void vect_merge(vector const v1, vector v2) {
 #endif
 
 #ifdef DEBUG
-	printf("merge: --- begin ---\n");
+	log_msg(ZVLP_INFO, "merge: --- begin ---\n");
 	fflush(stdout);
 #endif
 
@@ -2750,9 +2775,9 @@ void vect_merge(vector const v1, vector v2) {
 	}
 
 #ifdef DEBUG
-	printf("merge: v2 capacity = %*u, begin = %*u, end: %*u, size = %*u\n", 10, p_vect_capacity(v2), 10, v2->begin, 10, v2->end, 10, p_vect_size(v2));
+	log_msg(ZVLP_INFO, "merge: v2 capacity = %*u, begin = %*u, end: %*u, size = %*u\n", 10, p_vect_capacity(v2), 10, v2->begin, 10, v2->end, 10, p_vect_size(v2));
 	fflush(stdout);
-	printf("merge: v1 capacity = %*u, begin = %*u, end: %*u, size = %*u\n", 10, p_vect_capacity(v1), 10, v1->begin, 10, v1->end, 10, p_vect_size(v1));
+	log_msg(ZVLP_INFO, "merge: v1 capacity = %*u, begin = %*u, end: %*u, size = %*u\n", 10, p_vect_capacity(v1), 10, v1->begin, 10, v1->end, 10, p_vect_size(v1));
 	fflush(stdout);
 #endif
 
@@ -2761,7 +2786,7 @@ void vect_merge(vector const v1, vector v2) {
 		p_vect_increase_capacity(v1, 1);
 
 #ifdef DEBUG
-	printf("merge: v1 capacity = %*u, begin = %*u, end: %*u, size = %*u\n", 10, p_vect_capacity(v1), 10, v1->begin, 10, v1->end, 10, p_vect_size(v1));
+	log_msg(ZVLP_INFO, "merge: v1 capacity = %*u, begin = %*u, end: %*u, size = %*u\n", 10, p_vect_capacity(v1), 10, v1->begin, 10, v1->end, 10, p_vect_size(v1));
 	fflush(stdout);
 #endif
 
@@ -2772,13 +2797,13 @@ void vect_merge(vector const v1, vector v2) {
 	v1->end += p_vect_size(v2);
 
 #ifdef DEBUG
-	printf("merge: v1 capacity = %*u, begin = %*u, end: %*u, size = %*u\n", 10, p_vect_capacity(v1), 10, v1->begin, 10, v1->end, 10, p_vect_size(v1));
+	log_msg(ZVLP_INFO, "merge: v1 capacity = %*u, begin = %*u, end: %*u, size = %*u\n", 10, p_vect_capacity(v1), 10, v1->begin, 10, v1->end, 10, p_vect_size(v1));
 	fflush(stdout);
 #endif
 
 DONE_PROCESSING:
 #ifdef DEBUG
-	printf("merge: --- end ---\n");
+	log_msg(ZVLP_INFO, "merge: --- end ---\n");
 	fflush(stdout);
 #endif
 #if (ZVECT_THREAD_SAFE == 1)
