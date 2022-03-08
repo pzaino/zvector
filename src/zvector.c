@@ -199,8 +199,22 @@ unsigned int LOG_PRIORITY = (ZVLP_ERROR | ZVLP_HIGH | ZVLP_MEDIUM | ZVLP_LOW | Z
 unsigned int LOG_PRIORITY = (ZVLP_ERROR | ZVLP_HIGH | ZVLP_MEDIUM);
 #endif
 
+static size_t safe_strlen(const char *str, size_t max_len)
+{
+    const char * end = (const char *)memchr(str, '\0', max_len);
+    if (end == NULL)
+        return max_len;
+    else
+        return end - str;
+}
+
+static void safe_strncpy(char *str_dst, const char *str_src, size_t max_len)
+{
+	strncpy(str_dst, str_src, max_len);
+}
+
 // This is a vprintf wrapper nothing special:
-void log_msg(int const priority, const char * const format, ...)
+static void log_msg(int const priority, const char * const format, ...)
 {
 	va_list args;
 	va_start(args, format);
@@ -232,7 +246,7 @@ static void p_throw_error(const zvect_retval error_code, const char *error_messa
 		msg_len = sizeof(char)*255;
 		locally_allocated=-1;
 	} else {
-		msg_len = strlen(error_message);
+		msg_len = safe_strlen(error_message, 255);
 	}
 	message=(char *)malloc(sizeof(char) * (msg_len + 1));
 
@@ -240,38 +254,38 @@ static void p_throw_error(const zvect_retval error_code, const char *error_messa
 		switch (error_code)
 		{
 			case ZVERR_VECTUNDEF:
-				strncpy(message, "Undefined or uninitialized vector.\n\0", msg_len);
+				safe_strncpy(message, "Undefined or uninitialized vector.\n\0", msg_len);
 				break;
 			case ZVERR_IDXOUTOFBOUND:
-				strncpy(message, "Index out of bound.\n\0", msg_len);
+				safe_strncpy(message, "Index out of bound.\n\0", msg_len);
 				break;
 			case ZVERR_OUTOFMEM:
-				strncpy(message, "Not enough memory to allocate space for the vector.\n\0", msg_len);
+				safe_strncpy(message, "Not enough memory to allocate space for the vector.\n\0", msg_len);
 				break;
 			case ZVERR_VECTCORRUPTED:
-				strncpy(message, "Vector corrupted.\n\0", msg_len);
+				safe_strncpy(message, "Vector corrupted.\n\0", msg_len);
 				break;
 			case ZVERR_RACECOND:
-				strncpy(message, "Race condition detected, cannot continue.\n\0", msg_len);
+				safe_strncpy(message, "Race condition detected, cannot continue.\n\0", msg_len);
 				break;
 			case ZVERR_VECTTOOSMALL:
-				strncpy(message, "Destination vector is smaller than source.\n\0", msg_len);
+				safe_strncpy(message, "Destination vector is smaller than source.\n\0", msg_len);
 				break;
 			case ZVERR_VECTDATASIZE:
-				strncpy(message, "This operation requires two (or more vectors) with the same data size.\n\0", msg_len);
+				safe_strncpy(message, "This operation requires two (or more vectors) with the same data size.\n\0", msg_len);
 				break;
 			case ZVERR_VECTEMPTY:
-				strncpy(message, "Vector is empty.\n\0", msg_len);
+				safe_strncpy(message, "Vector is empty.\n\0", msg_len);
 				break;
 			case ZVERR_OPNOTALLOWED:
-				strncpy(message, "Operation not allowed.\n\0", msg_len);
+				safe_strncpy(message, "Operation not allowed.\n\0", msg_len);
 				break;
 			default:
-				strncpy(message, "Unknown error.\n\0", msg_len);
+				safe_strncpy(message, "Unknown error.\n\0", msg_len);
 				break;
 		}
 	} else
-		strncpy(message, error_message, msg_len);
+		safe_strncpy(message, error_message, msg_len);
 
 	log_msg(ZVLP_ERROR, "Error: i%, %s\n", error_code, error_message);
 	if (locally_allocated)
