@@ -1,7 +1,7 @@
 ###############################################################################
 #         Name: Automatic Makefile
 #       Author: Paolo Fabio Zaino
-#      License: Copyright by Paolo Fabio Ziano, all rights reserved.
+#      License: Copyright by Paolo Fabio Zaino, all rights reserved.
 #		Distributed under MIT license (read the MIT license for details)
 #
 #  Description: This Makefile is intended to be reusable to build many types of

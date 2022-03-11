@@ -2659,11 +2659,11 @@ DONE_PROCESSING:
 
 	return rval;
 }
-// END of vect_move
+// END of p_vect_move
 //////////////////////////////////////////////////////////////////
 
 //////////////////////////////////////////////////////////////////
-// TODO: Implement vect_move
+// vect_move moves a portion of a vector (v2) into another (v1):
 void vect_move(vector const v1, vector v2, const zvect_index s2,
                const zvect_index e2) {
 	// check if the vectors v1 and v2 exist:
@@ -2707,7 +2707,7 @@ JOB_DONE:
 
 
 //////////////////////////////////////////////////////////////////
-// TODO: Implement vect_move_if
+// vect_move_if moves a portion of a vector (v2) into another (v1) if f2 is true:
 zvect_retval vect_move_if(vector const v1, vector v2, const zvect_index s2,
                const zvect_index e2, zvect_retval (*f2)(void *, void *)) {
 	// check if the vectors v1 and v2 exist:
@@ -2756,6 +2756,7 @@ JOB_DONE:
 /////////////////////////////////////////////////////////////////
 
 /////////////////////////////////////////////////////////////////
+// vect_merge merges a vector (v2) into another (v1)
 void vect_merge(vector const v1, vector v2) {
 	// check if the vector v1 exists:
 	zvect_retval rval = p_vect_check(v1) | p_vect_check(v2);
