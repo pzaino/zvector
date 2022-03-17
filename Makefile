@@ -230,14 +230,17 @@ LIBST:=$(LIBDIR)/lib$(LIBNAME).a
 ###############################################################################
 # Targets:
 
+# Use "make all" to build both core library and tests for production
 .PHONY: all
 all: CFLAGS += $(P_CFLAGS)
 all: core test
 
+# Use "make clean" to clean your previous builds
 .PHONY: clean
 clean:
 	$(RM) -r $(LIBDIR) $(OBJ) $(TESTDIR)/bin ./*.o
 
+# Use "make configure" to set your configuration (useful to enable code in your IDE)
 .PHONY: configure
 configure: $(SRC)/$(LIBNAME)_config.h $(SCRIPTSDIR)/ux_set_extension
 	@echo ----------------------------------------------------------------
@@ -249,12 +252,14 @@ configure: $(SRC)/$(LIBNAME)_config.h $(SCRIPTSDIR)/ux_set_extension
 	$(RVAL5) || :
 	@echo ----------------------------------------------------------------
 
+# Use "make core" to just build the library FOR PRODUCTION
 .PHONY: core
 core: configure $(LIBDIR) $(LIBST)
 
 .PHONY: test
 test: $(TESTDIR)/bin $(TESTBINS)
 
+# Use "make tests" to build tests and run them
 .PHONY: tests
 tests: test
 	$(info   )
@@ -263,11 +268,18 @@ tests: test
 	$(info ===========================)
 	for test in $(TESTBINS) ; do time ./$(TESTBIN)$$test ; done
 
+# Use "make debug" to build code for gdb debugger
 .PHONY: debug
 debug: CFLAGS+= -ggdb3
 debug: CODE_MACROS+= -DDEBUG
 debug: core tests
 
+# Use "make testing" to build code with sanitizers for testing purposes:
+.PHONY: testing
+testing: CFLAGS+= -ggdb3 -fsanitize=address -fsanitize=leak -fsanitize=undefined
+testing: core tests
+
+# Use "make install" to build and install the core library
 .PHONY: install
 install: core
 	sudo cp -f $(LIBST) $(DESTDIR)

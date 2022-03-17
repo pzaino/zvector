@@ -139,8 +139,11 @@ void *consumer(void *arg) {
 
 		uint32_t i;
 		for (i = 0; i < MAX_ITEMS;) {
-			// For beginners: this is how in C we convert back a void * into the original dtata_type
-			QueueItem *item = (QueueItem *)malloc(sizeof(QueueItem *));
+			// For beginners: this is how in C we convert back a void *
+			// into the original data_type:
+			QueueItem *item; // We do not need to allocate item, because
+			                 // ZVector vect_remove_front will do it for us :)
+
 			int fetched_item= 0;
 
 			// Let's retrieve the value from the vector correctly:
@@ -164,7 +167,7 @@ void *consumer(void *arg) {
 			}
 
 			free(item);
-			// item = NULL;
+			item = NULL;
 		}
 
 	printf("Consumer thread %i done. Consumed %d events.\n", id, evt_counter);

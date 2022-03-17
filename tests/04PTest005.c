@@ -130,12 +130,12 @@ void *producer(void *arg) {
 			qi.msg[max_strLen]='\0';
 
 			// Enqueue message on the local queue:
+			// (this will copy qi into v2, so no need
+			//  to free qi after, we can simply reuse it)
 			vect_add(v2, &qi);
 		}
 
-		// Now merge the local partition to the shared vector:
-		//vect_lock(v);
-
+		// Now move the local partition to the shared vector:
 		vect_move(v, v2, 0, MAX_ITEMS);
 
 		// We're done, display some stats and terminate the thread:
@@ -157,7 +157,10 @@ void *producer(void *arg) {
 #endif
 		fflush(stdout);
 
-		//vect_unlock(v);
+		// Given that we have moved all the references to our message
+		// set from v2 to v, we can safely destroy v2 and recover its
+		// memory:
+		vect_destroy(v2);
 
 	pthread_exit(NULL);
 	return NULL;
@@ -196,7 +199,6 @@ void *consumer(void *arg) {
 			//if (vect_trylock(v))
 			//if (vect_wait_for_signal(v))
 			//{
-				//vect_lock(v);
 				//if ( vect_size(v) >= MAX_ITEMS )
 				if (!vect_move_if(v2, v, 0, MAX_ITEMS, check_if_correct_size))
 				{
@@ -220,7 +222,7 @@ void *consumer(void *arg) {
 START_JOB:
 		printf("--- Consumer Thread %*i received a chunk of %*i messages ---\n\n", 3, id, 4, vect_size(v2));
 
-		QueueItem *item = (QueueItem *)malloc(sizeof(QueueItem *));
+		QueueItem *item;// = (QueueItem *)malloc(sizeof(QueueItem *));
 		evt_counter = 0;
 
 		for (i = 0; i < MAX_ITEMS; i++)
@@ -285,7 +287,9 @@ int main() {
 		int err = 0;
 		int i = 0;
 		struct thread_args *targs[MAX_THREADS+1];
+
 		CCPAL_START_MEASURING;
+
 		for (i=0; i < MAX_THREADS / 2; i++) {
 			targs[i]=(struct thread_args *)malloc(sizeof(struct thread_args));
 			targs[i]->id=i;
@@ -322,19 +326,8 @@ int main() {
 	CCPAL_REPORT_ANALYSIS;
 	fflush(stdout);
 
-	// Allow the Producer and Consumer process
-	// To start properly:
-	//usleep(100);
-
 	printf("--- Events missed in the queue: %*i ---\n\n", 4, vect_size(v));
 	fflush(stdout);
-
-	// Now wait until the Queue is empty:
-	//while(!vect_is_empty(v))
-	//	;
-
-	//printf("--- Events missed in the queue: %*i ---\n", 4, vect_size(v));
-	//fflush(stdout);
 
 	printf("Test %s_%d: Delete all left over events (if any):\n", testGrp, testID);
 	fflush(stdout);
