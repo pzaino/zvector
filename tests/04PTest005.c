@@ -222,7 +222,8 @@ void *consumer(void *arg) {
 START_JOB:
 		printf("--- Consumer Thread %*i received a chunk of %*i messages ---\n\n", 3, id, 4, vect_size(v2));
 
-		QueueItem *item;// = (QueueItem *)malloc(sizeof(QueueItem *));
+		QueueItem *item; // We do not need to allocate item,
+		                 // ZVector vect_remove_front will do it for us :)
 		evt_counter = 0;
 
 		for (i = 0; i < MAX_ITEMS; i++)

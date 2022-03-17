@@ -34,8 +34,8 @@
 #define MAX_MSG_SIZE 72
 
 // Setup tests:
-char *testGrp = "003";
-uint8_t testID = 4;
+char *testGrp = "004";
+uint8_t testID = 1;
 
 #if ( ZVECT_THREAD_SAFE == 1 ) && ( OS_TYPE == 1 )
 
