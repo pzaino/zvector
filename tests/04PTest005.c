@@ -136,7 +136,8 @@ void *producer(void *arg) {
 		}
 
 		// Now move the local partition to the shared vector:
-		vect_move(v, v2, 0, MAX_ITEMS);
+		vect_merge(v, v2);
+		//vect_move(v, v2, 0, MAX_ITEMS);
 
 		// We're done, display some stats and terminate the thread:
 		printf("Producer thread %i done. Produced %d events.\n", id, i);
@@ -160,7 +161,7 @@ void *producer(void *arg) {
 		// Given that we have moved all the references to our message
 		// set from v2 to v, we can safely destroy v2 and recover its
 		// memory:
-		vect_destroy(v2);
+		//vect_destroy(v2);
 
 	pthread_exit(NULL);
 	return NULL;
@@ -284,7 +285,8 @@ int main() {
 	fflush(stdout);
 
 		vector v;
-		v = vect_create(TOTAL_ITEMS+(TOTAL_ITEMS/2), sizeof(struct QueueItem), ZV_NONE);
+		//v = vect_create(TOTAL_ITEMS+(TOTAL_ITEMS/2), sizeof(struct QueueItem), ZV_NONE);
+		v = vect_create(8, sizeof(struct QueueItem), ZV_NONE);
 
 	printf("done.\n");
 	testID++;

@@ -566,6 +566,56 @@ static void p_free_items(vector const v, zvect_index first, zvect_index offset) 
 // Vector Size and Capacity management functions:
 
 /*
+ * Set vector capacity to a specific new_capacity value
+ */
+static zvect_retval p_vect_set_capacity(vector const v, const zvect_index direction, const zvect_index new_capacity_)
+{
+	zvect_index new_capacity = new_capacity_;
+
+	if ( new_capacity <= v->init_capacity )
+		new_capacity = v->init_capacity;
+
+	void **new_data = NULL;
+	if (!direction)
+	{
+
+		// Set capacity on the left side of the vector to new_capacity:
+		new_data = (void **)malloc(sizeof(void *) * (new_capacity + v->cap_right));
+		if (new_data == NULL)
+			return ZVERR_OUTOFMEM;
+
+		zvect_index nb;
+		zvect_index ne;
+		nb = v->cap_left;
+		ne = ( nb + (v->end - v->begin) );
+		if (v->end != v->begin)
+			p_vect_memcpy(new_data + nb, v->data + v->begin, sizeof(void *) * (v->end - v->begin) );
+
+		// Reconfigure vector:
+		v->cap_left = new_capacity;
+		v->end = ne;
+		v->begin = nb;
+		free(v->data);
+
+	} else {
+
+		// Set capacity on the right side of the vector to new_capacity:
+		new_data = (void **)realloc(v->data, sizeof(void *) * (v->cap_left + new_capacity));
+		if (new_data == NULL)
+			return ZVERR_OUTOFMEM;
+
+		// Reconfigure Vector:
+		v->cap_right = new_capacity;
+	}
+
+	// Apply changes
+	v->data = new_data;
+
+	// done
+	return 0;
+}
+
+/*
  * This function increase the CAPACITY of a vector.
  */
 static zvect_retval p_vect_increase_capacity(vector const v, const zvect_index direction) {
@@ -1075,23 +1125,7 @@ static zvect_retval p_vect_destroy(vector v, uint32_t flags) {
 		return ZVERR_RACECOND;
 #endif
 
-	// Clear the vector:
-	/*
-	if ((p_vect_size(v) > 0) && (flags & 1)) {
-		// Secure Wipe the vector (or just free) depending on vector properties:
-		zvect_index i = p_vect_size(v); // if p_vect_size(v) is 200, then the first "i" below will be 199
-		while (i--) {
-			if (v->data[v->begin + i] != NULL) {
-				if ((v->flags & ZV_SEC_WIPE))
-					p_item_safewipe(v, v->data[v->begin + i]);
-
-				if (!(v->flags & ZV_BYREF)) {
-					free(v->data[v->begin + i]);
-					v->data[v->begin + i] = NULL;
-				}
-			}
-		}
-	} */
+	// Clear the vector (if LSB of flags is set to 1):
 	if ((p_vect_size(v) > 0) && (flags & 1)) {
 		// Clean the vector:
 		vect_clear(v);
@@ -2620,8 +2654,10 @@ static inline zvect_retval p_vect_move(vector const v1, vector v2, const zvect_i
 	zvect_index vsize1 = p_vect_size(v1);
 
 	// Set the correct capacity for v1 to get the whole v2:
-	while (p_vect_capacity(v1) <= (vsize1 + ee2))
-		p_vect_increase_capacity(v1, 1);
+	//while (p_vect_capacity(v1) <= (vsize1 + ee2))
+	//	p_vect_increase_capacity(v1, 1);
+	if (p_vect_capacity(v1) <= (vsize1 + ee2))
+		p_vect_set_capacity(v1, 1, p_vect_capacity(v1)+ee2);
 
 #ifdef DEBUG
 	log_msg(ZVLP_INFO, "move: v1 capacity = %*u, begin = %*u, end = %*u, size = %*u\n", 10, p_vect_capacity(v1), 10, v1->begin, 10, v1->end, 10, p_vect_size(v1));
@@ -2790,8 +2826,10 @@ void vect_merge(vector const v1, vector v2) {
 #endif
 
 	// Set the correct capacity for v1 to get the whole v2:
-	while (p_vect_capacity(v1) <= (p_vect_size(v1) + p_vect_size(v2)))
-		p_vect_increase_capacity(v1, 1);
+	//while (p_vect_capacity(v1) <= (p_vect_size(v1) + p_vect_size(v2)))
+	//	p_vect_increase_capacity(v1, 1);
+	if (p_vect_capacity(v1) <= (p_vect_size(v1) + p_vect_size(v2)))
+		p_vect_set_capacity(v1, 1, p_vect_capacity(v1)+p_vect_size(v2));
 
 #ifdef DEBUG
 	log_msg(ZVLP_INFO, "merge: v1 capacity = %*u, begin = %*u, end: %*u, size = %*u\n", 10, p_vect_capacity(v1), 10, v1->begin, 10, v1->end, 10, p_vect_size(v1));
