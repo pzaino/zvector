@@ -59,7 +59,7 @@ size_t max_strLen = 32;
 //              system when using multi-threaded queues.
 #define MAX_THREADS 16
 
-#define TOTAL_ITEMS 10000000
+#define TOTAL_ITEMS 100000000
 #define MAX_ITEMS (TOTAL_ITEMS / ( MAX_THREADS / 2))
 #define MAX_MSG_SIZE 72
 pthread_t tid[MAX_THREADS]; // threads IDs
@@ -230,7 +230,14 @@ START_JOB:
 		{
 			item  = (QueueItem *)vect_remove_front(v2);
 			if ( item->msg != NULL )
+			{
 				evt_counter++;
+				if (i < MAX_ITEMS - 1)
+				{
+					free(item);
+					item = NULL;
+				}
+			}
 #ifdef DEBUG
 			// printf("thread %*i, item %*u\n", 10, id, 8, evt_counter);
 #endif
@@ -241,7 +248,9 @@ START_JOB:
 		printf("Last element in the queue for Consumer Thread %*i: ID (%*d) - Message: %s\n",
 			8, id, 8, item->eventID, item->msg);
 #endif
-		free(item);
+
+	free(item);
+	item = NULL;
 
 	printf("Consumer thread %i done. Consumed %d events.\n", id, evt_counter);
 

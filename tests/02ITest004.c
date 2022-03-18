@@ -141,21 +141,17 @@ void *consumer(void *arg) {
 		for (i = 0; i < MAX_ITEMS;) {
 			// For beginners: this is how in C we convert back a void *
 			// into the original data_type:
-			QueueItem *item; // We do not need to allocate item, because
-			                 // ZVector vect_remove_front will do it for us :)
+			QueueItem *item = NULL; // We do not need to allocate item, because
+			                        // ZVector vect_remove_front will do it for us :)
 
 			int fetched_item= 0;
 
 			// Let's retrieve the value from the vector correctly:
-			//vect_lock(v);
-
 			if (!vect_is_empty(v))
 			{
 				item = (QueueItem *)vect_remove_front(v);
 				fetched_item=1;
 			}
-
-			//vect_unlock(v);
 
 			if ( fetched_item == 1 && item != NULL )
 			{
