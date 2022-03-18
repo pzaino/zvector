@@ -34,8 +34,8 @@
 #define MAX_MSG_SIZE 72
 
 // Setup tests:
-char *testGrp = "003";
-uint8_t testID = 4;
+char *testGrp = "004";
+uint8_t testID = 1;
 
 #if ( ZVECT_THREAD_SAFE == 1 ) && ( OS_TYPE == 1 )
 
@@ -139,20 +139,19 @@ void *consumer(void *arg) {
 
 		uint32_t i;
 		for (i = 0; i < MAX_ITEMS;) {
-			// For beginners: this is how in C we convert back a void * into the original dtata_type
-			QueueItem *item = (QueueItem *)malloc(sizeof(QueueItem *));
+			// For beginners: this is how in C we convert back a void *
+			// into the original data_type:
+			QueueItem *item = NULL; // We do not need to allocate item, because
+			                        // ZVector vect_remove_front will do it for us :)
+
 			int fetched_item= 0;
 
 			// Let's retrieve the value from the vector correctly:
-			//vect_lock(v);
-
 			if (!vect_is_empty(v))
 			{
 				item = (QueueItem *)vect_remove_front(v);
 				fetched_item=1;
 			}
-
-			//vect_unlock(v);
 
 			if ( fetched_item == 1 && item != NULL )
 			{
@@ -164,7 +163,7 @@ void *consumer(void *arg) {
 			}
 
 			free(item);
-			// item = NULL;
+			item = NULL;
 		}
 
 	printf("Consumer thread %i done. Consumed %d events.\n", id, evt_counter);
