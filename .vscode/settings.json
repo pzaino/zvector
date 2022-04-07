@@ -17,7 +17,6 @@
 	],
 	"c-cpp-flylint.clang.language": "C",
 	"c-cpp-flylint.cppcheck.extraArgs": [
-		"--std c99",
 		"--bug-hunting",
 		"--enable=all",
 		"--suppress=missingIncludeSystem"
@@ -53,5 +52,18 @@
 		"/usr/include/",
 		"/usr/local/include/",
 		"/usr/lib64/gcc/x86_64-suse-linux/11/include"
+	],
+	"makefile.compileCommandsPath": "${workspaceFolder}/.vscode/compile_commands.json",
+	"makefile.launchConfigurations": [
+
+	],
+	"makefile.configurations": [
+		{
+		    "name": "MyConfiguration",
+		    "problemMatchers": [
+			"$gcc"
+		    ],
+		    "makeArgs": ["all", "debug", "testing"]
+		},
 	]
 }
