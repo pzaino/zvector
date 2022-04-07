@@ -277,6 +277,7 @@ debug: core tests
 # Use "make testing" to build code with sanitizers for testing purposes:
 .PHONY: testing
 testing: CFLAGS+= -ggdb3 -fsanitize=address -fsanitize=leak -fsanitize=undefined
+testing: CODE_MACROS+= -DDEBUG
 testing: core tests
 
 # Use "make install" to build and install the core library
