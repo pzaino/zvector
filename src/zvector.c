@@ -335,6 +335,11 @@ void *p_vect_memcpy(void *__restrict dst, const void *__restrict src, size_t siz
 ZVECT_ALWAYSINLINE
 static inline void *p_vect_memmove(void *__restrict dst,
                                  const void *__restrict src, size_t size) {
+#ifdef DEBUG
+	log_msg(ZVLP_INFO, "p_vect_memmove: dst      %*p\n", 14, dst);
+	log_msg(ZVLP_INFO, "p_vect_memmove: src      %*p\n", 14, src);
+	log_msg(ZVLP_INFO, "p_vect_memmove: size     %*u\n", 14, size);
+#endif
 	return memmove(dst, src, size);
 }
 
@@ -1065,19 +1070,29 @@ static inline zvect_retval p_vect_delete_at(vector const v, const zvect_index st
 	// "shift" left the data of one position:
 	zvect_index tot_items = start + offset;
 #ifdef DEBUG
-	log_msg(ZVLP_INFO, "p_vect_delete_at: start     %*u\n", 10, start);
-	log_msg(ZVLP_INFO, "p_vect_delete_at: offset    %*u\n", 10, offset);
-	log_msg(ZVLP_INFO, "p_vect_delete_at: tot_items %*u\n", 10, tot_items);
-	log_msg(ZVLP_INFO, "p_vect_delete_at: v->begin  %*u\n", 10, v->begin);
-	log_msg(ZVLP_INFO, "p_vect_delete_at: v->end    %*u\n", 10, v->end);
+	/*
+	log_msg(ZVLP_INFO, "p_vect_delete_at: start     %*u\n", 14, start);
+	log_msg(ZVLP_INFO, "p_vect_delete_at: offset    %*u\n", 14, offset);
+	log_msg(ZVLP_INFO, "p_vect_delete_at: tot_items %*u\n", 14, tot_items);
+	log_msg(ZVLP_INFO, "p_vect_delete_at: v->begin  %*u\n", 14, v->begin);
+	log_msg(ZVLP_INFO, "p_vect_delete_at: v->end    %*u\n", 14, v->end);
+	log_msg(ZVLP_INFO, "p_vect_delete_at: vsize     %*u\n", 14, vsize);
+	log_msg(ZVLP_INFO, "p_vect_delete_at: data      %*p\n", 14, v->data);
+	*/
 #endif
-	if ( (start < (vsize - 1)) && (tot_items < (vsize - 1)) && (v->data != NULL) ) {
+	if ( (vsize > 1) && (start < (vsize - 1)) && (tot_items < vsize) && (v->data != NULL) ) {
 		array_changed = 1;
+#ifdef DEBUG
+		/* for (zvect_index ptrID = start; ptrID < start + offset; ptrID++)
+		{
+				log_msg(ZVLP_INFO, "p_vect_delete_at: data ptr  %*p\n", 14, v->data + (v->begin + ptrID));
+		}*/
+#endif
 		if ( flags & 1 )
 			p_free_items(v, start, offset);
 		if ( tot_items )
 			p_vect_memmove(v->data + (v->begin + start), v->data + (v->begin + tot_items + 1),
-				sizeof(void *) * (vsize - start));
+				sizeof(void *) * ((vsize - start) - offset));
 	}
 
 	// Reduce vector size:
@@ -2638,8 +2653,6 @@ static inline zvect_retval p_vect_move(vector const v1, vector v2, const zvect_i
 	if (v1->data_size != v2->data_size)
 		return ZVERR_VECTDATASIZE;
 
-	//zvect_index vsize2 = p_vect_size(v2);
-
 	// Let's check if the indexes provided are correct for
 	// v2:
 	if ((e2 > p_vect_size(v2)) || (s2 > p_vect_size(v2)))
@@ -2659,8 +2672,6 @@ static inline zvect_retval p_vect_move(vector const v1, vector v2, const zvect_i
 
 	log_msg(ZVLP_INFO, "p_vect_move: v1 capacity = %*u, begin = %*u, end = %*u, size = %*u\n", 10, p_vect_capacity(v1), 10, v1->begin, 10, v1->end, 10, p_vect_size(v1));
 #endif
-
-	//zvect_index vsize1 = p_vect_size(v1);
 
 	// Set the correct capacity for v1 to get the whole v2:
 	//while (p_vect_capacity(v1) <= (vsize1 + ee2))
