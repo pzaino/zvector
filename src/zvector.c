@@ -25,9 +25,7 @@
 #include <assert.h>
 #include <stddef.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
 
 // Include vector.h header
 #include "zvector.h"
@@ -394,7 +392,6 @@ static inline void mutex_cond_init(pthread_cond_t *cond) {
 }
 
 static inline void mutex_destroy(pthread_mutex_t *lock) {
-	//pthread_mutex_unlock(lock);
 	pthread_mutex_destroy(lock);
 }
 
@@ -798,6 +795,93 @@ static zvect_retval p_vect_shrink(vector const v) {
 /*---------------------------------------------------------------------------*/
 
 /*---------------------------------------------------------------------------*/
+// Creation and destruction primitives:
+
+zvect_retval p_vect_clear(vector const v) {
+	// Clear the vector:
+	if (!vect_is_empty(v))
+		p_free_items(v, 0, (p_vect_size(v) - 1));
+
+	// Reset interested descriptors:
+	v->prev_end = p_vect_size(v);
+	v->begin = 0;
+	v->end = 0;
+
+	// Shrink Vector's capacity:
+	// p_vect_shrink(v); // commented this out to make vect_clear behave more like the clear method in C++
+
+	return 0;
+}
+
+static zvect_retval p_vect_destroy(vector v, uint32_t flags) {
+	// p_destroy is an exception in the rule of handling
+	// locking from the public methods. This because
+	// p_destroy has to destroy the vector mutex too and
+	// so it needs to control the lock as well!
+#if (ZVECT_THREAD_SAFE == 1)
+	zvect_retval lock_owner = (locking_disabled || (v->flags & ZV_NOLOCKING)) ? 0 : get_mutex_lock(v, 1);
+	if (!lock_owner && (!locking_disabled) && !(v->flags & ZV_NOLOCKING))
+		return ZVERR_RACECOND;
+#endif
+
+	// Clear the vector (if LSB of flags is set to 1):
+	if ((p_vect_size(v) > 0) && (flags & 1)) {
+		// Clean the vector:
+		p_vect_clear(v);
+
+		// Reset interested descriptors:
+		v->prev_end = p_vect_size(v);
+		v->end = 0;
+
+		// Shrink Vector's capacity:
+		//if (p_vect_capacity(v) > v->init_capacity)
+		//	p_vect_shrink(v);
+	}
+
+	// Destroy the vector:
+	v->prev_end = 0;
+	v->init_capacity = 0;
+	v->cap_left = 0;
+	v->cap_right = 0;
+
+	// Destroy it:
+	if ((v->status & ZVS_CUST_WIPE_ON)) {
+		//free(v->SfWpFunc);
+		v->SfWpFunc = NULL;
+	}
+
+	if (v->data != NULL) {
+		free(v->data);
+		v->data = NULL;
+	}
+
+	// Clear vector status flags:
+	v->status = 0;
+	v->flags = 0;
+	v->begin = 0;
+	v->end = 0;
+	v->data_size = 0;
+	v->balance = 0;
+	v->bottom = 0;
+
+#if (ZVECT_THREAD_SAFE == 1)
+	if ( lock_owner )
+		get_mutex_unlock(v, v->lock_type);
+	mutex_destroy(&(v->lock));
+#endif
+
+	// All done and freed, so we can safely
+	// free the vector itself:
+	free(v);
+	v = NULL;
+
+	return 0;
+}
+
+/*---------------------------------------------------------------------------*/
+
+
+/*---------------------------------------------------------------------------*/
 // Vector data storage primitives:
 
 // inline implementation for all put:
@@ -1133,76 +1217,8 @@ static inline zvect_retval p_vect_delete_at(vector const v, const zvect_index st
 
 /*---------------------------------------------------------------------------*/
 
-/*---------------------------------------------------------------------------*/
-// Creation and destruction primitives:
 
-static zvect_retval p_vect_destroy(vector v, uint32_t flags) {
-	// p_destroy is an exception in the rule of handling
-	// locking from the public methods. This because
-	// p_destroy has to destroy the vector mutex too and
-	// so it needs to control the lock as well!
-#if (ZVECT_THREAD_SAFE == 1)
-	zvect_retval lock_owner = (locking_disabled || (v->flags & ZV_NOLOCKING)) ? 0 : get_mutex_lock(v, 1);
-	if (!lock_owner && (!locking_disabled) && !(v->flags & ZV_NOLOCKING))
-		return ZVERR_RACECOND;
-#endif
 
-	// Clear the vector (if LSB of flags is set to 1):
-	if ((p_vect_size(v) > 0) && (flags & 1)) {
-		// Clean the vector:
-		vect_clear(v);
-
-		// Reset interested descriptors:
-		v->prev_end = p_vect_size(v);
-		v->end = 0;
-
-		// Shrink Vector's capacity:
-		//if (p_vect_capacity(v) > v->init_capacity)
-		//	p_vect_shrink(v);
-	}
-
-	// Destroy the vector:
-	v->prev_end = 0;
-	v->init_capacity = 0;
-	v->cap_left = 0;
-	v->cap_right = 0;
-
-	// Destroy it:
-	if ((v->status & ZVS_CUST_WIPE_ON)) {
-		//free(v->SfWpFunc);
-		v->SfWpFunc = NULL;
-	}
-
-	if (v->data != NULL) {
-		free(v->data);
-		v->data = NULL;
-	}
-
-	// Clear vector status flags:
-	v->status = 0;
-	v->flags = 0;
-	v->begin = 0;
-	v->end = 0;
-	v->data_size = 0;
-	v->balance = 0;
-	v->bottom = 0;
-
-#if (ZVECT_THREAD_SAFE == 1)
-	if (lock_owner)
-		get_mutex_unlock(v, 1);
-
-	mutex_destroy(&(v->lock));
-#endif
-
-	// All done and freed, so we can safely
-	// free the vector itself:
-	free(v);
-	v = NULL;
-
-	return 0;
-}
-
-/*---------------------------------------------------------------------------*/
 
 /*****************************************************************************
  **                            ZVector API                                  **
@@ -1415,17 +1431,7 @@ void vect_clear(vector const v) {
 	zvect_retval lock_owner = (locking_disabled || (v->flags & ZV_NOLOCKING)) ? 0 : get_mutex_lock(v, 1);
 #endif
 
-	// Clear the vector:
-	if (!vect_is_empty(v))
-		p_free_items(v, 0, (p_vect_size(v) - 1));
-
-	// Reset interested descriptors:
-	v->prev_end = p_vect_size(v);
-	v->begin = 0;
-	v->end = 0;
-
-	// Shrink Vector's capacity:
-	// p_vect_shrink(v); // commented this out to make vect_clear behave more like the clear method in C++
+	rval = p_vect_clear(v);
 
 //DONE_PROCESSING:
 #if (ZVECT_THREAD_SAFE == 1)
@@ -2674,8 +2680,6 @@ static inline zvect_retval p_vect_move(vector const v1, vector v2, const zvect_i
 #endif
 
 	// Set the correct capacity for v1 to get the whole v2:
-	//while (p_vect_capacity(v1) <= (vsize1 + ee2))
-	//	p_vect_increase_capacity(v1, 1);
 	if (p_vect_capacity(v1) <= (p_vect_size(v1) + ee2))
 		p_vect_set_capacity(v1, 1, p_vect_capacity(v1)+ee2);
 
@@ -2752,6 +2756,7 @@ DONE_PROCESSING:
 #if (ZVECT_THREAD_SAFE == 1)
 	if (lock_owner2)
 		get_mutex_unlock(v2, 1);
+
 	if (lock_owner1)
 		get_mutex_unlock(v1, 1);
 #endif
