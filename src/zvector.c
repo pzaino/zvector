@@ -626,30 +626,14 @@ static zvect_retval p_vect_increase_capacity(vector const v, const zvect_index d
 	//void **new_data = NULL;
 	if (!direction)
 	{
+
 		// Increase capacity on the left side of the vector:
-		//zvect_index nb;
-		//zvect_index ne;
 
 		// Get actual left capacity and double it
 		// Note: "<< 1" is the same as "* 2"
 		//       this is an optimisation for old
 		//       compilers.
 		new_capacity = v->cap_left << 1;
-
-		/* new_data = (void **)malloc(sizeof(void *) * (new_capacity + v->cap_right));
-		if (new_data == NULL)
-			return ZVERR_OUTOFMEM;
-
-		nb = v->cap_left;
-		ne = ( nb + (v->end - v->begin) );
-		if (v->end != v->begin)
-			p_vect_memcpy(new_data + nb, v->data + v->begin, sizeof(void *) * (v->end - v->begin) );
-
-		// Reconfigure vector:
-		v->cap_left = new_capacity;
-		v->end = ne;
-		v->begin = nb;
-		free(v->data); */
 
 	} else {
 
@@ -661,20 +645,9 @@ static zvect_retval p_vect_increase_capacity(vector const v, const zvect_index d
 		//       compilers.
 		new_capacity = v->cap_right << 1;
 
-		/*
-		new_data = (void **)realloc(v->data, sizeof(void *) * (v->cap_left + new_capacity));
-		if (new_data == NULL)
-			return ZVERR_OUTOFMEM;
-
-		// Reconfigure Vector:
-		v->cap_right = new_capacity;
-		*/
 	}
 
 	zvect_retval rval = p_vect_set_capacity(v, direction, new_capacity);
-
-	// Apply changes
-	//v->data = new_data;
 
 	// done
 	return rval;
@@ -690,19 +663,16 @@ static zvect_retval p_vect_decrease_capacity(vector const v, const zvect_index d
 
 	zvect_index new_capacity;
 
-	//void **new_data = NULL;
+	void **new_data = NULL;
 	if (!direction)
 	{
 		// Decreasing on the left:
-		//zvect_index nb;
-        	//zvect_index ne;
 
 		// Note: ">> 1" is the same as "/ 2"
 		//       this is an optimisation for old
 		//       compilers.
 		new_capacity = v->cap_left >> 1;
 
-		/*
 		if (new_capacity < ( v->init_capacity >> 1 ))
 			new_capacity = v->init_capacity >> 1;
 
@@ -712,6 +682,8 @@ static zvect_retval p_vect_decrease_capacity(vector const v, const zvect_index d
 		if (new_data == NULL)
 			return ZVERR_OUTOFMEM;
 
+		zvect_index nb;
+        	zvect_index ne;
 		nb = ( new_capacity >> 1);
 		ne = ( nb + (v->end - v->begin) );
 		p_vect_memcpy(new_data + nb, v->data + v->begin, sizeof(void *) * (v->end - v->begin) );
@@ -721,7 +693,6 @@ static zvect_retval p_vect_decrease_capacity(vector const v, const zvect_index d
 		v->end = ne;
 		v->begin = nb;
 		free(v->data);
-		*/
 
 	} else {
 
@@ -731,7 +702,6 @@ static zvect_retval p_vect_decrease_capacity(vector const v, const zvect_index d
 		//       compilers.
 		new_capacity = v->cap_right >> 1;
 
-		/*
 		if (new_capacity < ( v->init_capacity >> 1 ))
 			new_capacity = v->init_capacity >> 1;
 
@@ -743,16 +713,13 @@ static zvect_retval p_vect_decrease_capacity(vector const v, const zvect_index d
 
 		// Reconfigure vector:
 		v->cap_right = new_capacity;
-		*/
 	}
 
-	zvect_retval rval = p_vect_set_capacity(v, direction, new_capacity);
-
 	// Apply changes
-	//v->data = new_data;
+	v->data = new_data;
 
 	// done:
-	return rval;
+	return 0;
 }
 
 /*
@@ -1179,7 +1146,7 @@ static inline zvect_retval p_vect_delete_at(vector const v, const zvect_index st
 				sizeof(void *) * ((vsize - start) - offset));
 
 		// Clear leftover item pointers:
-		if ( offset )
+		if ( offset && !(flags & 1))
 			memset(v->data + ((v->begin + vsize) - (offset + 1)), 0, offset);
 	}
 
