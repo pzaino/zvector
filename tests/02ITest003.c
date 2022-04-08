@@ -148,9 +148,10 @@ void *consumer(void *arg) {
 				fflush(stdout);
 				evt_counter++;
 				i++;
+
+				free(item);
 			}
 
-			free(item);
 			item=NULL;
 		}
 
