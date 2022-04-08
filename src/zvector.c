@@ -1172,11 +1172,18 @@ static inline zvect_retval p_vect_delete_at(vector const v, const zvect_index st
 				log_msg(ZVLP_INFO, "p_vect_delete_at: data ptr  %*p\n", 14, v->data + (v->begin + ptrID));
 		}*/
 #endif
+		// Safe erase items?
 		if ( flags & 1 )
 			p_free_items(v, start, offset);
+
+		// Move remaining items pointers up:
 		if ( tot_items )
 			p_vect_memmove(v->data + (v->begin + start), v->data + (v->begin + tot_items + 1),
 				sizeof(void *) * ((vsize - start) - offset));
+
+		// Clear leftover item pointers:
+		if ( offset )
+			memset(v->data + ((v->begin + vsize) - (offset + 1)), 0, offset);
 	}
 
 	// Reduce vector size:
