@@ -623,33 +623,17 @@ static zvect_retval p_vect_set_capacity(vector const v, const zvect_index direct
 static zvect_retval p_vect_increase_capacity(vector const v, const zvect_index direction) {
 	zvect_index new_capacity;
 
-	void **new_data = NULL;
+	//void **new_data = NULL;
 	if (!direction)
 	{
+
 		// Increase capacity on the left side of the vector:
-		zvect_index nb;
-		zvect_index ne;
 
 		// Get actual left capacity and double it
 		// Note: "<< 1" is the same as "* 2"
 		//       this is an optimisation for old
 		//       compilers.
 		new_capacity = v->cap_left << 1;
-
-		new_data = (void **)malloc(sizeof(void *) * (new_capacity + v->cap_right));
-		if (new_data == NULL)
-			return ZVERR_OUTOFMEM;
-
-		nb = v->cap_left;
-		ne = ( nb + (v->end - v->begin) );
-		if (v->end != v->begin)
-			p_vect_memcpy(new_data + nb, v->data + v->begin, sizeof(void *) * (v->end - v->begin) );
-
-		// Reconfigure vector:
-		v->cap_left = new_capacity;
-		v->end = ne;
-		v->begin = nb;
-		free(v->data);
 
 	} else {
 
@@ -661,19 +645,12 @@ static zvect_retval p_vect_increase_capacity(vector const v, const zvect_index d
 		//       compilers.
 		new_capacity = v->cap_right << 1;
 
-		new_data = (void **)realloc(v->data, sizeof(void *) * (v->cap_left + new_capacity));
-		if (new_data == NULL)
-			return ZVERR_OUTOFMEM;
-
-		// Reconfigure Vector:
-		v->cap_right = new_capacity;
 	}
 
-	// Apply changes
-	v->data = new_data;
+	zvect_retval rval = p_vect_set_capacity(v, direction, new_capacity);
 
 	// done
-	return 0;
+	return rval;
 }
 
 /*
@@ -690,8 +667,6 @@ static zvect_retval p_vect_decrease_capacity(vector const v, const zvect_index d
 	if (!direction)
 	{
 		// Decreasing on the left:
-		zvect_index nb;
-        	zvect_index ne;
 
 		// Note: ">> 1" is the same as "/ 2"
 		//       this is an optimisation for old
@@ -707,6 +682,8 @@ static zvect_retval p_vect_decrease_capacity(vector const v, const zvect_index d
 		if (new_data == NULL)
 			return ZVERR_OUTOFMEM;
 
+		zvect_index nb;
+        	zvect_index ne;
 		nb = ( new_capacity >> 1);
 		ne = ( nb + (v->end - v->begin) );
 		p_vect_memcpy(new_data + nb, v->data + v->begin, sizeof(void *) * (v->end - v->begin) );
@@ -804,8 +781,7 @@ zvect_retval p_vect_clear(vector const v) {
 
 	// Reset interested descriptors:
 	v->prev_end = p_vect_size(v);
-	v->begin = 0;
-	v->end = 0;
+	v->begin = v->end = 0;
 
 	// Shrink Vector's capacity:
 	// p_vect_shrink(v); // commented this out to make vect_clear behave more like the clear method in C++
@@ -832,23 +808,14 @@ static zvect_retval p_vect_destroy(vector v, uint32_t flags) {
 		// Reset interested descriptors:
 		v->prev_end = p_vect_size(v);
 		v->end = 0;
-
-		// Shrink Vector's capacity:
-		//if (p_vect_capacity(v) > v->init_capacity)
-		//	p_vect_shrink(v);
 	}
 
 	// Destroy the vector:
-	v->prev_end = 0;
-	v->init_capacity = 0;
-	v->cap_left = 0;
-	v->cap_right = 0;
+	v->prev_end = v->init_capacity = v->cap_left = v->cap_right = 0;
 
 	// Destroy it:
-	if ((v->status & ZVS_CUST_WIPE_ON)) {
-		//free(v->SfWpFunc);
+	if ((v->status & ZVS_CUST_WIPE_ON))
 		v->SfWpFunc = NULL;
-	}
 
 	if (v->data != NULL) {
 		free(v->data);
@@ -856,13 +823,7 @@ static zvect_retval p_vect_destroy(vector v, uint32_t flags) {
 	}
 
 	// Clear vector status flags:
-	v->status = 0;
-	v->flags = 0;
-	v->begin = 0;
-	v->end = 0;
-	v->data_size = 0;
-	v->balance = 0;
-	v->bottom = 0;
+	v->status = v->flags = v->begin = v->end = v->data_size = v->balance = v->bottom = 0;
 
 #if (ZVECT_THREAD_SAFE == 1)
 	if ( lock_owner )
@@ -1088,6 +1049,9 @@ static inline zvect_retval p_vect_remove_at(vector const v, const zvect_index i,
 			// because it's not safe to use it on the same src and dst.
 			p_vect_memmove(v->data + base + idx, v->data + base + (idx + 1),
 				sizeof(void *) * (vsize - idx));
+
+			// Clear leftover item pointers:
+			memset(v->data + ((v->begin + vsize) - 1), 0, 1);
 #endif
 		}
 	} else {
@@ -1182,7 +1146,7 @@ static inline zvect_retval p_vect_delete_at(vector const v, const zvect_index st
 				sizeof(void *) * ((vsize - start) - offset));
 
 		// Clear leftover item pointers:
-		if ( offset )
+		if ( offset && !(flags & 1))
 			memset(v->data + ((v->begin + vsize) - (offset + 1)), 0, offset);
 	}
 

@@ -131,8 +131,7 @@ void *consumer(void *arg) {
 		uint32_t i;
 		for (i = 0; i < MAX_ITEMS;)
 		{
-			// For beginners: this is how in C we convert back a void * into the original dtata_type
-			StackItem *item = (StackItem *)malloc(sizeof(StackItem *));
+			StackItem *item;
 			int fetched_item = 0;
 
 			vect_lock(v);
@@ -153,9 +152,11 @@ void *consumer(void *arg) {
 				fflush(stdout);
 				evt_counter++;
 				i++;
+
+				free(item);
 			}
 
-			free(item);
+			item = NULL;
 		}
 
 	printf("Consumer done. Consumed %d events.\n", evt_counter);
