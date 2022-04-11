@@ -1024,13 +1024,13 @@ static inline zvect_retval p_vect_remove_at(vector const v, const zvect_index i,
 			// then we need to wipe the old copy:
 			if (v->flags & ZV_SEC_WIPE)
 				p_item_safewipe(v, v->data[base + idx]);
-		} else {
+		} /* else {
 			memset(item, 0, v->data_size - 1);
-		}
+		} */
 	}
 
 	// "shift" left the array of one position:
-	uint16_t array_changed;
+	uint32_t array_changed;
 	array_changed = 0;
 	if ( idx != 0 ) {
 		if ((idx < (vsize - 1)) && (vsize > 0)) {
@@ -1070,7 +1070,6 @@ static inline zvect_retval p_vect_remove_at(vector const v, const zvect_index i,
 	}
 #endif
 	if (!(v->flags & ZV_CIRCULAR)) {
-		//v->prev_end = vsize;
 		if ( idx != 0 ) {
 			if (v->end > v->begin) {
 				v->end--;
@@ -2059,7 +2058,10 @@ static void p_vect_qsort(const vector v, zvect_index l, zvect_index r,
 	if (r <= l)
 	    return;
 
-	zvect_index i, p, j, q;
+	zvect_index i;
+	zvect_index p;
+	zvect_index j;
+	zvect_index q;
 	void *ref_val = NULL;
 
 	// l = left (also low)
@@ -2631,7 +2633,7 @@ static inline zvect_retval p_vect_move(vector const v1, vector v2, const zvect_i
 	log_msg(ZVLP_INFO, "p_vect_move: ready to copy pointers set\n");
 #endif
 	// Move v2 (from s2) in v1 at the end of v1:
-	void *rptr = NULL;
+	const void *rptr = NULL;
 	if (v1 != v2)
 		rptr = p_vect_memcpy(v1->data + (v1->begin + p_vect_size(v1)), v2->data + (v2->begin + s2), sizeof(void *) * ee2);
 	else
