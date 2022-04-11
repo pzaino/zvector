@@ -1024,8 +1024,9 @@ static inline zvect_retval p_vect_remove_at(vector const v, const zvect_index i,
 			// then we need to wipe the old copy:
 			if (v->flags & ZV_SEC_WIPE)
 				p_item_safewipe(v, v->data[base + idx]);
-		} else
-			memset(item, 0, v->data_size);
+		} else {
+			memset(item, 0, v->data_size - 1);
+		}
 	}
 
 	// "shift" left the array of one position:
@@ -2175,7 +2176,9 @@ static bool p_standard_binary_search(vector v, const void *key,
 static bool p_adaptive_binary_search(vector const v, const void *key,
                                     zvect_index *item_index,
                                     int (*f1)(const void *, const void *)) {
-	zvect_index bot, top, mid;
+	zvect_index bot;
+	zvect_index top;
+	zvect_index mid;
 
 	if ((v->balance >= 32) || (p_vect_size(v) <= 64)) {
 		bot = 0;
