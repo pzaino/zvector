@@ -425,10 +425,10 @@ static inline void mutex_destroy(CRITICAL_SECTION *lock) {
  * A user lock has the higher priority while ZVector itself
  * uses two different levels of priorities (both lower than
  * the user lock priority).
- * level 1 is the lower priority and it's used just by the
+ * level 1 is the lower priority, and it's used just by the
  *         primitives in ZVector.
- * level 2 is the priority used by the ZVEctor functions that
- *         uses ZVEctor primitives.
+ * level 2 is the priority used by the ZVector functions that
+ *         uses ZVector primitives.
  * level 3 is the priority of the User's locks.
  */
 static inline zvect_retval get_mutex_lock(const vector v, const int32_t lock_type) {
@@ -787,7 +787,7 @@ zvect_retval p_vect_clear(vector const v) {
 }
 
 static zvect_retval p_vect_destroy(vector v, uint32_t flags) {
-	// p_destroy is an exception in the rule of handling
+	// p_destroy is an exception to the rule of handling
 	// locking from the public methods. This because
 	// p_destroy has to destroy the vector mutex too and
 	// so it needs to control the lock as well!
