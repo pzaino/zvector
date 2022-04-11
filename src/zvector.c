@@ -518,17 +518,17 @@ void p_init_zvect(void) {
 // Vector's Utilities:
 
 ZVECT_ALWAYSINLINE
-static inline zvect_retval p_vect_check(vector const x) {
+static inline zvect_retval p_vect_check(const vector x) {
 	return (x == NULL) ? ZVERR_VECTUNDEF : 0;
 }
 
 ZVECT_ALWAYSINLINE
-static inline zvect_index p_vect_capacity(vector const v) {
+static inline zvect_index p_vect_capacity(const vector v) {
 	return ( v->cap_left + v->cap_right );
 }
 
 ZVECT_ALWAYSINLINE
-static inline zvect_index p_vect_size(vector const v) {
+static inline zvect_index p_vect_size(const vector v) {
 	return ( v->end > v->begin ) ? ( v->end - v->begin ) : ( v->begin - v->end );
 }
 
@@ -550,10 +550,8 @@ static void p_free_items(vector const v, zvect_index first, zvect_index offset) 
 		if (v->data[v->begin + j] != NULL) {
 			if (v->flags & ZV_SEC_WIPE)
 				p_item_safewipe(v, v->data[v->begin + j]);
-			if (!(v->flags & ZV_BYREF)) {
+			if (!(v->flags & ZV_BYREF))
 				free(v->data[v->begin + j]);
-				//v->data[v->begin + j] = NULL;
-			}
 		}
 		if (j == first)
 			break;	// this is required if we are using
@@ -625,7 +623,6 @@ static zvect_retval p_vect_set_capacity(vector const v, const zvect_index direct
 static zvect_retval p_vect_increase_capacity(vector const v, const zvect_index direction) {
 	zvect_index new_capacity;
 
-	//void **new_data = NULL;
 	if (!direction)
 	{
 
@@ -782,7 +779,6 @@ zvect_retval p_vect_clear(vector const v) {
 		p_free_items(v, 0, (p_vect_size(v) - 1));
 
 	// Reset interested descriptors:
-	//v->prev_end = p_vect_size(v);
 	v->begin = v->end = 0;
 
 	// Shrink Vector's capacity:
@@ -808,12 +804,10 @@ static zvect_retval p_vect_destroy(vector v, uint32_t flags) {
 		p_vect_clear(v);
 
 		// Reset interested descriptors:
-		//v->prev_end = p_vect_size(v);
 		v->end = 0;
 	}
 
 	// Destroy the vector:
-	// v->prev_end = 0;
     v->init_capacity = v->cap_left = v->cap_right = 0;
 
 	// Destroy it:
@@ -837,7 +831,6 @@ static zvect_retval p_vect_destroy(vector v, uint32_t flags) {
 	// All done and freed, so we can safely
 	// free the vector itself:
 	free(v);
-	//v = NULL;
 
 	return 0;
 }
@@ -972,7 +965,6 @@ static inline zvect_retval p_vect_add_at(vector const v, const void *value,
 	}
 #endif
 	// Increment vector size
-	//v->prev_end = vsize;
 	if (!idx) {
 		if (v->begin == base)
 			v->end++;
@@ -981,6 +973,7 @@ static inline zvect_retval p_vect_add_at(vector const v, const void *value,
 	} else {
 		v->end++;
 	}
+
 	// done
 	return 0;
 
@@ -1176,7 +1169,6 @@ static inline zvect_retval p_vect_delete_at(vector const v, const zvect_index st
 		v->begin = 0;
 		v->end = 0;
 	}
-	//v->prev_end = vsize;
 
 	// Check if we need to shrink the vector:
 	if ((4 * vsize) < p_vect_capacity(v))
@@ -1260,7 +1252,6 @@ vector vect_create(const zvect_index init_capacity, const size_t item_size,
 		p_throw_error(ZVERR_OUTOFMEM, NULL);
 
 	// Initialize the vector:
-	//v->prev_end = 0;
 	v->end = 0;
 	if (item_size == 0)
 		v->data_size = ZVECT_DEFAULT_DATA_SIZE;
@@ -2190,7 +2181,7 @@ static bool p_adaptive_binary_search(vector const v, const void *key,
 	if ((v->balance >= 32) || (p_vect_size(v) <= 64)) {
 		bot = 0;
 		top = p_vect_size(v);
-		goto monobound;
+		goto MONOBOUND;
 	}
 	bot = v->bottom;
 	top = 32;
@@ -2227,7 +2218,7 @@ static bool p_adaptive_binary_search(vector const v, const void *key,
 		}
 	}
 
-	monobound:
+	MONOBOUND:
 	while (top > 3) {
 		mid = top / 2;
 		// key >= array[bot + mid]
@@ -2540,10 +2531,6 @@ JOB_DONE:
  * from vector v2 (from position s2) in vector v1 (from
  * position s1).
  *
- * example: to insert 10 items from v2 (form item at
- *          position 10) into vector v1 starting at
- *          position 5, use:
- * vect_insert(v1, v2, 10, 10, 5);
  */
 void vect_insert(vector const v1, vector const v2, const zvect_index s2,
                  const zvect_index e2, const zvect_index s1) {
@@ -2600,9 +2587,6 @@ JOB_DONE:
  * from vector v2 (from position s2) in vector v1 (at
  * the end of it).
  *
- * example: to move 10 items from v2 (from item at
- *          position 10) into vector v1, use:
- * vect_move(v1, v2, 10, 10, 5);
  */
 static inline zvect_retval p_vect_move(vector const v1, vector v2, const zvect_index s2,
                			     const zvect_index e2) {
@@ -2818,8 +2802,6 @@ void vect_merge(vector const v1, vector v2) {
 #endif
 
 	// Set the correct capacity for v1 to get the whole v2:
-	//while (p_vect_capacity(v1) <= (p_vect_size(v1) + p_vect_size(v2)))
-	//	p_vect_increase_capacity(v1, 1);
 	if (p_vect_capacity(v1) <= (p_vect_size(v1) + p_vect_size(v2)))
 		p_vect_set_capacity(v1, 1, p_vect_capacity(v1) + p_vect_size(v2));
 
