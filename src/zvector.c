@@ -90,7 +90,7 @@ enum {
 
 /*---------------------------------------------------------------------------*/
 // Useful macros
-#define min(x, y) (((x) < (y)) ? (x) : (y))
+//# define min(x, y) (((x) < (y)) ? (x) : (y))
 #define max(x, y) (((x) > (y)) ? (x) : (y))
 #define UNUSED(x) (void)x
 
@@ -105,65 +105,66 @@ enum {
 struct ZVECT_PACKING p_vector {
 	zvect_index cap_left;		// - Max capacity allocated on the left.
 	zvect_index cap_right;		// - Max capacity allocated on the right.
-	zvect_index begin;		// - First vector's Element Pointer
-	zvect_index prev_end;		// - Used when clearing a vector.
-	zvect_index end;		// - Current Array size. size - 1 gives
-					//   us the pointer to the last element
-					//   in the vector.
-	size_t data_size;		// - User DataType size.
-					//   This should be 2 bytes size on a
-					//   16-bit system, 4 bytes on a 32 bit,
-					//   8 bytes on a 64 bit. But check your
-					//   compiler for the actual size, it's
-					//   implementation dependent.
-	uint32_t flags;			// - This flag set is used to store all
-					//   Vector's properties.
-					//   It contains bits that set Secure
-					//   Wipe, Auto Shrink, Pass Items By
-					//   Ref etc.
+	zvect_index begin;			// - First vector's Element Pointer
+	zvect_index end;			// - Current Array size. size - 1 gives
+								//   us the pointer to the last element
+								//   in the vector.
+	size_t data_size;			// - User DataType size.
+								//   This should be 2 bytes size on a
+								//   16-bit system, 4 bytes on a 32 bit,
+								//   8 bytes on a 64 bit. But check your
+								//   compiler for the actual size, it's
+								//   implementation dependent.
+	uint32_t flags;				// - This flag set is used to store all
+								//   Vector's properties.
+								//   It contains bits that set Secure
+								//   Wipe, Auto Shrink, Pass Items By
+								//   Ref etc.
 #if (ZVECT_THREAD_SAFE == 1)
 #	if MUTEX_TYPE == 0
-	void *lock;			// - Vector's mutex for thread safe
-					//   micro-transactions or user locks.
-					//   This should be 2 bytes size on a
-					//   16 bit machine, 4 bytes on a 32 bit
-					//   4 bytes on a 64 bit.
-	void *cond;			// - Vector's mutex condition variable
+	void *lock ZVECT_DATAALIGN;	// - Vector's mutex for thread safe
+								//   micro-transactions or user locks.
+								//   This should be 2 bytes size on a
+								//   16 bit machine, 4 bytes on a 32 bit
+								//   4 bytes on a 64 bit.
+	void *cond;					// - Vector's mutex condition variable
 #	elif MUTEX_TYPE == 1
-	pthread_mutex_t lock;		// - Vector's mutex for thread safe
-					//   micro-transactions or user locks.
-					//   This should be 24 bytes on a 32bit
-					//   machine and 40 bytes on a 64bit.
+	pthread_mutex_t lock ZVECT_DATAALIGN;
+								// - Vector's mutex for thread safe
+								//   micro-transactions or user locks.
+								//   This should be 24 bytes on a 32bit
+								//   machine and 40 bytes on a 64bit.
 	 pthread_cond_t cond;		// - Vector's mutex condition variable
-	 				//
+	 							//
 #	elif MUTEX_TYPE == 2
-	CRITICAL_SECTION lock;		// - Vector's mutex for thread safe
-					//   micro-transactions or user locks.
-					//   Check your WINNT.H to calculate the
-					//   size of this one.
+	CRITICAL_SECTION lock ZVECT_DATAALIGN;
+								// - Vector's mutex for thread safe
+								//   micro-transactions or user locks.
+								//   Check your WINNT.H to calculate the
+								//   size of this one.
 	CONDITION_VARIABLE cond;	// - Vector's mutex condition variable
 #	endif  // MUTEX_TYPE
 #endif  // ZVECT_THREAD_SAFE
-	void **data ZVECT_DATAALIGN;	// - Vector's storage.
+	void **data ZVECT_DATAALIGN;// - Vector's storage.
 	zvect_index init_capacity;	// - Initial Capacity (this is set at
-					//   creation time).
-					//   For the size of zvect_index check
-					//   zvector_config.h.
-	uint32_t status;		// - Internal vector Status Flags
+								//   creation time).
+								//   For the size of zvect_index check
+								//   zvector_config.h.
+	uint32_t status;			// - Internal vector Status Flags
 	void (*SfWpFunc)(const void *item, size_t size);
-					// - Pointer to a CUSTOM Safe Wipe
-					//   function (optional) needed only
-					//   for Secure Wiping special
-					//   structures.
+								// - Pointer to a CUSTOM Safe Wipe
+								//   function (optional) needed only
+								//   for Secure Wiping special
+								//   structures.
 #ifdef ZVECT_DMF_EXTENSIONS
 	zvect_index balance;		// - Used by the Adaptive Binary Search
-					//   to improve performance.
-	zvect_index bottom;	 	// - Used to optimise Adaptive Binary
-					//   Search.
+								//   to improve performance.
+	zvect_index bottom;			// - Used to optimise Adaptive Binary
+								//   Search.
 #endif  // ZVECT_DMF_EXTENSIONS
 #if (ZVECT_THREAD_SAFE == 1)
 	volatile int32_t lock_type;	// - This field contains the lock type
-					//   used for this Vector.
+								//   used for this Vector.
 #endif  // ZVECT_THREAD_SAFE
 } ZVECT_DATAALIGN;
 
@@ -371,9 +372,9 @@ static inline void mutex_init(pthread_mutex_t *lock) {
 #	if (!defined(macOS))
 	pthread_mutexattr_t Attr;
 	pthread_mutexattr_init(&Attr);
-	//pthread_mutexattr_settype(&Attr, PTHREAD_MUTEX_RECURSIVE_NP);
+	pthread_mutexattr_settype(&Attr, PTHREAD_MUTEX_RECURSIVE_NP);
 	pthread_mutexattr_setpshared(&Attr, PTHREAD_PROCESS_PRIVATE);
-	//pthread_mutexattr_setprotocol(&Attr, PTHREAD_PRIO_INHERIT);
+	pthread_mutexattr_setprotocol(&Attr, PTHREAD_PRIO_INHERIT);
 	pthread_mutex_init(lock, &Attr);
 #	else
 	pthread_mutex_init(lock, NULL);
@@ -516,17 +517,17 @@ void p_init_zvect(void) {
 // Vector's Utilities:
 
 ZVECT_ALWAYSINLINE
-static inline zvect_retval p_vect_check(vector const x) {
+static inline zvect_retval p_vect_check(const vector x) {
 	return (x == NULL) ? ZVERR_VECTUNDEF : 0;
 }
 
 ZVECT_ALWAYSINLINE
-static inline zvect_index p_vect_capacity(vector const v) {
+static inline zvect_index p_vect_capacity(const vector v) {
 	return ( v->cap_left + v->cap_right );
 }
 
 ZVECT_ALWAYSINLINE
-static inline zvect_index p_vect_size(vector const v) {
+static inline zvect_index p_vect_size(const vector v) {
 	return ( v->end > v->begin ) ? ( v->end - v->begin ) : ( v->begin - v->end );
 }
 
@@ -548,10 +549,8 @@ static void p_free_items(vector const v, zvect_index first, zvect_index offset) 
 		if (v->data[v->begin + j] != NULL) {
 			if (v->flags & ZV_SEC_WIPE)
 				p_item_safewipe(v, v->data[v->begin + j]);
-			if (!(v->flags & ZV_BYREF)) {
+			if (!(v->flags & ZV_BYREF))
 				free(v->data[v->begin + j]);
-				//v->data[v->begin + j] = NULL;
-			}
 		}
 		if (j == first)
 			break;	// this is required if we are using
@@ -623,7 +622,6 @@ static zvect_retval p_vect_set_capacity(vector const v, const zvect_index direct
 static zvect_retval p_vect_increase_capacity(vector const v, const zvect_index direction) {
 	zvect_index new_capacity;
 
-	//void **new_data = NULL;
 	if (!direction)
 	{
 
@@ -780,7 +778,6 @@ zvect_retval p_vect_clear(vector const v) {
 		p_free_items(v, 0, (p_vect_size(v) - 1));
 
 	// Reset interested descriptors:
-	v->prev_end = p_vect_size(v);
 	v->begin = v->end = 0;
 
 	// Shrink Vector's capacity:
@@ -806,15 +803,14 @@ static zvect_retval p_vect_destroy(vector v, uint32_t flags) {
 		p_vect_clear(v);
 
 		// Reset interested descriptors:
-		v->prev_end = p_vect_size(v);
 		v->end = 0;
 	}
 
 	// Destroy the vector:
-	v->prev_end = v->init_capacity = v->cap_left = v->cap_right = 0;
+    v->init_capacity = v->cap_left = v->cap_right = 0;
 
 	// Destroy it:
-	if ((v->status & ZVS_CUST_WIPE_ON))
+	if (v->status & ZVS_CUST_WIPE_ON)
 		v->SfWpFunc = NULL;
 
 	if (v->data != NULL) {
@@ -834,7 +830,6 @@ static zvect_retval p_vect_destroy(vector v, uint32_t flags) {
 	// All done and freed, so we can safely
 	// free the vector itself:
 	free(v);
-	v = NULL;
 
 	return 0;
 }
@@ -969,7 +964,6 @@ static inline zvect_retval p_vect_add_at(vector const v, const void *value,
 	}
 #endif
 	// Increment vector size
-	v->prev_end = vsize;
 	if (!idx) {
 		if (v->begin == base)
 			v->end++;
@@ -978,6 +972,7 @@ static inline zvect_retval p_vect_add_at(vector const v, const void *value,
 	} else {
 		v->end++;
 	}
+
 	// done
 	return 0;
 
@@ -994,13 +989,12 @@ static inline zvect_retval p_vect_remove_at(vector const v, const zvect_index i,
 	zvect_index vsize = p_vect_size(v);
 
 	// Check if the index is out of bounds:
-	if (!(v->flags & ZV_CIRCULAR))
-	{
-		if (idx >= vsize)
+	if (idx >= vsize) {
+		if (!(v->flags & ZV_CIRCULAR)) {
 			return ZVERR_IDXOUTOFBOUND;
-	} else {
-		if (idx >= vsize)
+		} else {
 			idx = idx % vsize;
+		}
 	}
 
 	// Check if the vector got corrupted
@@ -1030,12 +1024,14 @@ static inline zvect_retval p_vect_remove_at(vector const v, const zvect_index i,
 			// then we need to wipe the old copy:
 			if (v->flags & ZV_SEC_WIPE)
 				p_item_safewipe(v, v->data[base + idx]);
-		} else
-			item = NULL;
+		} /* else {
+			memset(item, 0, v->data_size - 1);
+		} */
 	}
 
 	// "shift" left the array of one position:
-	uint16_t array_changed = 0;
+	uint32_t array_changed;
+	array_changed = 0;
 	if ( idx != 0 ) {
 		if ((idx < (vsize - 1)) && (vsize > 0)) {
 			array_changed = 1;
@@ -1064,10 +1060,8 @@ static inline zvect_retval p_vect_remove_at(vector const v, const zvect_index i,
 
 	// Reduce vector size:
 #if (ZVECT_FULL_REENTRANT == 0)
-	if (!(v->flags & ZV_BYREF)) {
-		if (!array_changed)
-			p_free_items(v, vsize - 1, 0);
-	}
+	if (!(v->flags & ZV_BYREF) && !array_changed)
+		p_free_items(v, vsize - 1, 0);
 #else
 	// Apply changes
 	if (array_changed) {
@@ -1076,7 +1070,6 @@ static inline zvect_retval p_vect_remove_at(vector const v, const zvect_index i,
 	}
 #endif
 	if (!(v->flags & ZV_CIRCULAR)) {
-		v->prev_end = vsize;
 		if ( idx != 0 ) {
 			if (v->end > v->begin) {
 				v->end--;
@@ -1151,12 +1144,11 @@ static inline zvect_retval p_vect_delete_at(vector const v, const zvect_index st
 	}
 
 	// Reduce vector size:
-	if (!(v->flags & ZV_BYREF) && (flags & 1)) {
-		if (!array_changed)
+	if (!(v->flags & ZV_BYREF) && (flags & 1) && !array_changed)
 			p_free_items(v, ((vsize - 1) - offset), offset);
-	}
+
 	// Check if we need to increment begin or decrement end
-	// depending on the direction of the delete (left or right)
+	// depending on the direction of the "delete" (left or right)
 	if ( start != 0 || array_changed ) {
 		if ((v->end - (offset + 1)) > v->begin) {
 			v->end -= (offset + 1);
@@ -1176,7 +1168,6 @@ static inline zvect_retval p_vect_delete_at(vector const v, const zvect_index st
 		v->begin = 0;
 		v->end = 0;
 	}
-	v->prev_end = vsize;
 
 	// Check if we need to shrink the vector:
 	if ((4 * vsize) < p_vect_capacity(v))
@@ -1223,38 +1214,23 @@ void vect_shrink(vector const v) {
 // Vector Structural Information report:
 
 bool vect_is_empty(vector const v) {
-	// Check if the vector exists
-	if (!p_vect_check(v))
-		return p_vect_size(v) == 0;
-	return ZVERR_VECTUNDEF;
+	return !p_vect_check(v) ? (p_vect_size(v) == 0) : (bool)ZVERR_VECTUNDEF;
 }
 
 zvect_index vect_size(vector const v) {
-	// Check if the vector exists
-	if (!p_vect_check(v))
-		return p_vect_size(v);
-	return 0;
+	return !p_vect_check(v) ? p_vect_size(v) : 0;
 }
 
 zvect_index vect_max_size(vector const v) {
-	// Check if the vector exists
-	if (!p_vect_check(v))
-		return zvect_index_max;
-	return 0;
+	return !p_vect_check(v) ? zvect_index_max : 0;
 }
 
 void *vect_begin(vector const v) {
-	// Check if the vector exists
-	if (!p_vect_check(v))
-		return v->data[v->begin];
-	return NULL;
+	return !p_vect_check(v) ? v->data[v->begin] : NULL;
 }
 
 void *vect_end(vector const v) {
-	// Check if the vector exists
-	if (!p_vect_check(v))
-		return v->data[v->end];
-	return NULL;
+	return !p_vect_check(v) ? v->data[v->end] : NULL;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -1262,7 +1238,7 @@ void *vect_end(vector const v) {
 /*---------------------------------------------------------------------------*/
 // Vector Creation and Destruction:
 
-vector vect_create(const size_t init_capacity, const size_t item_size,
+vector vect_create(const zvect_index init_capacity, const size_t item_size,
                    const uint32_t properties) {
 	// If ZVector has not been initialised yet, then initialise it
 	// when creating the first vector:
@@ -1275,7 +1251,6 @@ vector vect_create(const size_t init_capacity, const size_t item_size,
 		p_throw_error(ZVERR_OUTOFMEM, NULL);
 
 	// Initialize the vector:
-	v->prev_end = 0;
 	v->end = 0;
 	if (item_size == 0)
 		v->data_size = ZVECT_DEFAULT_DATA_SIZE;
@@ -2083,7 +2058,10 @@ static void p_vect_qsort(const vector v, zvect_index l, zvect_index r,
 	if (r <= l)
 	    return;
 
-	zvect_index i, p, j, q;
+	zvect_index i;
+	zvect_index p;
+	zvect_index j;
+	zvect_index q;
 	void *ref_val = NULL;
 
 	// l = left (also low)
@@ -2200,12 +2178,14 @@ static bool p_standard_binary_search(vector v, const void *key,
 static bool p_adaptive_binary_search(vector const v, const void *key,
                                     zvect_index *item_index,
                                     int (*f1)(const void *, const void *)) {
-	zvect_index bot, top, mid;
+	zvect_index bot;
+	zvect_index top;
+	zvect_index mid;
 
 	if ((v->balance >= 32) || (p_vect_size(v) <= 64)) {
 		bot = 0;
 		top = p_vect_size(v);
-		goto monobound;
+		goto MONOBOUND;
 	}
 	bot = v->bottom;
 	top = 32;
@@ -2242,7 +2222,7 @@ static bool p_adaptive_binary_search(vector const v, const void *key,
 		}
 	}
 
-	monobound:
+	MONOBOUND:
 	while (top > 3) {
 		mid = top / 2;
 		// key >= array[bot + mid]
@@ -2555,10 +2535,6 @@ JOB_DONE:
  * from vector v2 (from position s2) in vector v1 (from
  * position s1).
  *
- * example: to insert 10 items from v2 (form item at
- *          position 10) into vector v1 starting at
- *          position 5, use:
- * vect_insert(v1, v2, 10, 10, 5);
  */
 void vect_insert(vector const v1, vector const v2, const zvect_index s2,
                  const zvect_index e2, const zvect_index s1) {
@@ -2615,9 +2591,6 @@ JOB_DONE:
  * from vector v2 (from position s2) in vector v1 (at
  * the end of it).
  *
- * example: to move 10 items from v2 (from item at
- *          position 10) into vector v1, use:
- * vect_move(v1, v2, 10, 10, 5);
  */
 static inline zvect_retval p_vect_move(vector const v1, vector v2, const zvect_index s2,
                			     const zvect_index e2) {
@@ -2660,7 +2633,7 @@ static inline zvect_retval p_vect_move(vector const v1, vector v2, const zvect_i
 	log_msg(ZVLP_INFO, "p_vect_move: ready to copy pointers set\n");
 #endif
 	// Move v2 (from s2) in v1 at the end of v1:
-	void *rptr = NULL;
+	const void *rptr = NULL;
 	if (v1 != v2)
 		rptr = p_vect_memcpy(v1->data + (v1->begin + p_vect_size(v1)), v2->data + (v2->begin + s2), sizeof(void *) * ee2);
 	else
@@ -2833,8 +2806,6 @@ void vect_merge(vector const v1, vector v2) {
 #endif
 
 	// Set the correct capacity for v1 to get the whole v2:
-	//while (p_vect_capacity(v1) <= (p_vect_size(v1) + p_vect_size(v2)))
-	//	p_vect_increase_capacity(v1, 1);
 	if (p_vect_capacity(v1) <= (p_vect_size(v1) + p_vect_size(v2)))
 		p_vect_set_capacity(v1, 1, p_vect_capacity(v1) + p_vect_size(v2));
 
