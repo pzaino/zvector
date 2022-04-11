@@ -106,7 +106,6 @@ struct ZVECT_PACKING p_vector {
 	zvect_index cap_left;		// - Max capacity allocated on the left.
 	zvect_index cap_right;		// - Max capacity allocated on the right.
 	zvect_index begin;			// - First vector's Element Pointer
-//	zvect_index prev_end;		// - Used when clearing a vector.
 	zvect_index end;			// - Current Array size. size - 1 gives
 								//   us the pointer to the last element
 								//   in the vector.
