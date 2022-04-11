@@ -86,7 +86,7 @@ enum ZVECT_ERR {
  * after item_size. Flags syntax is the usual C flag sets:
  * ZV_SEC_WIPE | ZV_BYREF etc.
  */
-vector vect_create(size_t capacity, size_t item_size, uint32_t properties);
+vector vect_create(zvect_index capacity, size_t item_size, uint32_t properties);
 
 /*
  * vect_destroy destroys the specified vector and, if

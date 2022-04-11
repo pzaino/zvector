@@ -59,7 +59,7 @@ size_t max_strLen = 32;
 //              system when using multi-threaded queues.
 #define MAX_THREADS 16
 
-#define TOTAL_ITEMS 10000000
+#define TOTAL_ITEMS 100000000
 #define MAX_ITEMS (TOTAL_ITEMS / ( MAX_THREADS / 2))
 #define MAX_MSG_SIZE 72
 pthread_t tid[MAX_THREADS]; // threads IDs
