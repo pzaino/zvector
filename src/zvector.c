@@ -372,9 +372,9 @@ static inline void mutex_init(pthread_mutex_t *lock) {
 #	if (!defined(macOS))
 	pthread_mutexattr_t Attr;
 	pthread_mutexattr_init(&Attr);
-	//pthread_mutexattr_settype(&Attr, PTHREAD_MUTEX_RECURSIVE_NP);
+	pthread_mutexattr_settype(&Attr, PTHREAD_MUTEX_RECURSIVE_NP);
 	pthread_mutexattr_setpshared(&Attr, PTHREAD_PROCESS_PRIVATE);
-	//pthread_mutexattr_setprotocol(&Attr, PTHREAD_PRIO_INHERIT);
+	pthread_mutexattr_setprotocol(&Attr, PTHREAD_PRIO_INHERIT);
 	pthread_mutex_init(lock, &Attr);
 #	else
 	pthread_mutex_init(lock, NULL);
