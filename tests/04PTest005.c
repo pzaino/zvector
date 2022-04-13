@@ -63,9 +63,6 @@ size_t max_strLen = 32;
 #define MAX_ITEMS (TOTAL_ITEMS / ( MAX_THREADS / 2))
 #define MAX_MSG_SIZE 72
 pthread_t tid[MAX_THREADS]; // Producers and Consumers thread ID
-pthread_t controller_t; // Controller thread
-
-bool ProcessMessages = true;
 
 struct thread_args {
     int id;
@@ -261,36 +258,6 @@ START_JOB:
 	return NULL;
 }
 
-// This is a special thread that will allow
-// multiple Producers to "signal" multiple
-// multiple Consumers.
-void *controller(void *arg) {
-	struct thread_args *targs = (struct thread_args *)arg;
-	vector v = (vector)targs->v;
-	uint32_t waitcycles = 0;
-	while (ProcessMessages) {
-		//vect_lock(v);
-		if (vect_size(v) >= MAX_ITEMS)
-		{
-			if (!vect_check_status(v, 1) || waitcycles > 100000000)
-			{
-				printf("about to send signal... \n");
-				vect_set_status(v, 1);
-				vect_broadcast_signal(v);
-				printf("Global Vector       size: %*u\n", 10, vect_size(v));
-				printf("Global Vector USR status: %*i\n", 10, vect_check_status(v, 1));
-				printf("signal sent... \n");
-				waitcycles=0;
-			} else {
-				waitcycles++;
-			}
-		}
-		//vect_unlock(v);
-	}
-	pthread_exit(NULL);
-	return NULL;
-}
-
 int main() {
 	// Setup
 	srand((time(NULL) * max_strLen) + (++mySeed));
@@ -302,11 +269,10 @@ int main() {
 
 	fflush(stdout);
 
-	printf("Test %s_%d: Create a Queue of %*i initial capacity and use it with %*i messages:\n", testGrp, testID, 8, TOTAL_ITEMS+(TOTAL_ITEMS/2), 8, TOTAL_ITEMS);
+	printf("Test %s_%d: Create a Queue of %*i initial capacity and use it for %*i messages:\n", testGrp, testID, 8, 8, 8, TOTAL_ITEMS);
 	fflush(stdout);
 
 		vector v;
-		//v = vect_create(TOTAL_ITEMS+(TOTAL_ITEMS/2), sizeof(struct QueueItem), ZV_NONE);
 		v = vect_create(8, sizeof(struct QueueItem), ZV_NONE);
 
 	printf("done.\n");
@@ -319,19 +285,12 @@ int main() {
 
 		int err = 0;
 		int i = 0;
-		struct thread_args *targs[MAX_THREADS+2];
+		struct thread_args *targs[MAX_THREADS+1];
 
 		CCPAL_START_MEASURING;
 
-		/*
-		// First we start the Controller thread:
-		targs[MAX_THREADS+1]=(struct thread_args *)malloc(sizeof(struct thread_args));
-		targs[MAX_THREADS+1]->id=1000;
-		targs[MAX_THREADS+1]->v=v;
-		err = pthread_create(&controller_t, NULL, &controller, targs[MAX_THREADS+1]);
-		*/
-
 		for (i=0; i < MAX_THREADS / 2; i++) {
+			// Create producer threads:
 			targs[i]=(struct thread_args *)malloc(sizeof(struct thread_args));
 			targs[i]->id=i;
 			targs[i]->v=v;
@@ -339,6 +298,7 @@ int main() {
 			if (err != 0)
 				printf("Can't create producer thread :[%s]\n", strerror(err));
 
+			// Create consumer threads
 			targs[i+(MAX_THREADS / 2)]=(struct thread_args *)malloc(sizeof(struct thread_args));
 			targs[i+(MAX_THREADS / 2)]->id=i+(MAX_THREADS / 2);
 			targs[i+(MAX_THREADS / 2)]->v=v;
@@ -347,14 +307,18 @@ int main() {
 				printf("Can't create consumer thread :[%s]\n", strerror(err));
 		}
 
-		// Let's start the threads:
-		for (i=0; i < MAX_THREADS; i++) {
+		// Let's join all the threads:
+		// for beginners: Please note starting first all the producers
+		//                and then all the consumer will reduce parallelism
+		//                this is because of how pthreads works, so I start
+		//                then in tuples, to increase parallelism over
+		//                concurrency.
+		for (i=0; i < MAX_THREADS / 2; i++) {
 			pthread_join(tid[i], NULL);
+			pthread_join(tid[i + (MAX_THREADS / 2)], NULL);
 		}
 
 		// We are done processing messages:
-		//ProcessMessages = false;
-
 		CCPAL_STOP_MEASURING;
 
 		for(i=0; i < MAX_THREADS; i++) {
