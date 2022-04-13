@@ -65,5 +65,15 @@
 		    ],
 		    "makeArgs": ["all", "debug", "testing"]
 		},
+	],
+	"compiler-explorer.url": "https://godbolt.org",
+    "compiler-explorer.compiler": "arm1100",
+	"compiler-explorer.options": "-O3",
+	"compiler-explorer.debug": true,
+	"C_Cpp.default.compileCommands": "make all",
+	"editor.fontFamily": "monospaced, monospace, Monaco, 'Courier New'",
+	"editor.fontSize": 16,
+	"compiler-explorer.include": [
+		"${workspaceFolder}/src"
 	]
 }

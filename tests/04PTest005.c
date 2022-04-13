@@ -62,7 +62,7 @@ size_t max_strLen = 32;
 #define TOTAL_ITEMS 10000000
 #define MAX_ITEMS (TOTAL_ITEMS / ( MAX_THREADS / 2))
 #define MAX_MSG_SIZE 72
-pthread_t tid[MAX_THREADS]; // threads IDs
+pthread_t tid[MAX_THREADS]; // Producers and Consumers thread ID
 
 struct thread_args {
     int id;
@@ -95,6 +95,11 @@ void mk_rndstr(char *rndStr, size_t len) {
 
 void clear_str(char *str, size_t len) {
 	memset(str, 0, len);
+}
+
+zvect_retval check_if_correct_size(void *v1, void *v2) {
+	return ( vect_size((vector)v2) >= MAX_ITEMS );
+	(void)v1;
 }
 
 // Threads
@@ -138,6 +143,7 @@ void *producer(void *arg) {
 		// Now move the local partition to the shared vector:
 		vect_merge(v, v2);
 		//vect_move(v, v2, 0, MAX_ITEMS);
+		vect_sem_post(v);
 
 		// We're done, display some stats and terminate the thread:
 		printf("Producer thread %i done. Produced %d events.\n", id, i);
@@ -153,8 +159,8 @@ void *producer(void *arg) {
 		CCPAL_REPORT_ANALYSIS;
 
 #ifdef DEBUG
-		printf("Signal status %*i\n\n", 8, !vect_send_signal(v));
-		printf("\n\n");
+		//printf("Signal status %*i\n\n", 8, !vect_send_signal(v));
+		//printf("\n\n");
 #endif
 		fflush(stdout);
 
@@ -165,11 +171,6 @@ void *producer(void *arg) {
 
 	pthread_exit(NULL);
 	return NULL;
-}
-
-zvect_retval check_if_correct_size(void *v1, void *v2) {
-	return ( vect_size((vector)v2) >= MAX_ITEMS );
-	(void)v1;
 }
 
 void *consumer(void *arg) {
@@ -184,8 +185,6 @@ void *consumer(void *arg) {
 	printf("Test %s_%d: Thread %*i, consume %*d events from the queue in FIFO order:\n", testGrp, testID, 3, id, 4, MAX_ITEMS);
 	fflush(stdout);
 
-		CCPAL_START_MEASURING;
-
 		uint32_t i;
 		vector v2 = vect_create(MAX_ITEMS+(MAX_ITEMS/2), sizeof(struct QueueItem), ZV_NONE | ZV_NOLOCKING);
 
@@ -196,27 +195,25 @@ void *consumer(void *arg) {
 
 		// Wait for a chunk of messages to be available:
 		//vect_wait_for_signal(v);
+		vect_sem_wait(v);
+
+		// Given that the semaphore wait will send this thread
+		// to sleep until the first data are available, we need
+		// to start measuring time from here. When the thread
+		// wake up:
+		CCPAL_START_MEASURING;
+
 		while (true) {
-			//if (vect_trylock(v))
-			//if (vect_wait_for_signal(v))
+			//if (!vect_move_on_signal(v2, v, 0, MAX_ITEMS, check_if_correct_size))
 			//{
-				//if ( vect_size(v) >= MAX_ITEMS )
 				if (!vect_move_if(v2, v, 0, MAX_ITEMS, check_if_correct_size))
 				{
-					//vect_move(v2, v, 0, MAX_ITEMS);
 #ifdef DEBUG
 					printf("Moved data from global vector to local, global vector size: %*i, local vector size: %*i\n", 8, vect_size(v), 8, vect_size(v2));
 					fflush(stdout);
 #endif
-					//vect_unlock(v);
-					// Ok, all good, we have our chunk of messages, let's
-					// start processing them:
 					goto START_JOB;
 				}
-				//printf("Main Vector size: %*i\n", 8, vect_size(v));
-				//fflush(stdout);
-				// No luck, let's remove the lock and repeat the process:
-				//vect_unlock(v);
 			//}
 		}
 
@@ -227,21 +224,12 @@ START_JOB:
 		                 // ZVector vect_remove_front will do it for us :)
 		evt_counter = 0;
 
-		for (i = 0; i < MAX_ITEMS; i++)
+		for (i = MAX_ITEMS; i--;)
 		{
 			item  = (QueueItem *)vect_remove_front(v2);
-			if ( item->msg != NULL )
-			{
-				evt_counter++;
-				if (i < MAX_ITEMS - 1)
-				{
-					free(item);
-					item = NULL;
-				}
-			}
-#ifdef DEBUG
-			// printf("thread %*i, item %*u\n", 10, id, 8, evt_counter);
-#endif
+			evt_counter++;
+			if (i)
+				free(item);
 		}
 
 
@@ -281,11 +269,10 @@ int main() {
 
 	fflush(stdout);
 
-	printf("Test %s_%d: Create a Queue of %*i initial capacity and use it with %*i messages:\n", testGrp, testID, 8, TOTAL_ITEMS+(TOTAL_ITEMS/2), 8, TOTAL_ITEMS);
+	printf("Test %s_%d: Create a Queue of %*i initial capacity and use it for %*i messages:\n", testGrp, testID, 8, 8, 8, TOTAL_ITEMS);
 	fflush(stdout);
 
 		vector v;
-		//v = vect_create(TOTAL_ITEMS+(TOTAL_ITEMS/2), sizeof(struct QueueItem), ZV_NONE);
 		v = vect_create(8, sizeof(struct QueueItem), ZV_NONE);
 
 	printf("done.\n");
@@ -303,6 +290,7 @@ int main() {
 		CCPAL_START_MEASURING;
 
 		for (i=0; i < MAX_THREADS / 2; i++) {
+			// Create producer threads:
 			targs[i]=(struct thread_args *)malloc(sizeof(struct thread_args));
 			targs[i]->id=i;
 			targs[i]->v=v;
@@ -310,6 +298,7 @@ int main() {
 			if (err != 0)
 				printf("Can't create producer thread :[%s]\n", strerror(err));
 
+			// Create consumer threads
 			targs[i+(MAX_THREADS / 2)]=(struct thread_args *)malloc(sizeof(struct thread_args));
 			targs[i+(MAX_THREADS / 2)]->id=i+(MAX_THREADS / 2);
 			targs[i+(MAX_THREADS / 2)]->v=v;
@@ -318,11 +307,18 @@ int main() {
 				printf("Can't create consumer thread :[%s]\n", strerror(err));
 		}
 
-		// Let's start the threads:
-		for (i=0; i < MAX_THREADS; i++) {
+		// Let's join all the threads:
+		// for beginners: Please note starting first all the producers
+		//                and then all the consumer will reduce parallelism
+		//                this is because of how pthreads works, so I start
+		//                then in tuples, to increase parallelism over
+		//                concurrency.
+		for (i=0; i < MAX_THREADS / 2; i++) {
 			pthread_join(tid[i], NULL);
+			pthread_join(tid[i + (MAX_THREADS / 2)], NULL);
 		}
 
+		// We are done processing messages:
 		CCPAL_STOP_MEASURING;
 
 		for(i=0; i < MAX_THREADS; i++) {

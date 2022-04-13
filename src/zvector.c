@@ -3,7 +3,7 @@
  * Purpose: Library to use Dynamic Arrays (Vectors) in C Language
  *  Author: Paolo Fabio Zaino
  *  Domain: General
- * License: Copyright by Paolo Fabio Zaino, all rights reserved
+ * License: Copyright by Paolo Fabio Zaino, all rights reserved.
  *          Distributed under MIT license
  *
  * Credits: This Library was inspired by the work of quite few,
@@ -58,6 +58,7 @@
 #endif // OS_TYPE
 #if (ZVECT_THREAD_SAFE == 1)
 #	if MUTEX_TYPE == 1
+#		include <semaphore.h>
 #		include <pthread.h>
 #	elif MUTEX_TYPE == 2
 #		include <windows.h>
@@ -69,9 +70,14 @@
 
 // Declare Vector status flags:
 enum {
-	ZVS_NONE = 0,              // Set or Reset vector's status register.
-	ZVS_CUST_WIPE_ON = 1 << 0  // Sets the bit to indicate a custom secure wipe
-				   // function has been set.
+	ZVS_NONE = 0,			// - Set or Reset vector's status register.
+	ZVS_CUST_WIPE_ON = 1 << 0,	// - Set the bit to indicate a custom secure wipe
+				   	//   function has been set.
+	ZVS_USR1_FLAG = 1 << 1,		// - This is a "user" available flag, a user code
+					//   can set it to 1 or 0 for its own need.
+					//   Can be useful when signaling between threads.
+	ZVS_USR2_FLAG = 1 << 2
+
 };
 
 #ifndef ZVECT_MEMX_METHOD
@@ -105,66 +111,67 @@ enum {
 struct ZVECT_PACKING p_vector {
 	zvect_index cap_left;		// - Max capacity allocated on the left.
 	zvect_index cap_right;		// - Max capacity allocated on the right.
-	zvect_index begin;			// - First vector's Element Pointer
-	zvect_index end;			// - Current Array size. size - 1 gives
-								//   us the pointer to the last element
-								//   in the vector.
-	size_t data_size;			// - User DataType size.
-								//   This should be 2 bytes size on a
-								//   16-bit system, 4 bytes on a 32 bit,
-								//   8 bytes on a 64 bit. But check your
-								//   compiler for the actual size, it's
-								//   implementation dependent.
-	uint32_t flags;				// - This flag set is used to store all
-								//   Vector's properties.
-								//   It contains bits that set Secure
-								//   Wipe, Auto Shrink, Pass Items By
-								//   Ref etc.
+	zvect_index begin;		// - First vector's Element Pointer
+	zvect_index end;		// - Current Array size. size - 1 gives
+					//   us the pointer to the last element
+					//   in the vector.
+	uint32_t flags;			// - This flag set is used to store all
+					//   Vector's properties.
+					//   It contains bits that set Secure
+					//   Wipe, Auto Shrink, Pass Items By
+					//   Ref etc.
+	size_t data_size;		// - User DataType size.
+					//   This should be 2 bytes size on a
+					//   16-bit system, 4 bytes on a 32 bit,
+					//   8 bytes on a 64 bit. But check your
+					//   compiler for the actual size, it's
+					//   implementation dependent.
 #if (ZVECT_THREAD_SAFE == 1)
 #	if MUTEX_TYPE == 0
 	void *lock ZVECT_DATAALIGN;	// - Vector's mutex for thread safe
-								//   micro-transactions or user locks.
-								//   This should be 2 bytes size on a
-								//   16 bit machine, 4 bytes on a 32 bit
-								//   4 bytes on a 64 bit.
-	void *cond;					// - Vector's mutex condition variable
+					//   micro-transactions or user locks.
+					//   This should be 2 bytes size on a
+					//   16 bit machine, 4 bytes on a 32 bit
+					//   4 bytes on a 64 bit.
+	void *cond;			// - Vector's mutex condition variable
 #	elif MUTEX_TYPE == 1
 	pthread_mutex_t lock ZVECT_DATAALIGN;
-								// - Vector's mutex for thread safe
-								//   micro-transactions or user locks.
-								//   This should be 24 bytes on a 32bit
-								//   machine and 40 bytes on a 64bit.
+					// - Vector's mutex for thread safe
+					//   micro-transactions or user locks.
+					//   This should be 24 bytes on a 32bit
+					//   machine and 40 bytes on a 64bit.
 	 pthread_cond_t cond;		// - Vector's mutex condition variable
-	 							//
+
 #	elif MUTEX_TYPE == 2
 	CRITICAL_SECTION lock ZVECT_DATAALIGN;
-								// - Vector's mutex for thread safe
-								//   micro-transactions or user locks.
-								//   Check your WINNT.H to calculate the
-								//   size of this one.
+					// - Vector's mutex for thread safe
+					//   micro-transactions or user locks.
+					//   Check your WINNT.H to calculate the
+					//   size of this one.
 	CONDITION_VARIABLE cond;	// - Vector's mutex condition variable
 #	endif  // MUTEX_TYPE
 #endif  // ZVECT_THREAD_SAFE
-	void **data ZVECT_DATAALIGN;// - Vector's storage.
+	void **data ZVECT_DATAALIGN;	// - Vector's storage.
 	zvect_index init_capacity;	// - Initial Capacity (this is set at
-								//   creation time).
-								//   For the size of zvect_index check
-								//   zvector_config.h.
-	uint32_t status;			// - Internal vector Status Flags
+					//   creation time).
+					//   For the size of zvect_index check
+					//   zvector_config.h.
 	void (*SfWpFunc)(const void *item, size_t size);
-								// - Pointer to a CUSTOM Safe Wipe
-								//   function (optional) needed only
-								//   for Secure Wiping special
-								//   structures.
+					// - Pointer to a CUSTOM Safe Wipe
+					//   function (optional) needed only
+					//   for Secure Wiping special
+					//   structures.
 #ifdef ZVECT_DMF_EXTENSIONS
 	zvect_index balance;		// - Used by the Adaptive Binary Search
-								//   to improve performance.
-	zvect_index bottom;			// - Used to optimise Adaptive Binary
-								//   Search.
+					//   to improve performance.
+	zvect_index bottom;		// - Used to optimise Adaptive Binary
+					//   Search.
 #endif  // ZVECT_DMF_EXTENSIONS
+	volatile uint32_t status;	// - Internal vector Status Flags
 #if (ZVECT_THREAD_SAFE == 1)
+		   sem_t semaphore;     // - Vector semaphore
 	volatile int32_t lock_type;	// - This field contains the lock type
-								//   used for this Vector.
+					//   used for this Vector.
 #endif  // ZVECT_THREAD_SAFE
 } ZVECT_DATAALIGN;
 
@@ -301,12 +308,12 @@ static void p_throw_error(const zvect_retval error_code, const char *error_messa
 ZVECT_ALWAYSINLINE
 static inline
 #endif // ZVECT_MEMX_METHOD
-void *p_vect_memcpy(void *__restrict dst, const void *__restrict src, size_t size) {
+void *p_vect_memcpy(const void *__restrict dst, const void *__restrict src, size_t size) {
 #if (ZVECT_MEMX_METHOD == 0)
 	// Using regular memcpy
 	// If you are using ZVector on Linux/macOS/BSD/Windows
 	// you should stick to this one!
-	return memcpy(dst, src, size);
+	return memcpy((void *)dst, src, size);
 #elif (ZVECT_MEMX_METHOD == 1)
 	// Using improved memcpy (where improved means for
 	// embedded systems only!):
@@ -332,14 +339,14 @@ void *p_vect_memcpy(void *__restrict dst, const void *__restrict src, size_t siz
 }
 
 ZVECT_ALWAYSINLINE
-static inline void *p_vect_memmove(void *__restrict dst,
-                                 const void *__restrict src, size_t size) {
+static inline void *p_vect_memmove(const void *__restrict dst,
+                                   const void *__restrict src, size_t size) {
 #ifdef DEBUG
 	log_msg(ZVLP_INFO, "p_vect_memmove: dst      %*p\n", 14, dst);
 	log_msg(ZVLP_INFO, "p_vect_memmove: src      %*p\n", 14, src);
 	log_msg(ZVLP_INFO, "p_vect_memmove: size     %*u\n", 14, size);
 #endif
-	return memmove(dst, src, size);
+	return memmove((void *)dst, src, size);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -374,7 +381,7 @@ static inline void mutex_init(pthread_mutex_t *lock) {
 	pthread_mutexattr_init(&Attr);
 	pthread_mutexattr_settype(&Attr, PTHREAD_MUTEX_RECURSIVE_NP);
 	pthread_mutexattr_setpshared(&Attr, PTHREAD_PROCESS_PRIVATE);
-	pthread_mutexattr_setprotocol(&Attr, PTHREAD_PRIO_INHERIT);
+	//pthread_mutexattr_setprotocol(&Attr, PTHREAD_PRIO_INHERIT);
 	pthread_mutex_init(lock, &Attr);
 #	else
 	pthread_mutex_init(lock, NULL);
@@ -394,6 +401,14 @@ static inline void mutex_cond_init(pthread_cond_t *cond) {
 
 static inline void mutex_destroy(pthread_mutex_t *lock) {
 	pthread_mutex_destroy(lock);
+}
+
+static inline int p_sem_init(sem_t *mutex, int value) {
+	return sem_init(mutex, 0, value);
+}
+
+static inline int p_sem_destroy(sem_t *mutex) {
+	return sem_destroy(mutex);
 }
 
 #	elif MUTEX_TYPE == 2
@@ -425,10 +440,10 @@ static inline void mutex_destroy(CRITICAL_SECTION *lock) {
  * A user lock has the higher priority while ZVector itself
  * uses two different levels of priorities (both lower than
  * the user lock priority).
- * level 1 is the lower priority and it's used just by the
+ * level 1 is the lower priority, and it's used just by the
  *         primitives in ZVector.
- * level 2 is the priority used by the ZVEctor functions that
- *         uses ZVEctor primitives.
+ * level 2 is the priority used by the ZVector functions that
+ *         uses ZVector primitives.
  * level 3 is the priority of the User's locks.
  */
 static inline zvect_retval get_mutex_lock(const vector v, const int32_t lock_type) {
@@ -462,23 +477,29 @@ static inline zvect_retval lock_after_signal(const vector v, const int32_t lock_
 	return 0;
 }
 
-static inline zvect_retval wait_for_signal(const vector v, const int32_t lock_type) {
+/*
+ * TODO: Write a generic function to allow user to use signals:
+
+static inline zvect_retval wait_for_signal(const vector v, const int32_t lock_type, bool (*f1)(const vector v), ) {
 	if (lock_type >= v->lock_type) {
 		//if (!mutex_trylock(&(v->lock))) {
-    			while (!pthread_cond_wait(&(v->cond), &(v->lock))) {
-				    // wait until we get a signal
+			while(!(*f1)(v)) {
+				// wait until we get a signal
+    				pthread_cond_wait(&(v->cond), &(v->lock))
 			}
 			return 1;
 		//}
 	}
 	return 0;
 }
+*/
 
 static inline zvect_retval send_signal(const vector v, const int32_t lock_type) {
-	if (lock_type >= v->lock_type) {
-		return pthread_cond_broadcast(&(v->cond));
-	}
-	return 0;
+	return (lock_type >= v->lock_type) ? pthread_cond_signal(&(v->cond)) : 0;
+}
+
+static inline zvect_retval broadcast_signal(const vector v, const int32_t lock_type) {
+	return (lock_type >= v->lock_type) ? pthread_cond_broadcast(&(v->cond)) : 0;
 }
 
 static inline zvect_retval get_mutex_unlock(const vector v, const int32_t lock_type) {
@@ -539,6 +560,51 @@ static inline void p_item_safewipe(vector const v, void *const item) {
 			(*(v->SfWpFunc))(item, v->data_size);
 		}
 	}
+}
+
+ZVECT_ALWAYSINLINE
+static inline zvect_retval p_usr_status(zvect_index flag_id)
+{
+	switch (flag_id) {
+		case  1: return 0;
+			 break;
+		default: return 1;
+	}
+}
+
+bool vect_check_status(const vector v, zvect_index flag_id)
+{
+	return (v->status >> flag_id) & 1U;
+}
+
+bool vect_set_status(const vector v, zvect_index flag_id)
+{
+	zvect_retval rval = p_usr_status(flag_id);
+
+	if (!rval)
+		v->status |= 1UL << flag_id;
+
+	return (bool)rval;
+}
+
+bool vect_clear_status(const vector v, zvect_index flag_id)
+{
+	zvect_retval rval = p_usr_status(flag_id);
+
+	if (!rval)
+		v->status &= ~(1UL << flag_id);
+
+	return (bool)rval;
+}
+
+bool vect_toggle_status(const vector v, zvect_index flag_id)
+{
+	zvect_retval rval = p_usr_status(flag_id);
+
+	if (!rval)
+		v->status ^= (1UL << flag_id);
+
+	return rval;
 }
 
 static void p_free_items(vector const v, zvect_index first, zvect_index offset) {
@@ -787,7 +853,7 @@ zvect_retval p_vect_clear(vector const v) {
 }
 
 static zvect_retval p_vect_destroy(vector v, uint32_t flags) {
-	// p_destroy is an exception in the rule of handling
+	// p_destroy is an exception to the rule of handling
 	// locking from the public methods. This because
 	// p_destroy has to destroy the vector mutex too and
 	// so it needs to control the lock as well!
@@ -807,7 +873,7 @@ static zvect_retval p_vect_destroy(vector v, uint32_t flags) {
 	}
 
 	// Destroy the vector:
-    v->init_capacity = v->cap_left = v->cap_right = 0;
+	v->init_capacity = v->cap_left = v->cap_right = 0;
 
 	// Destroy it:
 	if (v->status & ZVS_CUST_WIPE_ON)
@@ -921,7 +987,7 @@ static inline zvect_retval p_vect_add_at(vector const v, const void *value,
 		// We can't use the vect_memcpy when not in full reentrant code
 		// because it's not safe to use it on the same src and dst.
 		p_vect_memmove(v->data + base + (idx + 1), v->data + base + idx,
-			     sizeof(void *) * (vsize - idx));
+			    	   sizeof(void *) * (vsize - idx));
 #endif  // (ZVECT_FULL_REENTRANT == 1)
 	}
 
@@ -1020,6 +1086,7 @@ static inline zvect_retval p_vect_remove_at(vector const v, const zvect_index i,
 		if ( v->data[base + idx] != NULL )
 		{
 			p_vect_memcpy(*item, v->data[base + idx], v->data_size);
+
 			// If the vector is set for secure wipe, and we copied the item
 			// then we need to wipe the old copy:
 			if (v->flags & ZV_SEC_WIPE)
@@ -1030,7 +1097,7 @@ static inline zvect_retval p_vect_remove_at(vector const v, const zvect_index i,
 	}
 
 	// "shift" left the array of one position:
-	uint32_t array_changed;
+	uint16_t array_changed;
 	array_changed = 0;
 	if ( idx != 0 ) {
 		if ((idx < (vsize - 1)) && (vsize > 0)) {
@@ -1044,7 +1111,7 @@ static inline zvect_retval p_vect_remove_at(vector const v, const zvect_index i,
 			// We can't use the vect_memcpy when not in full reentrant code
 			// because it's not safe to use it on the same src and dst.
 			p_vect_memmove(v->data + base + idx, v->data + base + (idx + 1),
-				sizeof(void *) * (vsize - idx));
+						   sizeof(void *) * (vsize - idx));
 
 			// Clear leftover item pointers:
 			memset(v->data + ((v->begin + vsize) - 1), 0, 1);
@@ -1263,15 +1330,13 @@ vector vect_create(const zvect_index init_capacity, const size_t item_size,
 		v->cap_left = ZVECT_INITIAL_CAPACITY / 2;
 		v->cap_right= ZVECT_INITIAL_CAPACITY / 2;
 	} else {
-
 		if (init_capacity <= 4)
 			capacity = 4;
 
 		v->cap_left = capacity / 2;
 		v->cap_right= capacity / 2;
 	}
-	v->begin = 0;
-	v->end = 0;
+	v->begin = v->end = 0;
 
 	v->init_capacity = v->cap_left + v->cap_right;
 	v->flags = properties;
@@ -1286,8 +1351,7 @@ vector vect_create(const zvect_index init_capacity, const size_t item_size,
 		v->begin = v->cap_left - 1;
 	}
 #ifdef ZVECT_DMF_EXTENSIONS
-	v->balance = 0;
-	v->bottom = 0;
+	v->balance = v->bottom = 0;
 #endif // ZVECT_DMF_EXTENSIONS
 
 	v->data = NULL;
@@ -1296,6 +1360,7 @@ vector vect_create(const zvect_index init_capacity, const size_t item_size,
 	v->lock_type = 0;
 	mutex_init(&(v->lock));
 	mutex_cond_init(&(v->cond));
+	p_sem_init(&(v->semaphore), 0);
 #endif
 
 	// Allocate memory for the vector storage area
@@ -1336,28 +1401,62 @@ void vect_lock_disable(void) {
 	locking_disabled = true;
 }
 
-inline zvect_retval vect_lock(vector const v) {
+static inline zvect_retval p_vect_lock(vector const v) {
 	return (locking_disabled || (v->flags & ZV_NOLOCKING)) ? 0 : get_mutex_lock(v, 3);
 }
 
-inline zvect_retval vect_unlock(vector const v) {
+zvect_retval vect_lock(vector const v) {
+	return p_vect_lock(v);
+}
+
+static inline zvect_retval p_vect_unlock(vector const v) {
 	return (locking_disabled || (v->flags & ZV_NOLOCKING)) ? 0 : get_mutex_unlock(v, 3);
 }
 
-inline zvect_retval vect_trylock(vector const v) {
+zvect_retval vect_unlock(vector const v) {
+	return p_vect_unlock(v);
+}
+
+static inline zvect_retval p_vect_trylock(vector const v) {
 	return (locking_disabled || (v->flags & ZV_NOLOCKING)) ? 0 : check_mutex_trylock(v, 3);
 }
 
-inline zvect_retval vect_wait_for_signal(const vector v) {
+zvect_retval vect_trylock(vector const v) {
+	return p_vect_trylock(v);
+}
+
+zvect_retval vect_sem_wait(const vector v) {
+	return sem_wait(&(v->semaphore));
+}
+
+zvect_retval vect_sem_post(const vector v) {
+	return sem_post(&(v->semaphore));
+}
+
+/*
+static inline zvect_retval p_vect_wait_for_signal(const vector v) {
     	return (locking_disabled || (v->flags & ZV_NOLOCKING)) ? 1 : wait_for_signal(v, 3);
 }
 
-inline zvect_retval vect_lock_after_signal(const vector v) {
+inline zvect_retval vect_wait_for_signal(const vector v) {
+    	return p_vect_wait_for_signal(v);
+}
+*/
+
+static inline zvect_retval p_vect_lock_after_signal(const vector v) {
     	return (locking_disabled || (v->flags & ZV_NOLOCKING)) ? 1 : lock_after_signal(v, 3);
 }
 
-inline zvect_retval vect_send_signal(const vector v) {
+zvect_retval vect_lock_after_signal(const vector v) {
+	return p_vect_lock_after_signal(v);
+}
+
+zvect_retval vect_send_signal(const vector v) {
 	return send_signal(v, 3);
+}
+
+zvect_retval vect_broadcast_signal(const vector v) {
+	return broadcast_signal(v, 3);
 }
 
 #endif
@@ -2766,6 +2865,63 @@ JOB_DONE:
 	return rval;
 }
 /////////////////////////////////////////////////////////////////
+
+#if (ZVECT_THREAD_SAFE == 1)
+/////////////////////////////////////////////////////////////////
+// vect_move_on_signal
+
+zvect_retval vect_move_on_signal(vector const v1, vector v2, const zvect_index s2,
+               			const zvect_index e2, zvect_retval (*f2)(void *, void *))
+{
+	// check if the vectors v1 and v2 exist:
+	zvect_retval rval = p_vect_check(v1) | p_vect_check(v2);
+	if (rval)
+		goto JOB_DONE;
+
+	// vect_move modifies both vectors, so has to lock them both (if needed)
+	zvect_retval lock_owner1 = (locking_disabled || (v1->flags & ZV_NOLOCKING)) ? 0 : get_mutex_lock(v1, 1);
+	zvect_retval lock_owner2 = (locking_disabled || (v2->flags & ZV_NOLOCKING)) ? 0 : get_mutex_lock(v2, 1);
+
+	log_msg(ZVLP_MEDIUM, "vect_move_on_signal: --- start waiting ---\n");
+
+	// wait until we get a signal
+	while(!(*f2)(v1, v2) && !(v2->status && ZVS_USR1_FLAG)) {
+		pthread_cond_wait(&(v2->cond), &(v2->lock));
+	}
+	v2->status &= ~(ZVS_USR1_FLAG);
+	//v2->status |= ZVS_USR_FLAG;
+	log_msg(ZVLP_MEDIUM, "Set status flag: %*i\n", 10, vect_check_status(v2, 1));
+
+	log_msg(ZVLP_MEDIUM, "vect_move_on_signal: --- received signal ---\n");
+
+	log_msg(ZVLP_MEDIUM, "vect_move_on_signal: --- begin ---\n");
+
+	// Proceed with move items:
+	rval = p_vect_move(v1, v2, s2, e2);
+
+	log_msg(ZVLP_MEDIUM, "vect_move_on_signal: --- end ---\n");
+
+	v2->status &= ~(ZVS_USR1_FLAG);
+	log_msg(ZVLP_MEDIUM, "Reset status flag: %*i\n", 10, vect_check_status(v2, 1));
+
+//DONE_PROCESSING:
+	log_msg(ZVLP_MEDIUM, "v2 owner? %*i\n", 10, lock_owner2);
+	if (lock_owner2)
+		get_mutex_unlock(v2, 1);
+
+	log_msg(ZVLP_MEDIUM, "v1 owner? %*i\n", 10, lock_owner1);
+	if (lock_owner1)
+		get_mutex_unlock(v1, 1);
+
+JOB_DONE:
+	if(rval && (rval != 1))
+		p_throw_error(rval, NULL);
+
+	return rval;
+}
+#endif // (ZVECT_THREAD_SAFE == 1)
+/////////////////////////////////////////////////////////////////
+
 
 /////////////////////////////////////////////////////////////////
 // vect_merge merges a vector (v2) into another (v1)
