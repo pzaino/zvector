@@ -131,6 +131,12 @@ zvect_index vect_size(vector const v);
  */
 void vect_clear(vector const v);
 
+bool vect_check_status(const vector v, zvect_index flag_id);
+
+bool vect_set_status(const vector v, zvect_index flag_id);
+
+bool vect_clear_status(const vector v, zvect_index flag_id);
+
 #if ( ZVECT_THREAD_SAFE == 1 )
 // Vector Thread Safe functions:
 
@@ -189,11 +195,22 @@ zvect_retval vect_trylock(vector const v);
  */
 zvect_retval vect_unlock(vector const v);
 
-zvect_retval vect_wait_for_signal(const vector v);
+/* TODO:
+ * zvect_retval vect_wait_for_signal(const vector v);
+ *
+ * zvect_retval vect_lock_after_signal(const vector v);
+ */
 
-zvect_retval vect_lock_after_signal(const vector v);
+zvect_retval vect_move_on_signal(vector const v1, vector v2, const zvect_index s2,
+               			const zvect_index e2, zvect_retval (*f2)(void *, void *));
 
 zvect_retval vect_send_signal(const vector v);
+
+zvect_retval vect_broadcast_signal(const vector v);
+
+zvect_retval vect_sem_wait(const vector v);
+
+zvect_retval vect_sem_post(const vector v);
 
 #endif  // ( ZVECT_THREAD_SAFE == 1 )
 
