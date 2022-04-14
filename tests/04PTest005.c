@@ -230,7 +230,7 @@ START_JOB:
 		do {
 			item  = (QueueItem *)vect_remove_front(v2);
 			evt_counter++;
-			if (i)
+			if ( evt_counter < MAX_ITEMS)
 				free(item);
 		} while (--i);
 
