@@ -58,7 +58,11 @@
 #endif // OS_TYPE
 #if (ZVECT_THREAD_SAFE == 1)
 #	if MUTEX_TYPE == 1
-#		include <semaphore.h>
+#		if ( !defined(macOS) )
+#			include <semaphore.h>
+#		else
+#			include <dispatch/dispatch.h>
+#		endif
 #		include <pthread.h>
 #	elif MUTEX_TYPE == 2
 #		include <windows.h>
@@ -169,7 +173,11 @@ struct ZVECT_PACKING p_vector {
 #endif  // ZVECT_DMF_EXTENSIONS
 	volatile uint32_t status;	// - Internal vector Status Flags
 #if (ZVECT_THREAD_SAFE == 1)
+#	if ( !defined(macOS) )
 		   sem_t semaphore;     // - Vector semaphore
+#	else
+    dispatch_semaphore_t semaphore;	// - Vector semaphore
+#	endif
 	volatile int32_t lock_type;	// - This field contains the lock type
 					//   used for this Vector.
 #endif  // ZVECT_THREAD_SAFE
@@ -403,12 +411,26 @@ static inline void mutex_destroy(pthread_mutex_t *lock) {
 	pthread_mutex_destroy(lock);
 }
 
-static inline int p_sem_init(sem_t *mutex, int value) {
-	return sem_init(mutex, 0, value);
+static inline int p_sem_init
+#	if !defined(macOS)
+	(sem_t *sem, int value) {
+	return sem_init(sem, 0, value);
+#	else
+	(dispatch_semaphore_t *sem, int value) {
+	*sem = dispatch_semaphore_create(value);
+	return 0;
+#	endif
 }
 
-static inline int p_sem_destroy(sem_t *mutex) {
-	return sem_destroy(mutex);
+static inline int p_sem_destroy
+#	if !defined(macOS)
+	(sem_t *sem) {
+	return sem_destroy(sem);
+#	else
+	(dispatch_semaphore_t *sem) {
+	return 0; // dispatch_semaphore_destroy(sem);
+	(void)sem;
+#	endif
 }
 
 #	elif MUTEX_TYPE == 2
@@ -1426,11 +1448,19 @@ zvect_retval vect_trylock(vector const v) {
 }
 
 zvect_retval vect_sem_wait(const vector v) {
+#if !defined(macOS)
 	return sem_wait(&(v->semaphore));
+#else
+	return dispatch_semaphore_wait(v->semaphore, DISPATCH_TIME_FOREVER);
+#endif
 }
 
 zvect_retval vect_sem_post(const vector v) {
+#	if !defined(macOS)
 	return sem_post(&(v->semaphore));
+#	else
+	return dispatch_semaphore_signal(v->semaphore);
+#	endif
 }
 
 /*
@@ -2888,7 +2918,7 @@ zvect_retval vect_move_on_signal(vector const v1, vector v2, const zvect_index s
 	log_msg(ZVLP_MEDIUM, "vect_move_on_signal: --- start waiting ---\n");
 
 	// wait until we get a signal
-	while(!(*f2)(v1, v2) && !(v2->status && ZVS_USR1_FLAG)) {
+	while(!(*f2)(v1, v2) && !(v2->status && (bool)ZVS_USR1_FLAG)) {
 		pthread_cond_wait(&(v2->cond), &(v2->lock));
 	}
 	v2->status &= ~(ZVS_USR1_FLAG);
