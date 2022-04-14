@@ -15,6 +15,7 @@ bw-output/*
 .idea/*
 .checkmate/*
 callgrind.*
+cachegrind.out.*
 vgcore.*
 
 ## Ignore Visual Studio temporary files, build results, and

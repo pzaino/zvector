@@ -57,7 +57,7 @@ size_t max_strLen = 32;
 // Please note: Increase the number of threads here below
 //              to measure scalability of ZVector on your
 //              system when using multi-threaded queues.
-#define MAX_THREADS 8
+#define MAX_THREADS 16
 
 #define TOTAL_ITEMS 10000000
 #define MAX_ITEMS (TOTAL_ITEMS / ( MAX_THREADS / 2))
@@ -110,9 +110,9 @@ void *producer(void *arg) {
 
 	// Generate a random "pause" to improve simulation of
 	// real world use case:
-	int max_delay=(rand() % 1000000);
-	for (int delay=0; delay <= max_delay; delay++)
-		;
+	//int max_delay=(rand() % 1000000);
+	//for (int delay=0; delay <= max_delay; delay++)
+	//	;
 
 	CCPAL_INIT_LIB;
 
@@ -147,7 +147,8 @@ void *producer(void *arg) {
 		}
 
 		// Now move the local partition to the shared vector:
-		vect_merge(v, v2);
+		//vect_merge(v, v2);
+		vect_move(v, v2, 0, MAX_ITEMS);
 
 		// We're done, display some stats and terminate the thread:
 		printf("Producer thread %i done. Produced %d events.\n", id, i);
@@ -171,6 +172,8 @@ void *producer(void *arg) {
 		// Let's wake up consumer threads, data is available to
 		// be processed
 		vect_sem_post(v);
+
+		vect_destroy(v2);
 
 	pthread_exit(NULL);
 	return NULL;
