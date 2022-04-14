@@ -213,9 +213,9 @@ static size_t safe_strlen(const char *str, size_t max_len)
         return end - str;
 }
 
-static void safe_strncpy(char *str_dst, const char *str_src, size_t max_len)
+static void safe_strncpy(const char *str_dst, const char *str_src, size_t max_len)
 {
-	strncpy(str_dst, str_src, max_len);
+	strncpy((char *)str_dst, str_src, max_len);
 }
 
 // This is a vprintf wrapper nothing special:

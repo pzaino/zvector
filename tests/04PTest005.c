@@ -127,7 +127,7 @@ void *producer(void *arg) {
 		qi.priority = 0;
 
 		// Create a local vector (we'll use it as a partition)
-		vector v2 = vect_create(MAX_ITEMS+(MAX_ITEMS/2), sizeof(struct QueueItem), ZV_NONE | ZV_NOLOCKING );
+		vector v2 = vect_create((MAX_ITEMS)+8, sizeof(struct QueueItem), ZV_NONE | ZV_NOLOCKING );
 
 		printf("Producer Thread %*i, address of v2 is: %p\n", 3, id, v2);
 		fflush(stdout);
@@ -192,7 +192,7 @@ void *consumer(void *arg) {
 	fflush(stdout);
 
 		uint32_t i;
-		vector v2 = vect_create(MAX_ITEMS+(MAX_ITEMS/2), sizeof(struct QueueItem), ZV_NONE | ZV_NOLOCKING);
+		vector v2 = vect_create((MAX_ITEMS)+8, sizeof(struct QueueItem), ZV_NONE | ZV_NOLOCKING);
 
 #ifdef DEBUG
 		printf("Consumer Thread %*i, address of v2 is: %p\n", 3, id, v2);
