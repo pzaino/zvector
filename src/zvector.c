@@ -292,7 +292,7 @@ static void p_throw_error(const zvect_retval error_code, const char *error_messa
 	} else
 		safe_strncpy(message, error_message, msg_len);
 
-	log_msg(ZVLP_ERROR, "Error: i%, %s\n", error_code, error_message);
+	log_msg(ZVLP_ERROR, "Error: %*i, %s\n", 8, error_code, error_message);
 	if (locally_allocated)
 		free((void *)message);
 
