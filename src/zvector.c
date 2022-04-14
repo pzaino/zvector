@@ -2842,10 +2842,7 @@ zvect_retval vect_move_if(vector const v1, vector v2, const zvect_index s2,
 		goto DONE_PROCESSING;
 	}
 
-	if ((*f2)(v1, v2))
-		rval = p_vect_move(v1, v2, s2, e2);
-	else
-		rval = 1;
+	rval = (*f2)(v1, v2) ? p_vect_move(v1, v2, s2, e2) : 1;
 
 DONE_PROCESSING:
 #if (ZVECT_THREAD_SAFE == 1)

@@ -57,7 +57,7 @@ size_t max_strLen = 32;
 // Please note: Increase the number of threads here below
 //              to measure scalability of ZVector on your
 //              system when using multi-threaded queues.
-#define MAX_THREADS 16
+#define MAX_THREADS 8
 
 #define TOTAL_ITEMS 10000000
 #define MAX_ITEMS (TOTAL_ITEMS / ( MAX_THREADS / 2))
@@ -108,6 +108,12 @@ void *producer(void *arg) {
 	vector v = (vector)targs->v;
 	int id = (int)targs->id;
 
+	// Generate a random "pause" to improve simulation of
+	// real world use case:
+	int max_delay=(rand() % 1000000);
+	for (int delay=0; delay <= max_delay; delay++)
+		;
+
 	CCPAL_INIT_LIB;
 
 	// Simulating Producer:
@@ -142,8 +148,6 @@ void *producer(void *arg) {
 
 		// Now move the local partition to the shared vector:
 		vect_merge(v, v2);
-		//vect_move(v, v2, 0, MAX_ITEMS);
-		vect_sem_post(v);
 
 		// We're done, display some stats and terminate the thread:
 		printf("Producer thread %i done. Produced %d events.\n", id, i);
@@ -164,10 +168,9 @@ void *producer(void *arg) {
 #endif
 		fflush(stdout);
 
-		// Given that we have moved all the references to our message
-		// set from v2 to v, we can safely destroy v2 and recover its
-		// memory:
-		//vect_destroy(v2);
+		// Let's wake up consumer threads, data is available to
+		// be processed
+		vect_sem_post(v);
 
 	pthread_exit(NULL);
 	return NULL;
@@ -223,15 +226,13 @@ START_JOB:
 		QueueItem *item; // We do not need to allocate item,
 		                 // ZVector vect_remove_front will do it for us :)
 		evt_counter = 0;
-
-		for (i = MAX_ITEMS; i--;)
-		{
+		i = MAX_ITEMS;
+		do {
 			item  = (QueueItem *)vect_remove_front(v2);
 			evt_counter++;
 			if (i)
 				free(item);
-		}
-
+		} while (--i);
 
 #ifdef DEBUG
 		printf("Last element in the queue for Consumer Thread %*i: ID (%*d) - Message: %s\n",
@@ -314,8 +315,8 @@ int main() {
 		//                then in tuples, to increase parallelism over
 		//                concurrency.
 		for (i=0; i < MAX_THREADS / 2; i++) {
-			pthread_join(tid[i], NULL);
 			pthread_join(tid[i + (MAX_THREADS / 2)], NULL);
+			pthread_join(tid[i], NULL);
 		}
 
 		// We are done processing messages:
