@@ -201,8 +201,10 @@ zvect_retval vect_unlock(vector const v);
  * zvect_retval vect_lock_after_signal(const vector v);
  */
 
-zvect_retval vect_move_on_signal(vector const v1, vector v2, const zvect_index s2,
-               			const zvect_index e2, zvect_retval (*f2)(void *, void *));
+zvect_retval vect_move_on_signal(vector const v1, vector v2,
+				 const zvect_index s2,
+               			 const zvect_index e2,
+				 zvect_retval (*f2)(void *, void *));
 
 zvect_retval vect_send_signal(const vector v);
 
