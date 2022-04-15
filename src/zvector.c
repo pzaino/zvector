@@ -423,7 +423,7 @@ static inline void mutex_destroy(pthread_mutex_t *lock) {
 	pthread_mutex_destroy(lock);
 }
 
-static inline int p_sem_init
+static inline int semaphore_init
 #	if !defined(macOS)
 	(sem_t *sem, int value) {
 	return sem_init(sem, 0, value);
@@ -434,7 +434,7 @@ static inline int p_sem_init
 #	endif
 }
 
-static inline int p_sem_destroy
+static inline int semaphore_destroy
 #	if !defined(macOS)
 	(sem_t *sem) {
 	return sem_destroy(sem);
@@ -925,6 +925,7 @@ static zvect_retval p_vect_destroy(vector v, uint32_t flags) {
 	if ( lock_owner )
 		get_mutex_unlock(v, v->lock_type);
 	mutex_destroy(&(v->lock));
+	semaphore_destroy(&(v->semaphore));
 #endif
 
 	// All done and freed, so we can safely
@@ -1394,7 +1395,7 @@ vector vect_create(const zvect_index init_capacity, const size_t item_size,
 	v->lock_type = 0;
 	mutex_init(&(v->lock));
 	mutex_cond_init(&(v->cond));
-	p_sem_init(&(v->semaphore), 0);
+	semaphore_init(&(v->semaphore), 0);
 #endif
 
 	// Allocate memory for the vector storage area
