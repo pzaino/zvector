@@ -58,7 +58,11 @@
 #endif // OS_TYPE
 #if (ZVECT_THREAD_SAFE == 1)
 #	if MUTEX_TYPE == 1
-#		include <semaphore.h>
+#		if ( !defined(macOS) )
+#			include <semaphore.h>
+#		else
+#			include <dispatch/dispatch.h>
+#		endif
 #		include <pthread.h>
 #	elif MUTEX_TYPE == 2
 #		include <windows.h>
@@ -169,7 +173,11 @@ struct ZVECT_PACKING p_vector {
 #endif  // ZVECT_DMF_EXTENSIONS
 	volatile uint32_t status;	// - Internal vector Status Flags
 #if (ZVECT_THREAD_SAFE == 1)
+#	if ( !defined(macOS) )
 		   sem_t semaphore;     // - Vector semaphore
+#	else
+    dispatch_semaphore_t semaphore;	// - Vector semaphore
+#	endif
 	volatile int32_t lock_type;	// - This field contains the lock type
 					//   used for this Vector.
 #endif  // ZVECT_THREAD_SAFE
@@ -213,9 +221,9 @@ static size_t safe_strlen(const char *str, size_t max_len)
         return end - str;
 }
 
-static void safe_strncpy(char *str_dst, const char *str_src, size_t max_len)
+static void safe_strncpy(const char *str_dst, const char *str_src, size_t max_len)
 {
-	strncpy(str_dst, str_src, max_len);
+	strncpy((char *)str_dst, str_src, max_len);
 }
 
 // This is a vprintf wrapper nothing special:
@@ -292,7 +300,7 @@ static void p_throw_error(const zvect_retval error_code, const char *error_messa
 	} else
 		safe_strncpy(message, error_message, msg_len);
 
-	log_msg(ZVLP_ERROR, "Error: i%, %s\n", error_code, error_message);
+	log_msg(ZVLP_ERROR, "Error: %*i, %s\n", 8, error_code, error_message);
 	if (locally_allocated)
 		free((void *)message);
 
@@ -381,7 +389,7 @@ static inline void mutex_init(pthread_mutex_t *lock) {
 	pthread_mutexattr_init(&Attr);
 	pthread_mutexattr_settype(&Attr, PTHREAD_MUTEX_RECURSIVE_NP);
 	pthread_mutexattr_setpshared(&Attr, PTHREAD_PROCESS_PRIVATE);
-	//pthread_mutexattr_setprotocol(&Attr, PTHREAD_PRIO_INHERIT);
+	pthread_mutexattr_setprotocol(&Attr, PTHREAD_PRIO_INHERIT);
 	pthread_mutex_init(lock, &Attr);
 #	else
 	pthread_mutex_init(lock, NULL);
@@ -403,12 +411,26 @@ static inline void mutex_destroy(pthread_mutex_t *lock) {
 	pthread_mutex_destroy(lock);
 }
 
-static inline int p_sem_init(sem_t *mutex, int value) {
-	return sem_init(mutex, 0, value);
+static inline int p_sem_init
+#	if !defined(macOS)
+	(sem_t *sem, int value) {
+	return sem_init(sem, 0, value);
+#	else
+	(dispatch_semaphore_t *sem, int value) {
+	*sem = dispatch_semaphore_create(value);
+	return 0;
+#	endif
 }
 
-static inline int p_sem_destroy(sem_t *mutex) {
-	return sem_destroy(mutex);
+static inline int p_sem_destroy
+#	if !defined(macOS)
+	(sem_t *sem) {
+	return sem_destroy(sem);
+#	else
+	(dispatch_semaphore_t *sem) {
+	return 0; // dispatch_semaphore_destroy(sem);
+	(void)sem;
+#	endif
 }
 
 #	elif MUTEX_TYPE == 2
@@ -1426,11 +1448,19 @@ zvect_retval vect_trylock(vector const v) {
 }
 
 zvect_retval vect_sem_wait(const vector v) {
+#if !defined(macOS)
 	return sem_wait(&(v->semaphore));
+#else
+	return dispatch_semaphore_wait(v->semaphore, DISPATCH_TIME_FOREVER);
+#endif
 }
 
 zvect_retval vect_sem_post(const vector v) {
+#	if !defined(macOS)
 	return sem_post(&(v->semaphore));
+#	else
+	return dispatch_semaphore_signal(v->semaphore);
+#	endif
 }
 
 /*
@@ -2752,7 +2782,7 @@ static inline zvect_retval p_vect_move(vector const v1, vector v2, const zvect_i
 #endif
 
 	// Clean up v2 memory slots that no longer belong to v2:
-	rval = p_vect_delete_at(v2, s2, ee2 - 1, 0);
+	//rval = p_vect_delete_at(v2, s2, ee2 - 1, 0);
 
 DONE_PROCESSING:
 #ifdef DEBUG
@@ -2776,8 +2806,8 @@ void vect_move(vector const v1, vector v2, const zvect_index s2,
 
 #if (ZVECT_THREAD_SAFE == 1)
 	// vect_move modifies both vectors, so has to lock them both (if needed)
-	zvect_retval lock_owner1 = (locking_disabled || (v1->flags & ZV_NOLOCKING)) ? 0 : get_mutex_lock(v1, 1);
 	zvect_retval lock_owner2 = (locking_disabled || (v2->flags & ZV_NOLOCKING)) ? 0 : get_mutex_lock(v2, 1);
+	zvect_retval lock_owner1 = (locking_disabled || (v1->flags & ZV_NOLOCKING)) ? 0 : get_mutex_lock(v1, 1);
 #endif
 #ifdef DEBUG
 	log_msg(ZVLP_INFO, "vect_move: --- begin ---\n");
@@ -2797,11 +2827,13 @@ void vect_move(vector const v1, vector v2, const zvect_index s2,
 
 DONE_PROCESSING:
 #if (ZVECT_THREAD_SAFE == 1)
-	if (lock_owner2)
-		get_mutex_unlock(v2, 1);
-
 	if (lock_owner1)
 		get_mutex_unlock(v1, 1);
+
+	rval = p_vect_delete_at(v2, s2, e2 - 1, 0);
+
+	if (lock_owner2)
+		get_mutex_unlock(v2, 1);
 #endif
 #ifdef DEBUG
 	log_msg(ZVLP_INFO, "vect_move: --- end ---\n");
@@ -2825,8 +2857,8 @@ zvect_retval vect_move_if(vector const v1, vector v2, const zvect_index s2,
 
 #if (ZVECT_THREAD_SAFE == 1)
 	// vect_move modifies both vectors, so has to lock them both (if needed)
-	zvect_retval lock_owner1 = (locking_disabled || (v1->flags & ZV_NOLOCKING)) ? 0 : get_mutex_lock(v1, 1);
 	zvect_retval lock_owner2 = (locking_disabled || (v2->flags & ZV_NOLOCKING)) ? 0 : get_mutex_lock(v2, 1);
+	zvect_retval lock_owner1 = (locking_disabled || (v1->flags & ZV_NOLOCKING)) ? 0 : get_mutex_lock(v1, 1);
 #endif
 #ifdef DEBUG
 	log_msg(ZVLP_INFO, "vect_move_if: --- begin ---\n");
@@ -2842,17 +2874,17 @@ zvect_retval vect_move_if(vector const v1, vector v2, const zvect_index s2,
 		goto DONE_PROCESSING;
 	}
 
-	if ((*f2)(v1, v2))
-		rval = p_vect_move(v1, v2, s2, e2);
-	else
-		rval = 1;
+	rval = (*f2)(v1, v2) ? p_vect_move(v1, v2, s2, e2) : 1;
 
 DONE_PROCESSING:
 #if (ZVECT_THREAD_SAFE == 1)
-	if (lock_owner2)
-		get_mutex_unlock(v2, 1);
 	if (lock_owner1)
 		get_mutex_unlock(v1, 1);
+
+	rval = p_vect_delete_at(v2, s2, e2 - 1, 0);
+
+	if (lock_owner2)
+		get_mutex_unlock(v2, 1);
 #endif
 #ifdef DEBUG
 	log_msg(ZVLP_INFO, "vect_move_if: --- end ---\n");
@@ -2879,13 +2911,14 @@ zvect_retval vect_move_on_signal(vector const v1, vector v2, const zvect_index s
 		goto JOB_DONE;
 
 	// vect_move modifies both vectors, so has to lock them both (if needed)
-	zvect_retval lock_owner1 = (locking_disabled || (v1->flags & ZV_NOLOCKING)) ? 0 : get_mutex_lock(v1, 1);
 	zvect_retval lock_owner2 = (locking_disabled || (v2->flags & ZV_NOLOCKING)) ? 0 : get_mutex_lock(v2, 1);
+
+	zvect_retval lock_owner1 = (locking_disabled || (v1->flags & ZV_NOLOCKING)) ? 0 : get_mutex_lock(v1, 1);
 
 	log_msg(ZVLP_MEDIUM, "vect_move_on_signal: --- start waiting ---\n");
 
 	// wait until we get a signal
-	while(!(*f2)(v1, v2) && !(v2->status && ZVS_USR1_FLAG)) {
+	while(!(*f2)(v1, v2) && !(v2->status && (bool)ZVS_USR1_FLAG)) {
 		pthread_cond_wait(&(v2->cond), &(v2->lock));
 	}
 	v2->status &= ~(ZVS_USR1_FLAG);
@@ -2905,13 +2938,14 @@ zvect_retval vect_move_on_signal(vector const v1, vector v2, const zvect_index s
 	log_msg(ZVLP_MEDIUM, "Reset status flag: %*i\n", 10, vect_check_status(v2, 1));
 
 //DONE_PROCESSING:
-	log_msg(ZVLP_MEDIUM, "v2 owner? %*i\n", 10, lock_owner2);
-	if (lock_owner2)
-		get_mutex_unlock(v2, 1);
-
 	log_msg(ZVLP_MEDIUM, "v1 owner? %*i\n", 10, lock_owner1);
 	if (lock_owner1)
 		get_mutex_unlock(v1, 1);
+
+	log_msg(ZVLP_MEDIUM, "v2 owner? %*i\n", 10, lock_owner2);
+	rval = p_vect_delete_at(v2, s2, e2 - 1, 0);
+	if (lock_owner2)
+		get_mutex_unlock(v2, 1);
 
 JOB_DONE:
 	if(rval && (rval != 1))
