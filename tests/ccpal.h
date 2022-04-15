@@ -50,62 +50,68 @@
 #include <stdio.h>
 #include <time.h>
 
-#if ( OS_TYPE == 1 ) && !defined(__MACH__)
+#if ( OS_TYPE == 1 ) && !defined(macOS)
 #include <sys/time.h>
 #endif
 
-#ifdef __MACH__
+#if  defined(macOS)
 #include <mach/clock.h>
 #include <mach/mach.h>
 #endif
 
-#ifdef __APPLE__
+#if  defined(macOS)
 
-#   define CCPAL_INIT_LIB struct timeval tsi, tsf; \
-      double elaps_s; long elaps_us; \
+#   define CCPAL_INIT_LIB struct timespec tsi, tsf; \
+      double elaps_s; long elaps_ns; \
       clock_serv_t cclock; \
       mach_timespec_t mts;
 
 #else
 
-#   define CCPAL_INIT_LIB struct timeval tsi, tsf; \
-                         double elaps_s; long elaps_us;
+#   ifdef _PTHREAD_H_
+
+#     define CCPAL_INIT_LIB struct timeval tsi, tsf; \
+                            double elaps_s; long elaps_us;
+#   endif
+#   ifndef _PTHREAD_H_
+#     define CCPAL_INIT_LIB struct timespec tsi, tsf; \
+                            double elaps_s; long elaps_ns;
+#   endif
 
 #endif
 
-#ifdef __APPLE__
+#if defined(macOS)
 
 # define CCPAL_START_MEASURING \
     host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock); \
     clock_get_time(cclock, &mts); \
     mach_port_deallocate(mach_task_self(), cclock); \
     tsi.tv_sec = mts.tv_sec; \
-    tsi.tv_nsec = mts.tv_usec;
+    tsi.tv_nsec = mts.tv_nsec;
 
 # define CCPAL_STOP_MEASURING \
     host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock); \
     clock_get_time(cclock, &mts); \
     mach_port_deallocate(mach_task_self(), cclock); \
     tsf.tv_sec = mts.tv_sec; \
-    tsf.tv_usec = mts.tv_usec; \
+    tsf.tv_nsec = mts.tv_nsec; \
     elaps_s = tsf.tv_sec - tsi.tv_sec; \
-    elaps_us = tsf.tv_usec - tsi.tv_usec;
+    elaps_ns = tsf.tv_nsec - tsi.tv_nsec;
 
 #else
 
-# ifdef CLOCK_THREAD_CPUTIME_ID
-    /* cpu time in the current process */
+#  ifndef _PTHREAD_H_
+    /* cpu time in nanoseconds */
 
-    #define CCPAL_START_MEASURING gettimeofday(&tsi, NULL);
+    #define CCPAL_START_MEASURING clock_gettime(CLOCK_MONOTONIC_RAW, &tsi);
 
-    #define CCPAL_STOP_MEASURING gettimeofday(&tsf, NULL); \
-        elaps_s = tsf.tv_sec - tsi.tv_sec; \
-        elaps_us = tsf.tv_usec - tsi.tv_usec;
+    #define CCPAL_STOP_MEASURING clock_gettime(CLOCK_MONOTONIC_RAW, &tsf); \
+        elaps_s = difftime(tsf.tv_sec, tsi.tv_sec); \
+        elaps_ns = tsf.tv_nsec - tsi.tv_nsec;
 
+#  else
 
-# else
-
-    /* this one should be appropriate to avoid errors on multiprocessors systems */
+    /* this one should be appropriate to avoid errors on multithreaded processes */
 
 #   define CCPAL_START_MEASURING gettimeofday(&tsi, NULL);
 
@@ -113,10 +119,20 @@
         elaps_s = tsf.tv_sec - tsi.tv_sec; \
         elaps_us = tsf.tv_usec - tsi.tv_usec;
 
-# endif
+#  endif
 
 #endif
 
-#define CCPAL_REPORT_ANALYSIS fprintf (stdout, "We have spent %lf seconds executing previous code section.\n", elaps_s + ((double)elaps_us) / 1.0e6 );
+
+#if  defined(macOS)
+#    define CCPAL_REPORT_ANALYSIS fprintf (stdout, "We have spent %lf seconds executing previous code section.\n", elaps_s + ((double)elaps_ns) / 1.0e9 );   
+#else
+#  ifndef _PTHREAD_H_
+#    define CCPAL_REPORT_ANALYSIS fprintf (stdout, "We have spent %lf seconds executing previous code section.\n", elaps_s + ((double)elaps_ns) / 1.0e9 );
+#  endif
+#  ifdef _PTHREAD_H_
+#   define CCPAL_REPORT_ANALYSIS fprintf (stdout, "We have spent %lf seconds executing previous code section.\n", elaps_s + ((double)elaps_us) / 1.0e6 );
+#  endif
+#endif
 
 #endif  // CCPAL_H_
