@@ -57,7 +57,7 @@ size_t max_strLen = 32;
 // Please note: Increase the number of threads here below
 //              to measure scalability of ZVector on your
 //              system when using multi-threaded queues.
-#define MAX_THREADS 8
+#define MAX_THREADS 6
 
 #define TOTAL_ITEMS 10000000
 #define MAX_ITEMS (TOTAL_ITEMS / ( MAX_THREADS / 2))

@@ -1,8 +1,8 @@
-/* 
- *        Name: CCPal = C Code Performance Analysis Library 
+/*
+ *        Name: CCPal = C Code Performance Analysis Library
  *     Purpose: Measure performance (in terms of execution time) of
  *              C routines (useful to measure perfs as Unit Test)
- * 
+ *
  *    	Author: Paolo Fabio Zaino
  *     License: Copyright by Paolo Fabio Zaino, all rights reserved
  *              Distributed under GPL v2 license
@@ -13,8 +13,8 @@
  * time  and  works on a number of  Operating Systems natively, so
  * you just need to add it to your project and use it.
  *
- * At  the  moment  this  library  seems to be working well on ALL 
- * tested  Intel based Linux Distro  (RHEL,  CentOS,  PacketLinux, 
+ * At  the  moment  this  library  seems to be working well on ALL
+ * tested  Intel based Linux Distro  (RHEL,  CentOS,  PacketLinux,
  * ScientificLinux,  Debian, Ubuntu, KALI) and all modern releases
  * of Apple MacOS.
  */
@@ -61,15 +61,15 @@
 
 #ifdef __APPLE__
 
-#   define CCPAL_INIT_LIB struct timespec tsi, tsf; \
-      double elaps_s; long elaps_ns; \
+#   define CCPAL_INIT_LIB struct timeval tsi, tsf; \
+      double elaps_s; long elaps_us; \
       clock_serv_t cclock; \
       mach_timespec_t mts;
 
 #else
 
-#   define CCPAL_INIT_LIB struct timespec tsi, tsf; \
-                         double elaps_s; long elaps_ns;
+#   define CCPAL_INIT_LIB struct timeval tsi, tsf; \
+                         double elaps_s; long elaps_us;
 
 #endif
 
@@ -80,42 +80,43 @@
     clock_get_time(cclock, &mts); \
     mach_port_deallocate(mach_task_self(), cclock); \
     tsi.tv_sec = mts.tv_sec; \
-    tsi.tv_nsec = mts.tv_nsec;
+    tsi.tv_nsec = mts.tv_usec;
 
 # define CCPAL_STOP_MEASURING \
     host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock); \
     clock_get_time(cclock, &mts); \
     mach_port_deallocate(mach_task_self(), cclock); \
     tsf.tv_sec = mts.tv_sec; \
-    tsf.tv_nsec = mts.tv_nsec; \
-    elaps_s = difftime(tsf.tv_sec, tsi.tv_sec); \
-    elaps_ns = tsf.tv_nsec - tsi.tv_nsec;
+    tsf.tv_usec = mts.tv_usec; \
+    elaps_s = tsf.tv_sec - tsi.tv_sec; \
+    elaps_us = tsf.tv_usec - tsi.tv_usec;
 
 #else
 
-# ifdef CLOCK_PROCESS_CPUTIME_ID
+# ifdef CLOCK_THREAD_CPUTIME_ID
     /* cpu time in the current process */
 
-    #define CCPAL_START_MEASURING clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &tsi);
+    #define CCPAL_START_MEASURING gettimeofday(&tsi, NULL);
 
-    #define CCPAL_STOP_MEASURING clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &tsf); \
-        elaps_s = difftime(tsf.tv_sec, tsi.tv_sec); \
-        elaps_ns = tsf.tv_nsec - tsi.tv_nsec;
+    #define CCPAL_STOP_MEASURING gettimeofday(&tsf, NULL); \
+        elaps_s = tsf.tv_sec - tsi.tv_sec; \
+        elaps_us = tsf.tv_usec - tsi.tv_usec;
+
 
 # else
 
     /* this one should be appropriate to avoid errors on multiprocessors systems */
 
-#   define CCPAL_START_MEASURING clock_gettime(CLOCK_MONOTONIC_RAW, &tsi);
+#   define CCPAL_START_MEASURING gettimeofday(&tsi, NULL);
 
-#   define CCPAL_STOP_MEASURING clock_gettime(CLOCK_MONOTONIC_RAW, &tsf); \
-        elaps_s = difftime(tsf.tv_sec, tsi.tv_sec); \
-        elaps_ns = tsf.tv_nsec - tsi.tv_nsec;
+#   define CCPAL_STOP_MEASURING gettimeofday(&tsf, NULL); \
+        elaps_s = tsf.tv_sec - tsi.tv_sec; \
+        elaps_us = tsf.tv_usec - tsi.tv_usec;
 
 # endif
 
 #endif
 
-#define CCPAL_REPORT_ANALYSIS fprintf (stdout, "We have spent %lf seconds executing previous code section.\n", elaps_s + ((double)elaps_ns) / 1.0e9 );
+#define CCPAL_REPORT_ANALYSIS fprintf (stdout, "We have spent %lf seconds executing previous code section.\n", elaps_s + ((double)elaps_us) / 1.0e6 );
 
 #endif  // CCPAL_H_
