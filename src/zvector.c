@@ -74,12 +74,16 @@
 
 // Declare Vector status flags:
 enum {
-	ZVS_NONE = 0,			// - Set or Reset vector's status register.
-	ZVS_CUST_WIPE_ON = 1 << 0,	// - Set the bit to indicate a custom secure wipe
+	ZVS_NONE = 0,			// - Set or Reset vector's status
+					//   register.
+	ZVS_CUST_WIPE_ON = 1 << 0,	// - Set the bit to indicate a custom
+					//    secure wipe
 				   	//   function has been set.
-	ZVS_USR1_FLAG = 1 << 1,		// - This is a "user" available flag, a user code
-					//   can set it to 1 or 0 for its own need.
-					//   Can be useful when signaling between threads.
+	ZVS_USR1_FLAG = 1 << 1,		// - This is a "user" available flag,
+					//   a user code  can set it to 1 or
+					//   0 for its own need.
+					//   Can be useful when signaling
+					//   between threads.
 	ZVS_USR2_FLAG = 1 << 2
 
 };
@@ -113,8 +117,10 @@ enum {
 // Please note: fields order is based on "most used fields" to help a bit with cache
 
 struct ZVECT_PACKING p_vector {
-	zvect_index cap_left;		// - Max capacity allocated on the left.
-	zvect_index cap_right;		// - Max capacity allocated on the right.
+	zvect_index cap_left;		// - Max capacity allocated on the
+					//   left.
+	zvect_index cap_right;		// - Max capacity allocated on the
+					//   right.
 	zvect_index begin;		// - First vector's Element Pointer
 	zvect_index end;		// - Current Array size. size - 1 gives
 					//   us the pointer to the last element
@@ -126,17 +132,18 @@ struct ZVECT_PACKING p_vector {
 					//   Ref etc.
 	size_t data_size;		// - User DataType size.
 					//   This should be 2 bytes size on a
-					//   16-bit system, 4 bytes on a 32 bit,
-					//   8 bytes on a 64 bit. But check your
-					//   compiler for the actual size, it's
-					//   implementation dependent.
+					//   16-bit system, 4 bytes on a 32
+					//   bit, 8 bytes on a 64 bit. But
+					//   check your compiler for the
+					//   actual size, it's implementation
+					//   dependent.
 #if (ZVECT_THREAD_SAFE == 1)
 #	if MUTEX_TYPE == 0
 	void *lock ZVECT_DATAALIGN;	// - Vector's mutex for thread safe
 					//   micro-transactions or user locks.
 					//   This should be 2 bytes size on a
-					//   16 bit machine, 4 bytes on a 32 bit
-					//   4 bytes on a 64 bit.
+					//   16 bit machine, 4 bytes on a 32
+					//   bit 4 bytes on a 64 bit.
 	void *cond;			// - Vector's mutex condition variable
 #	elif MUTEX_TYPE == 1
 	pthread_mutex_t lock ZVECT_DATAALIGN;
@@ -150,8 +157,8 @@ struct ZVECT_PACKING p_vector {
 	CRITICAL_SECTION lock ZVECT_DATAALIGN;
 					// - Vector's mutex for thread safe
 					//   micro-transactions or user locks.
-					//   Check your WINNT.H to calculate the
-					//   size of this one.
+					//   Check your WINNT.H to calculate
+					//   the size of this one.
 	CONDITION_VARIABLE cond;	// - Vector's mutex condition variable
 #	endif  // MUTEX_TYPE
 #endif  // ZVECT_THREAD_SAFE
@@ -197,7 +204,8 @@ static uint32_t p_init_state = 0;
 
 enum ZVECT_LOGPRIORITY {
 	ZVLP_NONE       = 0,      // No priority
-	ZVLP_INFO       = 1 << 0, // This is an informational priority message.
+	ZVLP_INFO       = 1 << 0, // This is an informational priority
+				  // message.
 	ZVLP_LOW        = 1 << 1, //     "      low       "
 	ZVLP_MEDIUM     = 1 << 2, //     "      medium    "
 	ZVLP_HIGH       = 1 << 3, //     "      high      "
@@ -206,7 +214,8 @@ enum ZVECT_LOGPRIORITY {
 
 // Set the message priority at which we log it:
 #ifdef DEBUG
-unsigned int LOG_PRIORITY = (ZVLP_ERROR | ZVLP_HIGH | ZVLP_MEDIUM | ZVLP_LOW | ZVLP_INFO);
+unsigned int LOG_PRIORITY = (ZVLP_ERROR | ZVLP_HIGH | ZVLP_MEDIUM |
+			     ZVLP_LOW | ZVLP_INFO);
 #endif
 #ifndef DEBUG
 unsigned int LOG_PRIORITY = (ZVLP_ERROR | ZVLP_HIGH | ZVLP_MEDIUM);
@@ -221,9 +230,11 @@ static size_t safe_strlen(const char *str, size_t max_len)
         return end - str;
 }
 
-static void safe_strncpy(const char *str_dst, const char *str_src, size_t max_len)
+static void safe_strncpy(char * const str_dst, const char * const str_src,
+			 size_t max_len)
 {
 	strncpy((char *)str_dst, str_src, max_len);
+	memset((char *)str_dst + max_len, 0, 1);
 }
 
 // This is a vprintf wrapper nothing special:
@@ -249,21 +260,22 @@ static void log_msg(int const priority, const char * const format, ...)
 #if (ZVECT_COMPTYPE == 1) || (ZVECT_COMPTYPE == 3)
 __attribute__((noreturn))
 #endif
-static void p_throw_error(const zvect_retval error_code, const char *error_message) {
+static void p_throw_error(const zvect_retval error_code,
+			  const char *error_message) {
 	int32_t locally_allocated = 0;
 	char *message;
 	unsigned long msg_len = 0;
 
 	if ( error_message == NULL )
 	{
-		msg_len = sizeof(char)*255;
+		msg_len = sizeof(char *) * 255;
 		locally_allocated=-1;
 	} else {
 		msg_len = safe_strlen(error_message, 255);
 	}
-	message=(char *)malloc(sizeof(char) * (msg_len + 1));
+	message=(char *)malloc(sizeof(char *) * (msg_len + 1));
 
-	if ( error_message == NULL ) {
+	if ( locally_allocated ) {
 		switch (error_code)
 		{
 			case ZVERR_VECTUNDEF:
@@ -300,7 +312,7 @@ static void p_throw_error(const zvect_retval error_code, const char *error_messa
 	} else
 		safe_strncpy(message, error_message, msg_len);
 
-	log_msg(ZVLP_ERROR, "Error: %*i, %s\n", 8, error_code, error_message);
+	log_msg(ZVLP_ERROR, "Error: %*i, %s\n", 8, error_code, message);
 	if (locally_allocated)
 		free((void *)message);
 
@@ -411,7 +423,7 @@ static inline void mutex_destroy(pthread_mutex_t *lock) {
 	pthread_mutex_destroy(lock);
 }
 
-static inline int p_sem_init
+static inline int semaphore_init
 #	if !defined(macOS)
 	(sem_t *sem, int value) {
 	return sem_init(sem, 0, value);
@@ -422,7 +434,7 @@ static inline int p_sem_init
 #	endif
 }
 
-static inline int p_sem_destroy
+static inline int semaphore_destroy
 #	if !defined(macOS)
 	(sem_t *sem) {
 	return sem_destroy(sem);
@@ -913,6 +925,7 @@ static zvect_retval p_vect_destroy(vector v, uint32_t flags) {
 	if ( lock_owner )
 		get_mutex_unlock(v, v->lock_type);
 	mutex_destroy(&(v->lock));
+	semaphore_destroy(&(v->semaphore));
 #endif
 
 	// All done and freed, so we can safely
@@ -1382,7 +1395,7 @@ vector vect_create(const zvect_index init_capacity, const size_t item_size,
 	v->lock_type = 0;
 	mutex_init(&(v->lock));
 	mutex_cond_init(&(v->cond));
-	p_sem_init(&(v->semaphore), 0);
+	semaphore_init(&(v->semaphore), 0);
 #endif
 
 	// Allocate memory for the vector storage area
