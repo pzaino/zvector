@@ -243,7 +243,7 @@ static void log_msg(int const priority, const char * const format, ...)
 
 static size_t safe_strlen(const char *str, size_t max_len)
 {
-    const char * end = (const char *)memchr(str, '\0', max_len);
+    const char *end = (const char *)memchr(str, '\0', max_len);
     if (end == NULL)
         return max_len;
     else
@@ -280,7 +280,7 @@ __attribute__((noreturn))
 static void p_throw_error(const zvect_retval error_code,
 			  const char *error_message) {
 	int32_t locally_allocated = 0;
-	char *message;
+	char *message = NULL;
 	unsigned long msg_len = 0;
 
 	if ( error_message == NULL )
@@ -1161,11 +1161,11 @@ static inline zvect_retval p_vect_remove_at(vector const v, const zvect_index i,
 #else
 			// We can't use the vect_memcpy when not in full reentrant code
 			// because it's not safe to use it on the same src and dst.
-			p_vect_memmove(v->data + base + idx, v->data + base + (idx + 1),
-						   sizeof(void *) * (vsize - idx));
+			p_vect_memmove(v->data + (base + idx), v->data + (base + (idx + 1)),
+					sizeof(void *) * (vsize - idx));
 
 			// Clear leftover item pointers:
-			memset(v->data + ((v->begin + vsize) - 1), 0, 1);
+			memset(v->data[(v->begin + vsize) - 1], 0, 1);
 #endif
 		}
 	} else {
@@ -2727,11 +2727,50 @@ void vect_insert(vector const v1, vector const v2, const zvect_index s2,
 		ee2 = e2;
 
 	// Process vectors:
-	register zvect_index j = 0;
+	if (ee2 > 1)
+	{
+		// Number of rows to insert is large, so let's use
+		// memmove:
 
-	// Copy v2 items (from s2) in v1 (from s1):
-	for (register zvect_index i = s2; i <= s2 + ee2; i++, j++)
-		vect_add_at(v1, v2->data[v2->begin + i], s1 + j);
+		// Set the correct capacity for v1 to get data from v2:
+		if (p_vect_capacity(v1) <= (p_vect_size(v1) + ee2))
+			p_vect_set_capacity(v1, 1, p_vect_capacity(v1) + ee2);
+
+		const void *rptr = NULL;
+
+		// Reserve appropriate space in the destination vector
+		rptr = p_vect_memmove(v1->data + (v1->begin + s1 + ee2), v1->data + (v1->begin + s1), sizeof(void *) * (p_vect_size(v1) - s1));
+
+		if (rptr == NULL)
+		{
+			rval = ZVERR_VECTCORRUPTED;
+			goto DONE_PROCESSING;
+		}
+
+		// Copy items from v2 to v1 at location s1:
+		rptr = p_vect_memcpy(v1->data + (v1->begin + s1), v2->data + (v2->begin + s2), sizeof(void *) * ee2);
+
+		if (rptr == NULL)
+		{
+			rval = ZVERR_VECTCORRUPTED;
+			goto DONE_PROCESSING;
+		}
+
+		// Update v1 size:
+		v1->end += ee2;
+	} else {
+		// Number of rows to insert is small
+		// so let's use vect_Add_at:
+		register zvect_index j = 0;
+
+		// Copy v2 items (from s2) in v1 (from s1):
+		for (register zvect_index i = s2; i <= s2 + ee2; i++, j++)
+			vect_add_at(v1, v2->data[v2->begin + i], s1 + j);
+
+		goto DONE_PROCESSING;
+	}
+
+	rval = p_vect_delete_at(v2, s2, ee2 - 1, 0);
 
 DONE_PROCESSING:
 #if (ZVECT_THREAD_SAFE == 1)
@@ -2944,34 +2983,45 @@ zvect_retval vect_move_on_signal(vector const v1, vector v2, const zvect_index s
 
 	zvect_retval lock_owner1 = (locking_disabled || (v1->flags & ZV_NOLOCKING)) ? 0 : get_mutex_lock(v1, 1);
 
+#ifdef DEBUG
 	log_msg(ZVLP_MEDIUM, "vect_move_on_signal: --- start waiting ---\n");
-
+#endif
 	// wait until we get a signal
 	while(!(*f2)(v1, v2) && !(v2->status && (bool)ZVS_USR1_FLAG)) {
 		pthread_cond_wait(&(v2->cond), &(v2->lock));
 	}
 	v2->status &= ~(ZVS_USR1_FLAG);
 	//v2->status |= ZVS_USR_FLAG;
+
+#ifdef DEBUG
 	log_msg(ZVLP_MEDIUM, "Set status flag: %*i\n", 10, vect_check_status(v2, 1));
 
 	log_msg(ZVLP_MEDIUM, "vect_move_on_signal: --- received signal ---\n");
 
 	log_msg(ZVLP_MEDIUM, "vect_move_on_signal: --- begin ---\n");
-
+#endif
 	// Proceed with move items:
 	rval = p_vect_move(v1, v2, s2, e2);
 
+#ifdef DEBUG
 	log_msg(ZVLP_MEDIUM, "vect_move_on_signal: --- end ---\n");
+#endif
 
 	v2->status &= ~(ZVS_USR1_FLAG);
+#ifdef DEBUG
 	log_msg(ZVLP_MEDIUM, "Reset status flag: %*i\n", 10, vect_check_status(v2, 1));
+#endif
 
 //DONE_PROCESSING:
+#ifdef DEBUG
 	log_msg(ZVLP_MEDIUM, "v1 owner? %*i\n", 10, lock_owner1);
+#endif
 	if (lock_owner1)
 		get_mutex_unlock(v1, 1);
 
+#ifdef DEBUG
 	log_msg(ZVLP_MEDIUM, "v2 owner? %*i\n", 10, lock_owner2);
+#endif
 	rval = p_vect_delete_at(v2, s2, e2 - 1, 0);
 	if (lock_owner2)
 		get_mutex_unlock(v2, 1);
