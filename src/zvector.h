@@ -570,6 +570,26 @@ void vect_apply_if(vector const v1, vector const v2, void (*f1)(void *), bool (*
 void vect_copy(vector const v1, vector const v2, zvect_index start, zvect_index max_elements);
 
 /*
+ * vect_insert is a function that allows to copy a specified
+ * set of elements from a vector to another and "insert"
+ * them from a specified position in the destination vector.
+ * Please note: only vectors with the same data size (the
+ * parameter we pass during the creation of both vectors)
+ * can be copied into the other!
+ *
+ * vect_insert(v1, v2, 3, 5, 7) will copy all the items in
+ *                              vector v2, from the 4th item
+ *                              till the 9th (3 + 5, remember
+ *                              vector items start from 0) in
+ *                              the vector v1 from position 7.
+ *                              So at the end of the process
+ *                              you'll have such items "inserted"
+ *                              inside v1.
+ */
+void vect_insert(vector const v1, vector const v2, const zvect_index s2,
+                 const zvect_index e2, const zvect_index s1);
+
+/*
  * vect_move is a function that allows to move a specified
  * set of items from one vector to another.
  * It will also re-organise the source vector and (obviously)
