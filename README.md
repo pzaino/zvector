@@ -1,18 +1,19 @@
+# ZVector
+
 <img align="right" width="320" height="280" src="/images/ZVectorLogo2.png">
 
-Development branch status:
+**Status:**
 
-[![CodeQL](https://github.com/pzaino/zvector/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/pzaino/zvector/actions)
+Still under active development.
 
-[![FlawFinder](https://github.com/pzaino/zvector/actions/workflows/flawfinder.yml/badge.svg)](https://github.com/pzaino/zvector/actions)
+`- Security Tests:` [![CodeQL](https://github.com/pzaino/zvector/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/pzaino/zvector/actions) [![FlawFinder](https://github.com/pzaino/zvector/actions/workflows/flawfinder.yml/badge.svg)](https://github.com/pzaino/zvector/actions)
 
-[![CI/CD](https://github.com/pzaino/zvector/actions/workflows/ci.yml/badge.svg)](https://github.com/pzaino/zvector/actions) (Linux, macOS)
+`- _________CI/CD:` [![CI/CD](https://github.com/pzaino/zvector/actions/workflows/ci.yml/badge.svg)](https://github.com/pzaino/zvector/actions) (Linux, macOS)
 
-
-# ZVector
 This is a fast, configurable, portable, thread safe and reentrant Vector Library (dynamic arrays) in ANSI C.
 
 You can use ZVector to create:
+
 - Dynamic Arrays
 - Dynamic Stacks (LIFO)
 - Dynamic Queues (FIFO) (included priority queues)
@@ -21,7 +22,18 @@ You can use ZVector to create:
 The library also offers automatic Secure Data Wiping, so you can use it to store sensitive data. It is also constantly tested for security and bug hunting.
 
 ## Introduction
+
 I wrote this library for fun, after watching some presentations on the internet (from different authors) about dynamic arrays in C.
+
+### What problem does it solves?
+
+According to a reading on [Wikipedia](https://en.wikipedia.org/wiki/Dynamic_array#Performance) on the matter of Dynamic Arrays, it seems that there are still not Dynamic Arrays libraries that solve most common limitations of generic dynamic arrays.
+
+So, I thought it would be fun to develop a dynamic array library that actually presents high performance also when adding items at the beginning of an array as well as inside, while still maintaining the original high performance of when accessing each item using their index.
+
+So far, ZVector, has resulted to solves the traditional issues presented by Dynamic arrays and indeed one can use ZVector to create high performance dynamic arrays that stay fast when adding elements at the beginning of them or in the middle (check 04PTest001, 04PTest002 and 04PTest003 to see how one can do that).
+
+### Which features does it offers?
 
 The library is relatively small, however it comes with some nice features:
 
@@ -92,6 +104,7 @@ The library is relatively small, however it comes with some nice features:
 More features will be added over time as well as I constantly seek to improve its performance.
 
 ## How does it works?
+
 It's very simple, it's an ANSI C99 library, no funky dependencies, so, it should compile everywhere (let me know if you find any issue).
 
 ZVector uses a `p_vector` struct (everything that begins with a `p_` in zvector is "private") to represent a dynamic array of arbitrary items. The library tries to hide the `p_vector` data structure (the public type is called `vector`), this to make it easier to use the library and improve clean coding where possible. Given that, a typical size for a cache line is usually 64 Bytes (16 words), p_vector is optimized for such type of caches and so, an entire vector struct should take 1 single line in a cache, plus the number of pointers to user data.
@@ -103,13 +116,14 @@ Properties can be expressed as a set of flags, for example: ZV_BYREF | ZV_SEC_WI
 When a vector gets extended it may also gets its data copied into the new larger vector, however, to improve performances, ZVector only maintains and copies an "array of pointers" to such data (so the actual user data is untouched) and the functions that perform such copy are optimized for memory bandwidth to improve performance.
 
 ## How do I use it?
+
 To learn the API have a look at the `zvector.h` file in the `src` directory. To learn how to use it have a look at the Unit Test code in tests.
 
 As general rules:
 
 Add the `zvector.h` to your C code with:
 
-```
+```C
 #include "zvector.h"
 ```
 
@@ -125,10 +139,11 @@ Where:
 
 - `[your data structure]` is the name of your data structure that you want to store in the vector and correct C modifiers to ensure sizeof returns the correct size of your data structure or base type.
 
-- `[property flags list]` is a set of flags that will set the properties of your vector in a typical C flag set fashion, fo rexample: `ZV_BYREF | ZV_SEC_WIPE`
+- `[property flags list]` is a set of flags that will set the properties of your vector in a typical C flag set fashion, for example: `ZV_BYREF | ZV_SEC_WIPE`
 
 Example:
-```
+
+```C
 vector v = vect_create(8, sizeof(int), ZV_SEC_WIPE);
 ```
 
@@ -136,8 +151,8 @@ Will create a vector with an initial size of 8 elements, that can store integer 
 
 One important note for beginners is that whenever you try to store some data in the vector, please remember:
 
-* If you have defined such data as a pointer then you can just use the data name, so, for example: `vect_add( myvector, myDataPointer )`
-* If instead you have defined your data as a regular variable for example, then you need to pass it to the add function with an `&` before its name, so something like `vect_add( myvector, &myInt )`
+- If you have defined such data as a pointer then you can just use the data name, so, for example: `vect_add( myvector, myDataPointer )`
+- If instead you have defined your data as a regular variable for example, then you need to pass it to the add function with an `&` before its name, so something like `vect_add( myvector, &myInt )`
 
 Don't worry, in both cases the actual data contained in your reference will be copied (aka stored) in the vector (unless you've specified as your vector's property ZV_BYREF), so if you free your reference or leave the function that defined it (as long as the vector scope is above such function), the data you've stored in the vector will persist.
 
@@ -146,55 +161,61 @@ For the complete and up-to-date User Guide please click [here](https://paolozain
 ## How do I build it?
 
 ### GCC or CLang
+
 This has been tested on different Linux distributions, Apple macOS, FreeBSD, NetBSD, OpenBSD. It should also work on Free RTOS and ARM Embed OS.
 
 if you have GCC or CLang installed then use the Makefile provided, to build:
 
-```
+```bash
 make
 ```
 
 And to build and run the tests:
 
-```
+```bash
 make tests
 ```
 
 To install the static library and headers use:
 
-```
+```bash
 make install
 ```
 
 Note for CLang users on Linux: please check the Makefile before trying to build with clang and replace the value of variable `CC:=gcc` with `CC:=clang`.
 
 ### Visual Studio
+
 If you use Microsoft Windows, then you can open the project in Visual Studio 2019 or 2022 and build it using Visual Studio Build function.
 
 ### Other C Compilers
-At the moment I started to add support for different compilers which include NORCROFT C, HPC, IBM C and quite few others which should also allow to use ZVector on Operating Systems like OS/2 (Arka OS), Haiku OS, RISC OS, old Windows, Amiga OS, Atari TOS / EmuTOS, OS-9, IBM AIX and AS-400 and more.
+
+At the moment I started to add support for different compilers which include NORCROFT C, HPC, IBM C and quite few others which should also allow to use ZVector on Operating Systems like OS/2 (ArkaOS), Haiku OS, RISC OS, old Windows, Amiga OS, Atari TOS / EmuTOS, OS-9, IBM AIX and AS-400 and more.
 
 I'll add support for other compilers when I'll have time.
 
 For more details, pre-requisites and whatnot please check the User Guide [here](https://paolozaino.wordpress.com/2021/07/27/software-development-zvector-an-ansi-c-open-source-vector-library/)
 
 ## Performance
+
 ZVector is already really fast, however, if one wants to gain even more performance out of it, you can:
 
-* Create large arrays from the beginning
-* If your app is multi-threaded:
-  * If it does a lot of sequential calls to vect_add or vect_remove then try to use the user locks before starting your loop of calls to vect_add or vect_remove. To use the user locks have a look at the User Guide for the function vect_lock() and vect_unlock().
-  * If you can, then use local vectors to your thread to process thread data, and when processing is completed, use vect_move or vect_merge to merge your local vector items to your global vector. This will reduce concurrency and increase parallelism. If you use this approach you can also improve performances even more by setting the local vector property VECT_NOLOCKING, so each vect_add etc. operation will not lock on the local vector. See 04PTest005 for more details on how to use this technique.
-* Try to use ZVector in conjunction with jemalloc or other fast memory allocation algorithms like tcmalloc etc.
-  * To run a quick test with jemalloc for example, if you have it installed in `/usr/lib64/`, then run:
-```
+- Create large arrays from the beginning
+- If your app is multi-threaded:
+  - If it does a lot of sequential calls to vect_add or vect_remove then try to use the user locks before starting your loop of calls to vect_add or vect_remove. To use the user locks have a look at the User Guide for the function vect_lock() and vect_unlock().
+  - If you can, then use local vectors to your thread to process thread data, and when processing is completed, use vect_move or vect_merge to merge your local vector items to your global vector. This will reduce concurrency and increase parallelism. If you use this approach you can also improve performances even more by setting the local vector property VECT_NOLOCKING, so each vect_add etc. operation will not lock on the local vector. See 04PTest005 for more details on how to use this technique.
+- Try to use ZVector in conjunction with jemalloc or other fast memory allocation algorithms like tcmalloc etc.
+  - To run a quick test with jemalloc for example, if you have it installed in `/usr/lib64/`, then run:
+
+```bash
 LD_PRELOAD=/usr/lib64/libjemalloc.so.2 time ./tests/bin/04PTest001
-``` 
+```
+
 Please note: when using libraries like jemalloc and similar, performance improvements will depend a lot on the system architecture you're using to test your code. So, do not expect the same performance improvements on an old Atom CPU compared to a more modern AMD Zen3 ;)
 
 To have an idea of the performance, you can use the following tests that come with ZVector:
 
-- 04PTest005 This test spins 16 threads, 8 producers and 8 consumers and they all work in parallel. This happens because each producer and consumer works on a local vector that is derived from the global vector in chunks. So the only concurrency is when a chunk of items (all at once) is either moved from a local vector to the global vector or is fetched from the global vector into a local vector. This technique helps a lot to improve Amdhal's law constraints on the matter of parallelism. If you have a look at the test code, ZVector handles all the complexity of using multi-threading, so one can simply use local structures and let ZVector deal with locking mechanisms and concurrency complexity. When you run this test using jemalloc or tcmalloc you reduce the critical sections time even more improving both performance and parallelism.
+- 04PTest005 This test spins 16 threads, 8 producers and 8 consumers and they all work in parallel. This happens because each producer and consumer works on a local vector that is derived from the global vector in chunks. So the only concurrency is when a chunk of items (all at once) is either moved from a local vector to the global vector or is fetched from the global vector into a local vector. This technique helps a lot to improve Amdahl's law constraints on the matter of parallelism. If you have a look at the test code, ZVector handles all the complexity of using multi-threading, so one can simply use local structures and let ZVector deal with locking mechanisms and concurrency complexity. When you run this test using jemalloc or tcmalloc you reduce the critical sections time even more improving both performance and parallelism.
              You can easily increase the number of threads in this test to your like, need. Look at the source for more details.
 
 - 04PTestX All the tests that starts with 04PTest are generic performance tests and they try to measure specific costs of each activity in the library.
@@ -204,11 +225,13 @@ If you do not need the Thread Safe code in your own projects, then you can disab
 If you do not need all the features offered by the library you can disable subsets of the features. This will allow the library binary to be even smaller than it is now (on an ARM it's roughly 40KB) and that can help with caching the entire library.
 
 ## How much data can I store in this?
+
 ZVector by default uses unsigned int 32 bit (`uint32_t`)for the vector index (`vect_index`), so the amount of possible storage available per each vector is huge. If needed you can also reconfigure this using unsigned integers 64bit have a look at the file `zvect_config.h` for this.
 
 Of course for IoT, embedded devices and retrocomputing Operating Systems, you can change the default behavior to use smaller indexes too, for instance using unsigned int 16bit for old 16bit Architectures. Again changing this is really simple, just redefine the typedef for `zvect_index` in the `zvect_config.h`
 
 ## How small can I make this library?
+
 So, if you want to use it for embedded software developments and IoT, I have shrunk release 1.0.0 RC7 down to 17KB on ARM AArch64.
 
 To achieve similar results, you just need to configure the Makefile as follows:
@@ -218,9 +241,11 @@ To achieve similar results, you just need to configure the Makefile as follows:
 - Compile as explained above and check the results
 
 ## Can I use it in my own commercial applications?
+
 Yes, absolutely. The library is distributed with the MIT license, so please have a look at the [LICENSE](./LICENSE) file for details.
 
 ## A final note
+
 Have fun and happy coding, and if you'd like, drop me a line telling me how you've used this library in your own projects,
 
 Thanks!

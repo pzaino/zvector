@@ -75,5 +75,9 @@
 	"editor.fontSize": 16,
 	"compiler-explorer.include": [
 		"${workspaceFolder}/src"
+	],
+	"cSpell.words": [
+		"cppcheck",
+		"valgrind"
 	]
 }
