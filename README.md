@@ -27,11 +27,11 @@ I wrote this library for fun, after watching some presentations on the internet 
 
 ### What problem does it solves?
 
-According to a reading on [Wikipedia](https://en.wikipedia.org/wiki/Dynamic_array#Performance) on the matter of Dynamic Arrays, it seems that there are still not Dynamic Arrays libraries that solve most common limitations of generic dynamic arrays.
+According to a reading on [Wikipedia](https://en.wikipedia.org/wiki/Dynamic_array#Performance) on the matter of Dynamic Arrays, it seems that there are still no Dynamic Arrays libraries that solve most common limitations of generic dynamic arrays.
 
 So, I thought it would be fun to develop a dynamic array library that actually presents high performance also when adding items at the beginning of an array as well as inside, while still maintaining the original high performance of when accessing each item using their index.
 
-So far, ZVector, has resulted to solves the traditional issues presented by Dynamic arrays and indeed one can use ZVector to create high performance dynamic arrays that stay fast when adding elements at the beginning of them or in the middle (check 04PTest001, 04PTest002 and 04PTest003 to see how one can do that).
+So far, ZVector, has resulted to solve the traditional issues presented by Dynamic arrays, and indeed one can use ZVector to create high performance dynamic arrays that stay fast when adding elements at the beginning of them or in the middle (check 04PTest001, 04PTest002 and 04PTest003 to see how one can do that).
 
 ### Which features does it offers?
 
@@ -63,7 +63,7 @@ The library is relatively small, however it comes with some nice features:
 
 - **Configurable feature-set**
 
-   For example: if you are working on a single threaded application, you can easily disable the extra thread safe code, making so the library smaller and faster. To configure the library, check the zvector_config.h and the Makefile.
+   For example: if you are working on a single threaded application, you can easily disable the extra thread safe code, making so the library smaller and faster. To configure the library, check the `zvector_config.h` and the `Makefile`.
 
 - **Suitable for Embedded and IoT applications**
 
@@ -79,11 +79,11 @@ The library is relatively small, however it comes with some nice features:
 
 - **Elements swapping support**
 
-   The library comes with a handy reentrant and thread safe swap function that can swap elements in the vector (vect_swap), a vect_swap_range to swap a range of values in a vector and many more useful data manipulation functions (including vector rotation and more).
+   The library comes with a handy reentrant and thread safe swap function that can swap elements in the vector (`vect_swap`), a `vect_swap_range` to swap a range of values in a vector and many more useful data manipulation functions (including vector rotation and more).
 
 - **Single call to apply a function to the entire vector**
 
-   The library supports a single call to apply a C function to each and every item in a vector, very handy in many situations (vect_apply). It also supports "conditional function application" to an entire vector (vect_apply_if) and a handy vect_apply_range which applies a user function to a range of values in a vector.
+   The library supports a single call to apply a C function to each and every item in a vector, very handy in many situations (`vect_apply`). It also supports "conditional function application" to an entire vector (`vect_apply_if`) and a handy `vect_apply_range` which applies a user function to a range of values in a vector.
 
 - **Bulk Data copy, move, insert and merge support**
 
@@ -111,13 +111,13 @@ ZVector uses a `p_vector` struct (everything that begins with a `p_` in zvector 
 
 The user decides which type of items (between regular base types or custom types or data structures, etc), the initial capacity of a vector and its properties.
 
-Properties can be expressed as a set of flags, for example: ZV_BYREF | ZV_SEC_WIPE will set a vector with both these two properties on. Turning on a property simply means asking ZVector to automatically deal with that specific property. So enabling ZV_SEC_WIPE means that ZVector itself will handle secure data wipe of the data stored in a vector when such data is no longer needed.
+Properties can be expressed as a set of flags, for example: `ZV_BYREF | ZV_SEC_WIPE` will set a vector with both these two properties on. Turning on a property simply means asking ZVector to automatically deal with that specific property. So enabling `ZV_SEC_WIPE` means that ZVector itself will handle secure data wipe of the data stored in a vector when such data is no longer needed.
 
 When a vector gets extended it may also gets its data copied into the new larger vector, however, to improve performances, ZVector only maintains and copies an "array of pointers" to such data (so the actual user data is untouched) and the functions that perform such copy are optimized for memory bandwidth to improve performance.
 
 ## How do I use it?
 
-To learn the API have a look at the `zvector.h` file in the `src` directory. To learn how to use it have a look at the Unit Test code in tests.
+To learn the API have a look at the `zvector.h` file in the `src` directory. To learn how to use it have a look at the test code in `tests` directory.
 
 As general rules:
 
@@ -129,13 +129,17 @@ Add the `zvector.h` to your C code with:
 
 I wrote a full User Guide [here](https://paolozaino.wordpress.com/2021/07/27/software-development-zvector-an-ansi-c-open-source-vector-library/) and trying to keep it up-to-date.
 
-When compile make sure you link your code to the libvector.a as shown in the Makefile for the Unit Tests (in `tests`).
+When compile make sure you link your code to the `libvector.a` as shown in the `Makefile` for the tests (in `tests`).
 
-Before you can use a vector you need to create one using the function `vect_create([initial elements], sizeof([your data structure]), [property flags list])`
+Before you can use a vector you need to create one using the function:
+
+```C
+vect_create([initial elements], sizeof([your data structure]), [property flags list])
+```
 
 Where:
 
-- `[initial elements]` is an integer number, for example 16
+- `[initial elements]` is an integer number that represent the initial capacity of your vector, for example 16
 
 - `[your data structure]` is the name of your data structure that you want to store in the vector and correct C modifiers to ensure sizeof returns the correct size of your data structure or base type.
 
@@ -202,8 +206,8 @@ ZVector is already really fast, however, if one wants to gain even more performa
 
 - Create large arrays from the beginning
 - If your app is multi-threaded:
-  - If it does a lot of sequential calls to vect_add or vect_remove then try to use the user locks before starting your loop of calls to vect_add or vect_remove. To use the user locks have a look at the User Guide for the function vect_lock() and vect_unlock().
-  - If you can, then use local vectors to your thread to process thread data, and when processing is completed, use vect_move or vect_merge to merge your local vector items to your global vector. This will reduce concurrency and increase parallelism. If you use this approach you can also improve performances even more by setting the local vector property VECT_NOLOCKING, so each vect_add etc. operation will not lock on the local vector. See 04PTest005 for more details on how to use this technique.
+  - If it does a lot of sequential calls to `vect_add()` or `vect_remove()` then try to use the user locks before starting your loop of calls to vect_add or vect_remove. To use the user locks have a look at the User Guide for the function `vect_lock()` and `vect_unlock()`.
+  - If you can, then use local vectors to your thread to process thread data, and when processing is completed, use `vect_move()` or `vect_merge()` to merge your local vector items to your global vector. This will reduce concurrency and increase parallelism. If you use this approach you can also improve performances even more by setting the local vector property `VECT_NOLOCKING`, so each vect_add etc. operation will not lock on the local vector. See 04PTest005 for more details on how to use this technique.
 - Try to use ZVector in conjunction with jemalloc or other fast memory allocation algorithms like tcmalloc etc.
   - To run a quick test with jemalloc for example, if you have it installed in `/usr/lib64/`, then run:
 
@@ -234,9 +238,9 @@ Of course for IoT, embedded devices and retrocomputing Operating Systems, you ca
 
 So, if you want to use it for embedded software developments and IoT, I have shrunk release 1.0.0 RC7 down to 17KB on ARM AArch64.
 
-To achieve similar results, you just need to configure the Makefile as follows:
+To achieve similar results, you just need to configure the `Makefile` as follows:
 
-- Replace the values in P_CFLAGS with just -Os if you're using GCC or clang
+- Replace the values in `P_CFLAGS` with just `-Os` if you're using GCC or clang
 - Disable ALL the extensions in the extension section of the Makefile
 - Compile as explained above and check the results
 

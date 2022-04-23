@@ -59,7 +59,14 @@ size_t max_strLen = 32;
 //              system when using multi-threaded queues.
 #define MAX_THREADS 6
 
+
+// This is the total number of messages that will be
+// produced durign this test (you can increase it if
+// you'd like, but keep in mind that the more messages
+// the more memory your test system will need!):
 #define TOTAL_ITEMS 10000000
+
+
 #define MAX_ITEMS (TOTAL_ITEMS / ( MAX_THREADS / 2))
 #define MAX_MSG_SIZE 72
 pthread_t tid[MAX_THREADS]; // Producers and Consumers thread ID
@@ -210,20 +217,16 @@ void *consumer(void *arg) {
 		CCPAL_START_MEASURING;
 
 		while (true) {
-			//if (!vect_move_on_signal(v2, v, 0, MAX_ITEMS, check_if_correct_size))
-			//{
-				if (!vect_move_if(v2, v, 0, MAX_ITEMS, check_if_correct_size))
-				{
+			if (!vect_move_if(v2, v, 0, MAX_ITEMS, check_if_correct_size))
+			{
 #ifdef DEBUG
-					printf("Moved data from global vector to local, global vector size: %*i, local vector size: %*i\n", 8, vect_size(v), 8, vect_size(v2));
-					fflush(stdout);
+				printf("Moved data from global vector to local, global vector size: %*i, local vector size: %*i\n", 8, vect_size(v), 8, vect_size(v2));
+				fflush(stdout);
 #endif
-					goto START_JOB;
-				}
-			//}
+				break;
+			}
 		}
 
-START_JOB:
 		printf("--- Consumer Thread %*i received a chunk of %*i messages ---\n\n", 3, id, 4, vect_size(v2));
 
 		QueueItem *item; // We do not need to allocate item,
