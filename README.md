@@ -10,7 +10,7 @@ Still under active development.
 
 `- _________CI/CD:` [![CI/CD](https://github.com/pzaino/zvector/actions/workflows/ci.yml/badge.svg)](https://github.com/pzaino/zvector/actions) (Linux, macOS)
 
-This is a fast, configurable, portable, thread safe and reentrant Vector Library (dynamic arrays) in ANSI C.
+This is a fast, configurable, portable, thread safe and reentrant Vector Library (dynamic arrays) in ANSI C 99.
 
 You can use ZVector to create:
 
@@ -25,15 +25,15 @@ The library also offers automatic Secure Data Wiping, so you can use it to store
 
 I wrote this library for fun, after watching some presentations on the internet (from different authors) about dynamic arrays in C.
 
-### What problem does it solves?
+### What problem does it solve?
 
 According to a reading on [Wikipedia](https://en.wikipedia.org/wiki/Dynamic_array#Performance) on the matter of Dynamic Arrays, it seems that there are still no Dynamic Arrays libraries that solve most common limitations of generic dynamic arrays.
 
-So, I thought it would be fun to develop a dynamic array library that actually presents high performance also when adding items at the beginning of an array as well as inside, while still maintaining the original high performance of when accessing each item using their index.
+So, I thought it would be fun to develop a dynamic array library that actually presents high performance also when adding items at the beginning of an array as well as inside, while still maintaining the original high performance when accessing each item using their index.
 
-So far, ZVector, has resulted to solve the traditional issues presented by Dynamic arrays, and indeed one can use ZVector to create high performance dynamic arrays that stay fast when adding elements at the beginning of them or in the middle (check 04PTest001, 04PTest002 and 04PTest003 to see how one can do that).
+So far, ZVector has resulted in solving the traditional issues presented by Dynamic arrays, and indeed one can use it to create high performance dynamic arrays that stay fast also when adding elements at the beginning of them or inside (check 04PTest001, 04PTest002 and 04PTest003 to see how one can do that).
 
-### Which features does it offers?
+### Which features does it offer?
 
 The library is relatively small, however it comes with some nice features:
 
@@ -59,7 +59,7 @@ The library is relatively small, however it comes with some nice features:
 
 - **Reentrant**
 
-   The library should be fully reentrant, so changes are applied when we are ready for, and all the library functions do not use global state.
+   The library should be fully reentrant, so changes are made available only when the full set of actions have been completed. Also, the library functions do not use global state.
 
 - **Configurable feature-set**
 
@@ -75,7 +75,7 @@ The library is relatively small, however it comes with some nice features:
 
 - **Stack and Queue behavior support**
 
-   We can also use the vector as a dynamic stack (FIFO) structure. Or we can use it to create Queues (LIFO) structures (including priority queues)
+   We can also use the vector as a dynamic stack (FIFO) structure. Or we can use it to create Queues (LIFO) structures (including priority queues).
 
 - **Elements swapping support**
 
@@ -95,7 +95,7 @@ The library is relatively small, however it comes with some nice features:
 
 - **CI/CD support**
 
-   The library comes with its own Unit and Integration tests that are built and executed systematically with each library build and that can be extended automatically just by adding new C files in the `tests` directory (you the make process will detect them, build them automatically and execute them at every build)
+   The library comes with its own Unit and Integration tests that are built and executed systematically with each library build and that can be extended automatically just by adding new C files in the `tests` directory (the make process will detect them, build them automatically and execute them at every build).
 
 - **GitHub code test automation**
 
@@ -103,9 +103,9 @@ The library is relatively small, however it comes with some nice features:
 
 More features will be added over time as well as I constantly seek to improve its performance.
 
-## How does it works?
+## How does it work?
 
-It's very simple, it's an ANSI C99 library, no funky dependencies, so, it should compile everywhere (let me know if you find any issue).
+It's very simple, it's an ANSI C99 library, no funky dependencies, so, it should compile everywhere (let me know if you find any issues).
 
 ZVector uses a `p_vector` struct (everything that begins with a `p_` in zvector is "private") to represent a dynamic array of arbitrary items. The library tries to hide the `p_vector` data structure (the public type is called `vector`), this to make it easier to use the library and improve clean coding where possible. Given that, a typical size for a cache line is usually 64 Bytes (16 words), p_vector is optimized for such type of caches and so, an entire vector struct should take 1 single line in a cache, plus the number of pointers to user data.
 
@@ -113,11 +113,11 @@ The user decides which type of items (between regular base types or custom types
 
 Properties can be expressed as a set of flags, for example: `ZV_BYREF | ZV_SEC_WIPE` will set a vector with both these two properties on. Turning on a property simply means asking ZVector to automatically deal with that specific property. So enabling `ZV_SEC_WIPE` means that ZVector itself will handle secure data wipe of the data stored in a vector when such data is no longer needed.
 
-When a vector gets extended it may also gets its data copied into the new larger vector, however, to improve performances, ZVector only maintains and copies an "array of pointers" to such data (so the actual user data is untouched) and the functions that perform such copy are optimized for memory bandwidth to improve performance.
+When a vector gets extended, it may also gets its data copied into the new larger vector, however, to improve performances, ZVector only maintains and copies an "array of pointers" to such data (so the actual user data is untouched) and the functions that perform such copy are optimized for memory bandwidth to improve performance.
 
 ## How do I use it?
 
-To learn the API have a look at the `zvector.h` file in the `src` directory. To learn how to use it have a look at the test code in `tests` directory.
+To learn the API have a look at the `zvector.h` file in the `src` directory. To learn how to use it have a look at the test code in `tests` directory. I wrote a full User Guide [here](https://paolozaino.wordpress.com/2021/07/27/software-development-zvector-an-ansi-c-open-source-vector-library/) and trying to keep it up-to-date.
 
 As general rules:
 
@@ -127,11 +127,9 @@ Add the `zvector.h` to your C code with:
 #include "zvector.h"
 ```
 
-I wrote a full User Guide [here](https://paolozaino.wordpress.com/2021/07/27/software-development-zvector-an-ansi-c-open-source-vector-library/) and trying to keep it up-to-date.
+When compiling, make sure you link your code to the `libvector.a` as shown in the `Makefile` for the tests (in `tests`).
 
-When compile make sure you link your code to the `libvector.a` as shown in the `Makefile` for the tests (in `tests`).
-
-Before you can use a vector you need to create one using the function:
+Before you can use a vector, you need to create one using the function:
 
 ```C
 vect_create([initial elements], sizeof([your data structure]), [property flags list])
@@ -226,11 +224,11 @@ To have an idea of the performance, you can use the following tests that come wi
 
 If you do not need the Thread Safe code in your own projects, then you can disable it from the Makefile (have a look at the file for details). Disabling the Thread Safe code will make the library even faster.
 
-If you do not need all the features offered by the library you can disable subsets of the features. This will allow the library binary to be even smaller than it is now (on an ARM it's roughly 40KB) and that can help with caching the entire library.
+If you do not need all the features offered by the library, you can disable subsets of the features. This will allow the library binary to be even smaller than it is now (on an ARM it's roughly 40KB) and that can help with caching the entire library.
 
 ## How much data can I store in this?
 
-ZVector by default uses unsigned int 32 bit (`uint32_t`)for the vector index (`vect_index`), so the amount of possible storage available per each vector is huge. If needed you can also reconfigure this using unsigned integers 64bit have a look at the file `zvect_config.h` for this.
+ZVector, by default, uses unsigned int 32 bit (`uint32_t`)for the vector index (`vect_index`), so the amount of possible storage available per each vector is huge. If needed you can also reconfigure this using unsigned integers 64bit have a look at the file `zvect_config.h` for this.
 
 Of course for IoT, embedded devices and retrocomputing Operating Systems, you can change the default behavior to use smaller indexes too, for instance using unsigned int 16bit for old 16bit Architectures. Again changing this is really simple, just redefine the typedef for `zvect_index` in the `zvect_config.h`
 
