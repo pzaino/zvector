@@ -33,6 +33,16 @@ So, I thought it would be fun to develop a dynamic array library that actually p
 
 So far, ZVector has resulted in solving the traditional issues presented by Dynamic arrays, and indeed one can use it to create high performance dynamic arrays that stay fast also when adding elements at the beginning of them or inside (check 04PTest001, 04PTest002 and 04PTest003 to see how one can do that).
 
+There are also other advantages using ZVector instead of regular C Arrays (beside of being dynamic):
+
+- For instance, passing a ZVector to a function will NOT lose it's size, so you can safely do this.
+
+- If you need to do binary searches, the binary search provided with ZVector optimise for each vector (even when you pass them to another function, such optimisation is passed on too!).
+
+- Fetching items from a ZVector also triggers more checks and so, in general terms, it's safer than fetching data from a regular C Array.
+
+- ZVector offers a lot more features (described below) than a regular C Array.
+
 ### Which features does it offer?
 
 The library is relatively small, however it comes with some nice features:
