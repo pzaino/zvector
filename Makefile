@@ -7,9 +7,9 @@
 #  Description: This Makefile is intended to be reusable to build many types of
 #		C Libraries and it will also build and execute automatically all
 #		the provided Unit and Integration tests at every build.
-#		Your can reuse it very easly in your own libraries, just copy it
-#		in you rlibrary structure and change the parameters in the next
-#		section "Manualpart of the Makefile", and you're ready to build!
+#		Your can reuse it very easily in your own libraries, just copy it
+#		in your library structure and change the parameters in the next
+#		section "Manual part of the Makefile", and you're ready to build!
 ###############################################################################
 
 ###############################################################################
@@ -123,6 +123,7 @@ ifeq ($(CC),gcc)
 	ifeq ($(strip $(CFLAGS)),)
 		CFLAGS+=-std=c99 -Wall -Wextra -I./src -I./tests -fstack-protector-strong
 		P_CFLAGS+=
+        CLIBFLAGS+=-pedantic
 	endif
 	ifeq ($(strip $(LDFLAGS)),)
 		LDFLAGS+=
@@ -291,7 +292,7 @@ $(OBJF): $(OSRCF)
 	$(info Building $@                )
 	$(info ===========================)
 #	. /opt/rh/devtoolset-10/enable
-	$(CC) -c -o $@ $< $(CFLAGS) $(CODE_MACROS)
+	$(CC) -c -o $@ $< $(CLIBFLAGS) $(CFLAGS) $(CODE_MACROS)
 	@echo ""
 	@echo "Check if the objcode has been built:"
 	@ls -alh ./o/*
