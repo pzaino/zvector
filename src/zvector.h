@@ -11,10 +11,6 @@
 #ifndef SRC_ZVECTOR_H_
 #define SRC_ZVECTOR_H_
 
-#if defined(_MSC_VER) && (_MSC_VER >= 1020)
-#	pragma once
-#endif
-
 #ifdef _cplusplus
 extern "C" {
 #endif
@@ -27,12 +23,16 @@ extern "C" {
 // so we know on which platform and which features
 // we can use:
 #include "zvector_checks.h"
+#if defined(_MSC_VER) && (_MSC_VER >= 1020)
+#	pragma once
+#endif
 
 // Include vector configuration header
 #include "zvector_config.h"
 
 // Declare required structs:
 typedef struct p_vector * vector;
+
 
 // Declare required enums:
 
@@ -70,6 +70,8 @@ enum ZVECT_ERR {
 	ZVERR_VECTEMPTY     = -8,
 	ZVERR_OPNOTALLOWED  = -9
 };
+
+extern unsigned int LOG_PRIORITY;
 
 /*****************************
  ** Public API declaration: **
@@ -126,16 +128,30 @@ bool vect_is_empty(vector const v);
 zvect_index vect_size(vector const v);
 
 /*
+ * vect_size returns the maximum size (the max number of)
+ * slots in the vector storage.
+ */
+zvect_index vect_max_size(vector const v);
+
+void *vect_begin(vector const v);
+void *vect_end(vector const v);
+
+/*
  * vect_clear clears out a vector and also resizes it
  * to its initial capacity.
  */
 void vect_clear(vector const v);
 
+/*
+ * Vector status bits control
+ */
 bool vect_check_status(const vector v, zvect_index flag_id);
 
 bool vect_set_status(const vector v, zvect_index flag_id);
 
 bool vect_clear_status(const vector v, zvect_index flag_id);
+
+bool vect_toggle_status(const vector v, zvect_index flag_id);
 
 #if ( ZVECT_THREAD_SAFE == 1 )
 // Vector Thread Safe functions:
@@ -203,7 +219,7 @@ zvect_retval vect_unlock(vector const v);
 
 zvect_retval vect_move_on_signal(vector const v1, vector v2,
 				 const zvect_index s2,
-               			 const zvect_index e2,
+				 const zvect_index e2,
 				 zvect_retval (*f2)(void *, void *));
 
 zvect_retval vect_send_signal(const vector v);
@@ -549,6 +565,8 @@ void vect_apply(vector const v, void (*f1)(void *));
  * }
  */
 void vect_apply_if(vector const v1, vector const v2, void (*f1)(void *), bool (*f2)(void *, void *));
+
+void vect_apply_range(vector const v, void (*f)(void *), const zvect_index x, const zvect_index y);
 
 // Operations with multiple vectors:
 

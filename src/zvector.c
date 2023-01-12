@@ -17,17 +17,18 @@
 /*
  * Few code standard notes:
  *
- * p_ <- indicate a PRIVATE method or variable. Not reachable outside this module.
+ * p_ <- indicate a PRIVATE method or variable. Not reachable outside this
+ *       module.
  *
  */
 
-// Include standard C libs headers
+/* Include standard C libs headers */
 #include <assert.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 
-// Include vector.h header
+/* Include vector.h header */
 #include "zvector.h"
 
 #if (OS_TYPE == 1)
@@ -111,12 +112,15 @@ enum {
 /*---------------------------------------------------------------------------*/
 
 /*---------------------------------------------------------------------------*/
-// Define the vector data structure:
-
-// This is ZVector core data structure, it is the structure of a ZVector vector :)
-// Please note: fields order is based on "most used fields" to help a bit with cache
-
-struct ZVECT_PACKING p_vector {
+/* Define the vector data structure:
+ *
+ * This is ZVector core data structure, it is the structure of a ZVector
+ * vector :)
+ * Please note: fields order is based on "most used fields" to help a bit
+ * with cache
+ */
+struct ZVECT_PACKING p_vector
+{
 	zvect_index cap_left;		// - Max capacity allocated on the
 					//   left.
 	zvect_index cap_right;		// - Max capacity allocated on the
@@ -190,6 +194,10 @@ struct ZVECT_PACKING p_vector {
 #endif  // ZVECT_THREAD_SAFE
 } ZVECT_DATAALIGN;
 
+
+// Internal representation of a vector
+typedef struct p_vector * const ivector;
+
 // Initialisation state:
 static uint32_t p_init_state = 0;
 
@@ -202,7 +210,8 @@ static uint32_t p_init_state = 0;
 /*---------------------------------------------------------------------------*/
 // Errors and messages handling:
 
-enum ZVECT_LOGPRIORITY {
+enum ZVECT_LOGPRIORITY
+{
 	ZVLP_NONE       = 0,      // No priority
 	ZVLP_INFO       = 1 << 0, // This is an informational priority
 				  // message.
@@ -220,6 +229,10 @@ unsigned int LOG_PRIORITY = (ZVLP_ERROR | ZVLP_HIGH | ZVLP_MEDIUM |
 #ifndef DEBUG
 unsigned int LOG_PRIORITY = (ZVLP_ERROR | ZVLP_HIGH | ZVLP_MEDIUM);
 #endif
+
+// Local declaration of private functions
+void p_init_zvect(void);
+zvect_retval p_vect_clear(ivector v);
 
 // This is a vprintf wrapper nothing special:
 static void log_msg(int const priority, const char * const format, ...)
@@ -251,7 +264,7 @@ static size_t safe_strlen(const char *str, size_t max_len)
 }
 
 static void *safe_strncpy(const char * const str_src,
-			 size_t max_len)
+			  size_t max_len)
 {
 	void *str_dst = NULL;
 	char tmp_dst[max_len];
@@ -278,10 +291,11 @@ static void *safe_strncpy(const char * const str_src,
 __attribute__((noreturn))
 #endif
 static void p_throw_error(const zvect_retval error_code,
-			  const char *error_message) {
+			  const char *error_message)
+{
 	int32_t locally_allocated = 0;
 	char *message = NULL;
-	unsigned long msg_len = 0;
+	size_t msg_len = 0;
 
 	if ( error_message == NULL )
 	{
@@ -344,7 +358,9 @@ static void p_throw_error(const zvect_retval error_code,
 ZVECT_ALWAYSINLINE
 static inline
 #endif // ZVECT_MEMX_METHOD
-void *p_vect_memcpy(const void *__restrict dst, const void *__restrict src, size_t size) {
+void *p_vect_memcpy(const void *__restrict dst, const void *__restrict src,
+                    size_t size)
+{
 #if (ZVECT_MEMX_METHOD == 0)
 	// Using regular memcpy
 	// If you are using ZVector on Linux/macOS/BSD/Windows
@@ -376,7 +392,8 @@ void *p_vect_memcpy(const void *__restrict dst, const void *__restrict src, size
 
 ZVECT_ALWAYSINLINE
 static inline void *p_vect_memmove(const void *__restrict dst,
-                                   const void *__restrict src, size_t size) {
+                                   const void *__restrict src, size_t size)
+{
 #ifdef DEBUG
 	log_msg(ZVLP_INFO, "p_vect_memmove: dst      %*p\n", 14, dst);
 	log_msg(ZVLP_INFO, "p_vect_memmove: src      %*p\n", 14, src);
@@ -397,21 +414,25 @@ static volatile bool locking_disabled = false;
 #	elif MUTEX_TYPE == 1
 
 ZVECT_ALWAYSINLINE
-static inline int mutex_lock(pthread_mutex_t *lock) {
+static inline int mutex_lock(pthread_mutex_t *lock)
+{
 	return pthread_mutex_lock(lock);
 }
 
 ZVECT_ALWAYSINLINE
-static inline int mutex_trylock(pthread_mutex_t *lock) {
+static inline int mutex_trylock(pthread_mutex_t *lock)
+{
 	return pthread_mutex_trylock(lock);
 }
 
 ZVECT_ALWAYSINLINE
-static inline int mutex_unlock(pthread_mutex_t *lock) {
+static inline int mutex_unlock(pthread_mutex_t *lock)
+{
 	return pthread_mutex_unlock(lock);
 }
 
-static inline void mutex_init(pthread_mutex_t *lock) {
+static inline void mutex_init(pthread_mutex_t *lock)
+{
 #	if (!defined(macOS))
 	pthread_mutexattr_t Attr;
 	pthread_mutexattr_init(&Attr);
@@ -424,7 +445,8 @@ static inline void mutex_init(pthread_mutex_t *lock) {
 #	endif // macOS
 }
 
-static inline void mutex_cond_init(pthread_cond_t *cond) {
+static inline void mutex_cond_init(pthread_cond_t *cond)
+{
 #	if (!defined(macOS))
 	pthread_condattr_t Attr;
 	pthread_condattr_init(&Attr);
@@ -435,48 +457,61 @@ static inline void mutex_cond_init(pthread_cond_t *cond) {
 #	endif // macOS
 }
 
-static inline void mutex_destroy(pthread_mutex_t *lock) {
+static inline void mutex_destroy(pthread_mutex_t *lock)
+{
 	pthread_mutex_destroy(lock);
 }
 
 static inline int semaphore_init
-#	if !defined(macOS)
-	(sem_t *sem, int value) {
+#		if !defined(macOS)
+				(sem_t *sem, int value)
+#		else
+				(dispatch_semaphore_t *sem, int value)
+#		endif
+{
+#		if !defined(macOS)
 	return sem_init(sem, 0, value);
-#	else
-	(dispatch_semaphore_t *sem, int value) {
+#		else
 	*sem = dispatch_semaphore_create(value);
 	return 0;
-#	endif
+#		endif
 }
 
 static inline int semaphore_destroy
-#	if !defined(macOS)
-	(sem_t *sem) {
+#		if !defined(macOS)
+					(sem_t *sem)
+#		else
+					(dispatch_semaphore_t *sem)
+#		endif
+{
+#		if !defined(macOS)
 	return sem_destroy(sem);
-#	else
-	(dispatch_semaphore_t *sem) {
+#		else
 	return 0; // dispatch_semaphore_destroy(sem);
 	(void)sem;
-#	endif
+#		endif
 }
 
 #	elif MUTEX_TYPE == 2
 
-static inline void mutex_lock(CRITICAL_SECTION *lock) {
+static inline void mutex_lock(CRITICAL_SECTION *lock)
+{
 	EnterCriticalSection(lock);
 }
 
-static inline void mutex_unlock(CRITICAL_SECTION *lock) {
+static inline void mutex_unlock(CRITICAL_SECTION *lock)
+{
 	LeaveCriticalSection(lock);
 }
 
-static inline void mutex_alloc(CRITICAL_SECTION *lock) {
+static inline void mutex_alloc(CRITICAL_SECTION *lock)
+{
 	// InitializeCriticalSection(lock);
 	InitializeCriticalSectionAndSpinCount(lock, 32);
 }
 
-static inline void mutex_destroy(CRITICAL_SECTION *lock) {
+static inline void mutex_destroy(CRITICAL_SECTION *lock)
+{
 	DeleteCriticalSection(lock);
 }
 #	endif // MUTEX_TYPE
@@ -496,7 +531,9 @@ static inline void mutex_destroy(CRITICAL_SECTION *lock) {
  *         uses ZVector primitives.
  * level 3 is the priority of the User's locks.
  */
-static inline zvect_retval get_mutex_lock(const vector v, const int32_t lock_type) {
+static inline zvect_retval get_mutex_lock(const vector v,
+					  const int32_t lock_type)
+{
 	if (lock_type >= v->lock_type) {
 		mutex_lock(&(v->lock));
 		v->lock_type = lock_type;
@@ -505,7 +542,9 @@ static inline zvect_retval get_mutex_lock(const vector v, const int32_t lock_typ
 	return 0;
 }
 
-static inline zvect_retval check_mutex_trylock(const vector v, const int32_t lock_type) {
+static inline zvect_retval check_mutex_trylock(const vector v,
+					       const int32_t lock_type)
+{
 	if ((lock_type >= v->lock_type) && (!mutex_trylock(&(v->lock)))) {
 		v->lock_type = lock_type;
 		return 1;
@@ -513,7 +552,9 @@ static inline zvect_retval check_mutex_trylock(const vector v, const int32_t loc
 	return 0;
 }
 
-static inline zvect_retval lock_after_signal(const vector v, const int32_t lock_type) {
+static inline zvect_retval lock_after_signal(const vector v,
+					     const int32_t lock_type)
+{
 	if (lock_type >= v->lock_type) {
 		//if (!mutex_trylock(&(v->lock))) {
 			while (!pthread_cond_wait(&(v->cond), &(v->lock))) {
@@ -544,15 +585,20 @@ static inline zvect_retval wait_for_signal(const vector v, const int32_t lock_ty
 }
 */
 
-static inline zvect_retval send_signal(const vector v, const int32_t lock_type) {
+static inline zvect_retval send_signal(const vector v, const int32_t lock_type)
+{
 	return (lock_type >= v->lock_type) ? pthread_cond_signal(&(v->cond)) : 0;
 }
 
-static inline zvect_retval broadcast_signal(const vector v, const int32_t lock_type) {
+static inline zvect_retval broadcast_signal(const vector v,
+					    const int32_t lock_type)
+{
 	return (lock_type >= v->lock_type) ? pthread_cond_broadcast(&(v->cond)) : 0;
 }
 
-static inline zvect_retval get_mutex_unlock(const vector v, const int32_t lock_type) {
+static inline zvect_retval get_mutex_unlock(const vector v,
+					    const int32_t lock_type)
+{
 	if (lock_type == v->lock_type) {
 		v->lock_type = 0;
 		mutex_unlock(&(v->lock));
@@ -570,7 +616,8 @@ static inline zvect_retval get_mutex_unlock(const vector v, const int32_t lock_t
 /*---------------------------------------------------------------------------*/
 // Library Initialisation:
 
-void p_init_zvect(void) {
+void p_init_zvect(void)
+{
 #if (OS_TYPE == 1)
 #	if ( !defined(macOS) )
 		//mallopt(M_MXFAST, 196*sizeof(size_t)/4);
@@ -588,21 +635,25 @@ void p_init_zvect(void) {
 // Vector's Utilities:
 
 ZVECT_ALWAYSINLINE
-static inline zvect_retval p_vect_check(const vector x) {
+static inline zvect_retval p_vect_check(const vector x)
+{
 	return (x == NULL) ? ZVERR_VECTUNDEF : 0;
 }
 
 ZVECT_ALWAYSINLINE
-static inline zvect_index p_vect_capacity(const vector v) {
+static inline zvect_index p_vect_capacity(const vector v)
+{
 	return ( v->cap_left + v->cap_right );
 }
 
 ZVECT_ALWAYSINLINE
-static inline zvect_index p_vect_size(const vector v) {
+static inline zvect_index p_vect_size(const vector v)
+{
 	return ( v->end > v->begin ) ? ( v->end - v->begin ) : ( v->begin - v->end );
 }
 
-static inline void p_item_safewipe(vector const v, void *const item) {
+static inline void p_item_safewipe(ivector v, void *const item)
+{
 	if (item != NULL) {
 		if (!(v->status & ZVS_CUST_WIPE_ON)) {
 			memset(item, 0, v->data_size);
@@ -632,7 +683,7 @@ bool vect_set_status(const vector v, zvect_index flag_id)
 	zvect_retval rval = p_usr_status(flag_id);
 
 	if (!rval)
-		v->status |= 1UL << flag_id;
+		v->status |= 1 << flag_id;
 
 	return (bool)rval;
 }
@@ -642,7 +693,7 @@ bool vect_clear_status(const vector v, zvect_index flag_id)
 	zvect_retval rval = p_usr_status(flag_id);
 
 	if (!rval)
-		v->status &= ~(1UL << flag_id);
+		v->status &= ~(1 << flag_id);
 
 	return (bool)rval;
 }
@@ -652,12 +703,13 @@ bool vect_toggle_status(const vector v, zvect_index flag_id)
 	zvect_retval rval = p_usr_status(flag_id);
 
 	if (!rval)
-		v->status ^= (1UL << flag_id);
+		v->status ^= (1 << flag_id);
 
 	return rval;
 }
 
-static void p_free_items(vector const v, zvect_index first, zvect_index offset) {
+static void p_free_items(ivector v, zvect_index first, zvect_index offset)
+{
 	if (p_vect_size(v) == 0)
 		return;
 
@@ -685,7 +737,9 @@ static void p_free_items(vector const v, zvect_index first, zvect_index offset) 
 /*
  * Set vector capacity to a specific new_capacity value
  */
-static zvect_retval p_vect_set_capacity(vector const v, const zvect_index direction, const zvect_index new_capacity_)
+static zvect_retval p_vect_set_capacity(ivector v,
+					const zvect_index direction,
+					const zvect_index new_capacity_)
 {
 	zvect_index new_capacity = new_capacity_;
 
@@ -735,7 +789,9 @@ static zvect_retval p_vect_set_capacity(vector const v, const zvect_index direct
 /*
  * This function increase the CAPACITY of a vector.
  */
-static zvect_retval p_vect_increase_capacity(vector const v, const zvect_index direction) {
+static zvect_retval p_vect_increase_capacity(ivector v,
+					     const zvect_index direction)
+{
 	zvect_index new_capacity;
 
 	if (!direction)
@@ -770,7 +826,9 @@ static zvect_retval p_vect_increase_capacity(vector const v, const zvect_index d
 /*
  * This function decrease the CAPACITY of a vector.
  */
-static zvect_retval p_vect_decrease_capacity(vector const v, const zvect_index direction) {
+static zvect_retval p_vect_decrease_capacity(ivector v,
+					     const zvect_index direction)
+{
 	// Check if new capacity is smaller than initial capacity
 	if ( p_vect_capacity(v) <= v->init_capacity)
 		return 0;
@@ -841,7 +899,8 @@ static zvect_retval p_vect_decrease_capacity(vector const v, const zvect_index d
  * not its size. To reduce the size of a vector we
  * need to remove items from it.
  */
-static zvect_retval p_vect_shrink(vector const v) {
+static zvect_retval p_vect_shrink(ivector v)
+{
 	if (v->init_capacity < 2)
 		v->init_capacity = 2;
 
@@ -888,7 +947,8 @@ static zvect_retval p_vect_shrink(vector const v) {
 /*---------------------------------------------------------------------------*/
 // Creation and destruction primitives:
 
-zvect_retval p_vect_clear(vector const v) {
+zvect_retval p_vect_clear(ivector v)
+{
 	// Clear the vector:
 	if (!vect_is_empty(v))
 		p_free_items(v, 0, (p_vect_size(v) - 1));
@@ -902,7 +962,8 @@ zvect_retval p_vect_clear(vector const v) {
 	return 0;
 }
 
-static zvect_retval p_vect_destroy(vector v, uint32_t flags) {
+static zvect_retval p_vect_destroy(vector v, uint32_t flags)
+{
 	// p_destroy is an exception to the rule of handling
 	// locking from the public methods. This because
 	// p_destroy has to destroy the vector mutex too and
@@ -958,7 +1019,7 @@ static zvect_retval p_vect_destroy(vector v, uint32_t flags) {
 // Vector data storage primitives:
 
 // inline implementation for all put:
-static inline zvect_retval p_vect_put_at(vector const v, const void *value,
+static zvect_retval p_vect_put_at(ivector v, const void *value,
                                 const zvect_index i) {
 	// Check if the index passed is out of bounds:
 	zvect_index idx = i;
@@ -987,7 +1048,7 @@ static inline zvect_retval p_vect_put_at(vector const v, const void *value,
 }
 
 // inline implementation for all add(s):
-static inline zvect_retval p_vect_add_at(vector const v, const void *value,
+static inline zvect_retval p_vect_add_at(ivector v, const void *value,
                                 const zvect_index i) {
 	zvect_index idx = i;
 
@@ -1099,7 +1160,7 @@ static inline zvect_retval p_vect_add_at(vector const v, const void *value,
 }
 
 // This is the inline implementation for all the remove and pop
-static inline zvect_retval p_vect_remove_at(vector const v, const zvect_index i, void **item) {
+static inline zvect_retval p_vect_remove_at(ivector v, const zvect_index i, void **item) {
 	zvect_index idx = i;
 
 	// Get the vector size:
@@ -1211,8 +1272,11 @@ static inline zvect_retval p_vect_remove_at(vector const v, const zvect_index i,
 }
 
 // This is the inline implementation for all the "delete" methods
-static inline zvect_retval p_vect_delete_at(vector const v, const zvect_index start,
-                                   	    const zvect_index offset, uint32_t flags) {
+static inline zvect_retval p_vect_delete_at(ivector v,
+					    const zvect_index start,
+					    const zvect_index offset,
+					    uint32_t flags)
+{
 
 	zvect_index vsize = p_vect_size(v);
 
@@ -1311,7 +1375,8 @@ static inline zvect_retval p_vect_delete_at(vector const v, const zvect_index st
  * Public method to request ZVector to
  * shrink a vector.
  */
-void vect_shrink(vector const v) {
+void vect_shrink(ivector v)
+{
 #if (ZVECT_THREAD_SAFE == 1)
 	zvect_retval lock_owner = get_mutex_lock(v, 1);
 #endif
@@ -1331,23 +1396,28 @@ void vect_shrink(vector const v) {
 /*---------------------------------------------------------------------------*/
 // Vector Structural Information report:
 
-bool vect_is_empty(vector const v) {
+bool vect_is_empty(ivector v)
+{
 	return !p_vect_check(v) ? (p_vect_size(v) == 0) : (bool)ZVERR_VECTUNDEF;
 }
 
-zvect_index vect_size(vector const v) {
+zvect_index vect_size(ivector v)
+{
 	return !p_vect_check(v) ? p_vect_size(v) : 0;
 }
 
-zvect_index vect_max_size(vector const v) {
-	return !p_vect_check(v) ? zvect_index_max : 0;
+zvect_index vect_max_size(ivector v)
+{
+	return (!p_vect_check(v) ? zvect_index_max : 0);
 }
 
-void *vect_begin(vector const v) {
+void *vect_begin(ivector v)
+{
 	return !p_vect_check(v) ? v->data[v->begin] : NULL;
 }
 
-void *vect_end(vector const v) {
+void *vect_end(ivector v)
+{
 	return !p_vect_check(v) ? v->data[v->end] : NULL;
 }
 
@@ -1452,27 +1522,27 @@ void vect_lock_disable(void) {
 	locking_disabled = true;
 }
 
-static inline zvect_retval p_vect_lock(vector const v) {
+static inline zvect_retval p_vect_lock(ivector v) {
 	return (locking_disabled || (v->flags & ZV_NOLOCKING)) ? 0 : get_mutex_lock(v, 3);
 }
 
-zvect_retval vect_lock(vector const v) {
+zvect_retval vect_lock(ivector v) {
 	return p_vect_lock(v);
 }
 
-static inline zvect_retval p_vect_unlock(vector const v) {
+static inline zvect_retval p_vect_unlock(ivector v) {
 	return (locking_disabled || (v->flags & ZV_NOLOCKING)) ? 0 : get_mutex_unlock(v, 3);
 }
 
-zvect_retval vect_unlock(vector const v) {
+zvect_retval vect_unlock(ivector v) {
 	return p_vect_unlock(v);
 }
 
-static inline zvect_retval p_vect_trylock(vector const v) {
+static inline zvect_retval p_vect_trylock(ivector v) {
 	return (locking_disabled || (v->flags & ZV_NOLOCKING)) ? 0 : check_mutex_trylock(v, 3);
 }
 
-zvect_retval vect_trylock(vector const v) {
+zvect_retval vect_trylock(ivector v) {
 	return p_vect_trylock(v);
 }
 
@@ -1525,7 +1595,7 @@ zvect_retval vect_broadcast_signal(const vector v) {
 /*---------------------------------------------------------------------------*/
 // Vector Data Storage functions:
 
-void vect_clear(vector const v) {
+void vect_clear(ivector v) {
 	// check if the vector exists:
 	zvect_retval rval = p_vect_check(v);
 	if (rval)
@@ -1549,9 +1619,9 @@ JOB_DONE:
 }
 
 void vect_set_wipefunct(const vector v, void (*f1)(const void *, size_t)) {
-	v->SfWpFunc = (void *)malloc(sizeof(void *));
-	if (v->SfWpFunc == NULL)
-		p_throw_error(ZVERR_OUTOFMEM, NULL);
+	//v->SfWpFunc = (void *)malloc(sizeof(void *));
+	//if (v->SfWpFunc == NULL)
+	//	p_throw_error(ZVERR_OUTOFMEM, NULL);
 
 	// Set custom Safe Wipe function:
 	v->SfWpFunc = f1;
@@ -1560,7 +1630,8 @@ void vect_set_wipefunct(const vector v, void (*f1)(const void *, size_t)) {
 }
 
 // Add an item at the END (top) of the vector
-inline void vect_push(const vector v, const void *value) {
+void vect_push(const vector v, const void *value) {
+	zvect_index vsize = 0;
 	zvect_retval rval = p_vect_check(v);
 	if (rval)
 		goto JOB_DONE;
@@ -1582,7 +1653,7 @@ inline void vect_push(const vector v, const void *value) {
 	// push will use index 0 and the rule in ZVector is
 	// when we use index 0 we may need to expand on the
 	// left. So let's check if we do for this vector:
-	zvect_index vsize = p_vect_size(v);
+	vsize = p_vect_size(v);
 
 	// Check if we need to expand on thr right side:
 	if ( (v->end >= v->cap_right) && ((rval = p_vect_increase_capacity(v, 1)) != 0) )
@@ -1599,6 +1670,7 @@ DONE_PROCESSING:
 JOB_DONE:
 	if (rval)
 		p_throw_error(rval, NULL);
+
 }
 
 // Add an item at the END of the vector
@@ -1653,7 +1725,7 @@ JOB_DONE:
 }
 
 // Add an item at the FRONT of the vector
-void vect_add_front(vector const v, const void *value) {
+void vect_add_front(ivector v, const void *value) {
 	zvect_retval rval = p_vect_check(v);
 	if (rval)
 		goto JOB_DONE;
@@ -1687,7 +1759,7 @@ JOB_DONE:
 }
 
 // inline implementation for all get(s):
-static inline void *p_vect_get_at(vector const v, const zvect_index i) {
+static inline void *p_vect_get_at(ivector v, const zvect_index i) {
 	// Check if passed index is out of bounds:
 	if (i >= p_vect_size(v))
 		p_throw_error(ZVERR_IDXOUTOFBOUND, NULL);
@@ -1696,7 +1768,7 @@ static inline void *p_vect_get_at(vector const v, const zvect_index i) {
 	return v->data[v->begin + i];
 }
 
-void *vect_get(vector const v) {
+void *vect_get(ivector v) {
 	// check if the vector exists:
 	zvect_retval rval = p_vect_check(v);
 	if (!rval)
@@ -1707,7 +1779,7 @@ void *vect_get(vector const v) {
 	return NULL;
 }
 
-void *vect_get_at(vector const v, const zvect_index i) {
+void *vect_get_at(ivector v, const zvect_index i) {
 	// check if the vector exists:
 	zvect_retval rval = p_vect_check(v);
 	if (!rval)
@@ -1718,7 +1790,7 @@ void *vect_get_at(vector const v, const zvect_index i) {
 	return NULL;
 }
 
-void *vect_get_front(vector const v) {
+void *vect_get_front(ivector v) {
 	// check if the vector exists:
 	zvect_retval rval = p_vect_check(v);
 	if (!rval)
@@ -1729,7 +1801,7 @@ void *vect_get_front(vector const v) {
 	return NULL;
 }
 
-void vect_put(vector const v, const void *value) {
+void vect_put(ivector v, const void *value) {
 	zvect_retval rval = p_vect_check(v);
 	if (rval)
 		goto JOB_DONE;
@@ -1750,7 +1822,7 @@ JOB_DONE:
 		p_throw_error(rval, NULL);
 }
 
-void vect_put_at(vector const v, const void *value, const zvect_index i) {
+void vect_put_at(ivector v, const void *value, const zvect_index i) {
 	zvect_retval rval = p_vect_check(v);
 	if (rval)
 		goto JOB_DONE;
@@ -1771,7 +1843,7 @@ JOB_DONE:
 		p_throw_error(rval, NULL);
 }
 
-void vect_put_front(vector const v, const void *value) {
+void vect_put_front(ivector v, const void *value) {
 	zvect_retval rval = p_vect_check(v);
 	if (rval)
 		goto JOB_DONE;
@@ -1792,7 +1864,7 @@ JOB_DONE:
 		p_throw_error(rval, NULL);
 }
 
-inline void *vect_pop(vector const v) {
+void *vect_pop(ivector v) {
 	void *item = NULL;
 	zvect_retval rval = p_vect_check(v);
 	if (rval)
@@ -1818,7 +1890,7 @@ JOB_DONE:
 	return item;
 }
 
-void *vect_remove(vector const v) {
+void *vect_remove(ivector v) {
 	void *item = NULL;
 	zvect_retval rval = p_vect_check(v);
 	if (rval)
@@ -1844,7 +1916,7 @@ JOB_DONE:
 	return item;
 }
 
-void *vect_remove_at(vector const v, const zvect_index i) {
+void *vect_remove_at(ivector v, const zvect_index i) {
 	void *item = NULL;
 	zvect_retval rval = p_vect_check(v);
 	if (rval)
@@ -1869,7 +1941,7 @@ JOB_DONE:
 	return item;
 }
 
-void *vect_remove_front(vector const v) {
+void *vect_remove_front(ivector v) {
 	void *item = NULL;
 	zvect_retval rval = p_vect_check(v);
 	if (rval)
@@ -1895,7 +1967,7 @@ JOB_DONE:
 }
 
 // Delete an item at the END of the vector
-void vect_delete(vector const v) {
+void vect_delete(ivector v) {
 	zvect_retval rval = p_vect_check(v);
 	if (rval)
 		goto JOB_DONE;
@@ -1939,7 +2011,7 @@ JOB_DONE:
 }
 
 // Delete a range of items from "first_element" to "last_element" on the vector v
-void vect_delete_range(vector const v, const zvect_index first_element,
+void vect_delete_range(ivector v, const zvect_index first_element,
                        const zvect_index last_element) {
 	zvect_retval rval = p_vect_check(v);
 	if (rval)
@@ -1963,7 +2035,7 @@ JOB_DONE:
 }
 
 // Delete an item at the BEGINNING of a vector v
-void vect_delete_front(vector const v) {
+void vect_delete_front(ivector v) {
 	zvect_retval rval = p_vect_check(v);
 	if (rval)
 		goto JOB_DONE;
@@ -1990,7 +2062,7 @@ JOB_DONE:
 // Vector Data Manipulation functions
 #ifdef ZVECT_DMF_EXTENSIONS
 
-void vect_swap(vector const v, const zvect_index i1, const zvect_index i2) {
+void vect_swap(ivector v, const zvect_index i1, const zvect_index i2) {
 	// Check parameters:
 	if (i1 == i2)
 		return;
@@ -2027,7 +2099,7 @@ JOB_DONE:
 		p_throw_error(rval, NULL);
 }
 
-void vect_swap_range(vector const v, const zvect_index s1, const zvect_index e1,
+void vect_swap_range(ivector v, const zvect_index s1, const zvect_index e1,
                      const zvect_index s2) {
 	// Check parameters:
 	if (s1 == s2)
@@ -2072,7 +2144,7 @@ JOB_DONE:
 		p_throw_error(rval, NULL);
 }
 
-void vect_rotate_left(vector const v, const zvect_index i) {
+void vect_rotate_left(ivector v, const zvect_index i) {
 
 	// check if the vector exists:
 	zvect_retval rval = p_vect_check(v);
@@ -2124,7 +2196,7 @@ JOB_DONE:
 		p_throw_error(rval, NULL);
 }
 
-void vect_rotate_right(vector const v, const zvect_index i) {
+void vect_rotate_right(ivector v, const zvect_index i) {
 	// check if the vector exists:
 	zvect_retval rval = p_vect_check(v);
 	if (rval)
@@ -2333,7 +2405,7 @@ static bool p_standard_binary_search(vector v, const void *key,
 // original design, most notably the use of custom compare
 // function that makes it suitable also to search through strings
 // and other types of vectors.
-static bool p_adaptive_binary_search(vector const v, const void *key,
+static bool p_adaptive_binary_search(ivector v, const void *key,
                                     zvect_index *item_index,
                                     int (*f1)(const void *, const void *)) {
 	zvect_index bot;
@@ -2409,7 +2481,7 @@ static bool p_adaptive_binary_search(vector const v, const void *key,
 }
 #endif // ! TRADITIONAL_BINARY_SEARCH
 
-bool vect_bsearch(vector const v, const void *key,
+bool vect_bsearch(ivector v, const void *key,
                   int (*f1)(const void *, const void *),
                   zvect_index *item_index) {
 	// Check parameters:
@@ -2456,7 +2528,7 @@ JOB_DONE:
  * functions, the vect_add_ordered is an exception because it
  * requires vect_bserach and vect_qsort to be available.
  */
-void vect_add_ordered(vector const v, const void *value,
+void vect_add_ordered(ivector v, const void *value,
                       int (*f1)(const void *, const void *)) {
 	// Check parameters:
 	if (value == NULL)
@@ -2523,7 +2595,7 @@ JOB_DONE:
 #ifdef ZVECT_SFMD_EXTENSIONS
 // Single Function Call Multiple Data operations extensions:
 
-void vect_apply(vector const v, void (*f)(void *)) {
+void vect_apply(ivector v, void (*f)(void *)) {
 	// Check Parameters:
 	if (f == NULL)
 		return;
@@ -2551,8 +2623,9 @@ JOB_DONE:
 		p_throw_error(rval, NULL);
 }
 
-void vect_apply_range(vector const v, void (*f)(void *), const zvect_index x,
-                      const zvect_index y) {
+void vect_apply_range(ivector v, void (*f)(void *), const zvect_index x,
+			const zvect_index y)
+{
 	// Check parameters:
 	if ( f == NULL )
 		return;
@@ -2597,7 +2670,7 @@ JOB_DONE:
 		p_throw_error(rval, NULL);
 }
 
-void vect_apply_if(vector const v1, vector const v2, void (*f1)(void *),
+void vect_apply_if(ivector v1, ivector v2, void (*f1)(void *),
                    bool (*f2)(void *, void *)) {
 	// Check parameters:
 	if (f1 == NULL || f2 == NULL)
@@ -2634,7 +2707,7 @@ JOB_DONE:
 		p_throw_error(rval, NULL);
 }
 
-void vect_copy(vector const v1, vector const v2, const zvect_index s2,
+void vect_copy(ivector v1, ivector v2, const zvect_index s2,
                const zvect_index e2) {
 	// check if the vectors v1 and v2 exist:
 	zvect_retval rval = p_vect_check(v1) | p_vect_check(v2);
@@ -2694,7 +2767,7 @@ JOB_DONE:
  * position s1).
  *
  */
-void vect_insert(vector const v1, vector const v2, const zvect_index s2,
+void vect_insert(ivector v1, ivector v2, const zvect_index s2,
                  const zvect_index e2, const zvect_index s1) {
 	// check if the vectors v1 and v2 exist:
 	zvect_retval rval = p_vect_check(v1) | p_vect_check(v2);
@@ -2789,7 +2862,7 @@ JOB_DONE:
  * the end of it).
  *
  */
-static inline zvect_retval p_vect_move(vector const v1, vector v2, const zvect_index s2,
+static inline zvect_retval p_vect_move(ivector v1, vector v2, const zvect_index s2,
                			     const zvect_index e2) {
 	zvect_retval rval = 0;
 
@@ -2865,7 +2938,7 @@ DONE_PROCESSING:
 
 //////////////////////////////////////////////////////////////////
 // vect_move moves a portion of a vector (v2) into another (v1):
-void vect_move(vector const v1, vector v2, const zvect_index s2,
+void vect_move(ivector v1, vector v2, const zvect_index s2,
                const zvect_index e2) {
 	// check if the vectors v1 and v2 exist:
 	zvect_retval rval = p_vect_check(v1) | p_vect_check(v2);
@@ -2916,7 +2989,7 @@ JOB_DONE:
 
 //////////////////////////////////////////////////////////////////
 // vect_move_if moves a portion of a vector (v2) into another (v1) if f2 is true:
-zvect_retval vect_move_if(vector const v1, vector v2, const zvect_index s2,
+zvect_retval vect_move_if(ivector v1, vector v2, const zvect_index s2,
                const zvect_index e2, zvect_retval (*f2)(void *, void *)) {
 	// check if the vectors v1 and v2 exist:
 	zvect_retval rval = p_vect_check(v1) | p_vect_check(v2);
@@ -2970,7 +3043,7 @@ JOB_DONE:
 /////////////////////////////////////////////////////////////////
 // vect_move_on_signal
 
-zvect_retval vect_move_on_signal(vector const v1, vector v2, const zvect_index s2,
+zvect_retval vect_move_on_signal(ivector v1, vector v2, const zvect_index s2,
                			const zvect_index e2, zvect_retval (*f2)(void *, void *))
 {
 	// check if the vectors v1 and v2 exist:
@@ -3038,7 +3111,7 @@ JOB_DONE:
 
 /////////////////////////////////////////////////////////////////
 // vect_merge merges a vector (v2) into another (v1)
-void vect_merge(vector const v1, vector v2) {
+void vect_merge(ivector v1, vector v2) {
 	// check if the vector v1 exists:
 	zvect_retval rval = p_vect_check(v1) | p_vect_check(v2);
 	if (rval)
