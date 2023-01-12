@@ -129,7 +129,9 @@ fi
 # Run CPPCheck:
 ###############
 
-${cppcheck_cmd} ${start_path}/src/*.c --bug-hunting \
+# Old and lo longer used options: --bug-hunting
+
+${cppcheck_cmd} ${start_path}/src/*.c \
              --enable=all \
              --output-file=./cppcheck_report.txt \
              --platform=${Platform} \
