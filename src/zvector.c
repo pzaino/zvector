@@ -273,10 +273,7 @@ static void *safe_strncpy(const char * const str_src,
 
 	strncpy(tmp_dst, str_src, sizeof(tmp_dst));
 
-	if ( tmp_dst[sizeof(tmp_dst) - 1] != 0 )
-	{
-		tmp_dst[sizeof(tmp_dst) - 1] = 0;
-	}
+	tmp_dst[sizeof(tmp_dst) - 1] = 0;
 
 	str_dst = (void *)malloc(sizeof(char *) * (sizeof(tmp_dst) + 1));
 	if ( str_dst == NULL )
@@ -586,18 +583,18 @@ static inline zvect_retval wait_for_signal(const vector v, const int32_t lock_ty
 }
 */
 
-static inline zvect_retval send_signal(const vector v, const int32_t lock_type)
+static inline zvect_retval send_signal(cvector v, const int32_t lock_type)
 {
 	return (lock_type >= v->lock_type) ? pthread_cond_signal(&(v->cond)) : 0;
 }
 
-static inline zvect_retval broadcast_signal(const vector v,
+static inline zvect_retval broadcast_signal(cvector v,
 					    const int32_t lock_type)
 {
 	return (lock_type >= v->lock_type) ? pthread_cond_broadcast(&(v->cond)) : 0;
 }
 
-static inline zvect_retval get_mutex_unlock(const vector v,
+static inline zvect_retval get_mutex_unlock(ivector v,
 					    const int32_t lock_type)
 {
 	if (lock_type == v->lock_type) {
@@ -1009,6 +1006,7 @@ static zvect_retval p_vect_destroy(vector v, uint32_t flags)
 	// All done and freed, so we can safely
 	// free the vector itself:
 	free(v);
+	v=NULL;
 
 	return 0;
 }
@@ -1050,39 +1048,62 @@ static zvect_retval p_vect_put_at(ivector v, const void *value,
 
 // inline implementation for all add(s):
 static inline zvect_retval p_vect_add_at(ivector v, const void *value,
-                                const zvect_index i) {
+                                	 const zvect_index i) {
 	zvect_index idx = i;
 
 	// Get vector size:
 	zvect_index vsize = p_vect_size(v);
 
+	// Allocate memory for the new item:
+	zvect_index base = v->begin;
+
 #if (ZVECT_FULL_REENTRANT == 1)
 	// If we are in FULL_REENTRANT MODE prepare for potential
 	// array copy:
 	void **new_data = NULL;
-	if (idx < vsize) {
-		new_data = (void **)malloc(sizeof(void *) * p_vect_capacity(v));
-		if (new_data == NULL)
-			return ZVERR_OUTOFMEM;
-	}
+	new_data = (void **)malloc(sizeof(void *) * p_vect_capacity(v));
+	if (new_data == NULL)
+		return ZVERR_OUTOFMEM;
+	// Algorithm to try to copy an array of pointers as fast as possible:
+	//if (idx > 0)
+	//	p_vect_memcpy(new_data + base, v->data + base, sizeof(void *) * idx);
+	//p_vect_memcpy(new_data + base + (idx + 1), v->data + base +  idx,
+	//	      sizeof(void *) * (vsize - idx));
+	if (vsize)
+		p_vect_memcpy(new_data + base, v->data + base, sizeof(void *) * vsize);
 #endif
 
-	// Allocate memory for the new item:
-	zvect_index base = v->begin;
+	// Allocate space at the beginning or end of the vector as required:
 	if (!idx) {
 		// Prepare left side of the vector:
 		if ( base )
 			base--;
 		if (!(v->flags & ZV_BYREF)) {
+#if (ZVECT_FULL_REENTRANT == 1)
+			new_data[base] = (void *)malloc(v->data_size);
+			if (new_data[base] == NULL) {
+				free(new_data);
+				return ZVERR_OUTOFMEM;
+			}
+#else
 			v->data[base] = (void *)malloc(v->data_size);
 			if (v->data[base] == NULL)
 				return ZVERR_OUTOFMEM;
+#endif
 		}
 	} else if (idx == vsize && !(v->flags & ZV_BYREF)) {
 		// Prepare right side of the vector:
+#if (ZVECT_FULL_REENTRANT == 1)
+		new_data[base + vsize] = (void *)malloc(v->data_size);
+		if (new_data[base + vsize] == NULL) {
+			free(new_data);
+			return ZVERR_OUTOFMEM;
+		}
+#else
 		v->data[base + vsize] = (void *)malloc(v->data_size);
 		if (v->data[base + vsize] == NULL)
 			return ZVERR_OUTOFMEM;
+#endif
 	}
 
 	// "Shift" right the array of one position to make space for the new item:
@@ -1091,36 +1112,27 @@ static inline zvect_retval p_vect_add_at(ivector v, const void *value,
 	if ((idx < vsize) && (idx != 0)) {
 		array_changed = 1;
 #if (ZVECT_FULL_REENTRANT == 1)
-		// Algorithm to try to copy an array of pointers as fast as possible:
-		if (idx > 0)
-			p_vect_memcpy(new_data + base, v->data + base, sizeof(void *) * idx);
-		p_vect_memcpy(new_data + base + (idx + 1), v->data + base + idx,
-			    sizeof(void *) * (vsize - idx));
+		p_vect_memmove(new_data + base + (idx + 1), new_data + base + idx,
+			       sizeof(void *) * (vsize - idx));
 #else
-		// We can't use the vect_memcpy when not in full reentrant code
-		// because it's not safe to use it on the same src and dst.
 		p_vect_memmove(v->data + base + (idx + 1), v->data + base + idx,
-			    	   sizeof(void *) * (vsize - idx));
+			       sizeof(void *) * (vsize - idx));
 #endif  // (ZVECT_FULL_REENTRANT == 1)
 	}
 
-	// Add new value in (at the index i):
+	// Add new value in (at the index idx):
 #if (ZVECT_FULL_REENTRANT == 1)
-	if (array_changed) {
-		if (v->flags & ZV_BYREF) {
-			new_data[base + idx] = (void *)value;
-		} else {
-			new_data[base + idx] = (void *)malloc(v->data_size);
-			if (new_data[base + idx] == NULL)
-				return ZVERR_OUTOFMEM;
-			p_vect_memcpy(new_data[base + idx], value, v->data_size);
+	if (array_changed && !(v->flags & ZV_BYREF)) {
+		new_data[base + idx] = (void *)malloc(v->data_size);
+		if (new_data[base + idx] == NULL) {
+			free(new_data);
+			return ZVERR_OUTOFMEM;
 		}
-	} else {
-		if (v->flags & ZV_BYREF)
-			v->data[base + idx] = (void *)value;
-		else
-			p_vect_memcpy(v->data[base + idx], value, v->data_size);
 	}
+	if (v->flags & ZV_BYREF)
+		new_data[base + idx] = (void *)value;
+	else
+		p_vect_memcpy(new_data[base + idx], value, v->data_size);
 #else
 	if (array_changed && !(v->flags & ZV_BYREF)) {
 		// We moved chunks of memory, so we need to
@@ -1137,10 +1149,10 @@ static inline zvect_retval p_vect_add_at(ivector v, const void *value,
 
 	// Apply changes:
 #if (ZVECT_FULL_REENTRANT == 1)
-	if (array_changed) {
+	//if (array_changed) {
 		free(v->data);
 		v->data = new_data;
-	}
+	//}
 #endif
 	// Increment vector size
 	if (!idx) {
@@ -1154,10 +1166,6 @@ static inline zvect_retval p_vect_add_at(ivector v, const void *value,
 
 	// done
 	return 0;
-
-#if (ZVECT_FULL_REENTRANT == 1)
-	UNUSED(new_data);
-#endif
 }
 
 // This is the inline implementation for all the remove and pop
@@ -1180,33 +1188,50 @@ static inline zvect_retval p_vect_remove_at(ivector v, const zvect_index i, void
 	if ((v->end != 0) && (v->begin > v->end))
 		return ZVERR_VECTCORRUPTED;
 
+	zvect_index base = v->begin;
+	zvect_index top = v->end;
+
 	// Start processing the vector:
 #if (ZVECT_FULL_REENTRANT == 1)
 	// Allocate memory for support Data Structure:
 	void **new_data = (void **)malloc(sizeof(void *) * p_vect_capacity(v));
 	if (new_data == NULL)
 		return ZVERR_OUTOFMEM;
+	if (vsize)
+		p_vect_memcpy(new_data + base, v->data + base, sizeof(void *) * vsize);
 #endif
 
 	// Get the value we are about to remove:
 	// If the vector is set as ZV_BYREF, then just copy the pointer to the item
 	// If the vector is set as regular, then copy the item
-	zvect_index base = v->begin;
 	if (v->flags & ZV_BYREF) {
+#if (ZVECT_FULL_REENTRANT == 1)
+		*item = new_data[base + idx];
+#else
 		*item = v->data[base + idx];
+#endif
 	} else {
 		*item = (void **)malloc(v->data_size);
+#if (ZVECT_FULL_REENTRANT == 1)
+		if ( new_data[base + idx] != NULL )
+#else
 		if ( v->data[base + idx] != NULL )
+#endif
 		{
+#if (ZVECT_FULL_REENTRANT == 1)
+			p_vect_memcpy(*item, new_data[base + idx], v->data_size);
+#else
 			p_vect_memcpy(*item, v->data[base + idx], v->data_size);
-
+#endif
 			// If the vector is set for secure wipe, and we copied the item
 			// then we need to wipe the old copy:
 			if (v->flags & ZV_SEC_WIPE)
+#if (ZVECT_FULL_REENTRANT == 1)
+				p_item_safewipe(v, new_data[base + idx]);
+#else
 				p_item_safewipe(v, v->data[base + idx]);
-		} /* else {
-			memset(item, 0, v->data_size - 1);
-		} */
+#endif
+		}
 	}
 
 	// "shift" left the array of one position:
@@ -1215,14 +1240,28 @@ static inline zvect_retval p_vect_remove_at(ivector v, const zvect_index i, void
 	if ( idx != 0 ) {
 		if ((idx < (vsize - 1)) && (vsize > 0)) {
 			array_changed = 1;
-			free(v->data[base + idx]);
 #if (ZVECT_FULL_REENTRANT == 1)
+			free(new_data[base + idx]);
+			new_data[base + idx]=NULL;
+			/*
+			// old code, was faster than new logic, but too keen to problems
+			// I may try to reuse it in a better way in the future.
 			p_vect_memcpy(new_data + base, v->data + base, sizeof(void *) * idx);
 			p_vect_memcpy(new_data + base + idx, v->data + base + (idx + 1),
 				sizeof(void *) * (vsize - idx));
+			*/
 #else
-			// We can't use the vect_memcpy when not in full reentrant code
-			// because it's not safe to use it on the same src and dst.
+			free(v->data[base + idx]);
+			v->data[base + idx]=NULL;
+#endif
+
+			// move data
+#if (ZVECT_FULL_REENTRANT == 1)
+			p_vect_memmove(new_data + (base + idx), new_data + (base + (idx + 1)),
+					sizeof(void *) * (vsize - idx));
+			// Clear leftover item pointers:
+			memset(new_data[(v->begin + vsize) - 1], 0, 1);
+#else
 			p_vect_memmove(v->data + (base + idx), v->data + (base + (idx + 1)),
 					sizeof(void *) * (vsize - idx));
 
@@ -1231,10 +1270,19 @@ static inline zvect_retval p_vect_remove_at(ivector v, const zvect_index i, void
 #endif
 		}
 	} else {
-		if ( base < v->end ) {
+		if ( base < top ) {
 			array_changed = 1;
-			if (v->data[base] != NULL)
+#if (ZVECT_FULL_REENTRANT == 1)
+			if (new_data[base] != NULL) {
+				free(new_data[base]);
+				new_data[base]=NULL;
+			}
+#else
+			if (v->data[base] != NULL) {
 				free(v->data[base]);
+				v->data[base]=NULL;
+			}
+#endif
 		}
 	}
 
@@ -1243,11 +1291,29 @@ static inline zvect_retval p_vect_remove_at(ivector v, const zvect_index i, void
 	if (!(v->flags & ZV_BYREF) && !array_changed)
 		p_free_items(v, vsize - 1, 0);
 #else
+	if (!(v->flags & ZV_BYREF) && !array_changed)
+		for (register zvect_index j = (vsize - 1); j >= vsize; j--) {
+			if (new_data[base + j] != NULL) {
+				if (v->flags & ZV_SEC_WIPE)
+					p_item_safewipe(v, new_data[base + j]);
+				if (!(v->flags & ZV_BYREF)) {
+					free(new_data[base + j]);
+					new_data[base + j]=NULL;
+				}
+			}
+			if (j == (vsize - 1))
+				break;	// this is required if we are using
+					// uint and the first element is element
+					// 0, because on GCC an uint will fail
+					// then check in the for loop if j >= first
+					// in this particular case!
+		}
+
 	// Apply changes
-	if (array_changed) {
-		free(v->data);
-		v->data = new_data;
-	}
+	//if (array_changed) {
+	free(v->data);
+	v->data = new_data;
+	//}
 #endif
 	if (!(v->flags & ZV_CIRCULAR)) {
 		if ( idx != 0 ) {
@@ -1397,12 +1463,12 @@ void vect_shrink(ivector v)
 /*---------------------------------------------------------------------------*/
 // Vector Structural Information report:
 
-bool vect_is_empty(ivector v)
+bool vect_is_empty(cvector v)
 {
 	return !p_vect_check(v) ? (p_vect_size(v) == 0) : (bool)ZVERR_VECTUNDEF;
 }
 
-zvect_index vect_size(ivector v)
+zvect_index vect_size(cvector v)
 {
 	return !p_vect_check(v) ? p_vect_size(v) : 0;
 }
@@ -1547,7 +1613,7 @@ zvect_retval vect_trylock(ivector v) {
 	return p_vect_trylock(v);
 }
 
-zvect_retval vect_sem_wait(const vector v) {
+zvect_retval vect_sem_wait(ivector v) {
 #if !defined(macOS)
 	return sem_wait(&(v->semaphore));
 #else
@@ -1555,7 +1621,7 @@ zvect_retval vect_sem_wait(const vector v) {
 #endif
 }
 
-zvect_retval vect_sem_post(const vector v) {
+zvect_retval vect_sem_post(ivector v) {
 #	if !defined(macOS)
 	return sem_post(&(v->semaphore));
 #	else
@@ -1573,19 +1639,19 @@ inline zvect_retval vect_wait_for_signal(const vector v) {
 }
 */
 
-static inline zvect_retval p_vect_lock_after_signal(cvector v) {
+static inline zvect_retval p_vect_lock_after_signal(ivector v) {
     	return (locking_disabled || (v->flags & ZV_NOLOCKING)) ? 1 : lock_after_signal(v, 3);
 }
 
-zvect_retval vect_lock_after_signal(cvector v) {
+zvect_retval vect_lock_after_signal(ivector v) {
 	return p_vect_lock_after_signal(v);
 }
 
-zvect_retval vect_send_signal(cvector v) {
+zvect_retval vect_send_signal(ivector v) {
 	return send_signal(v, 3);
 }
 
-zvect_retval vect_broadcast_signal(cvector v) {
+zvect_retval vect_broadcast_signal(ivector v) {
 	return broadcast_signal(v, 3);
 }
 
@@ -1619,14 +1685,14 @@ VECT_CLEAR_JOB_DONE:
 		p_throw_error(rval, NULL);
 }
 
-void vect_set_wipefunct(const vector v, void (*f1)(const void *, size_t)) {
+void vect_set_wipefunct(ivector v, void (*f1)(const void *, size_t)) {
 	// Set custom Safe Wipe function:
 	v->SfWpFunc = f1;
 	v->status |= ZVS_CUST_WIPE_ON;
 }
 
 // Add an item at the END (top) of the vector
-void vect_push(const vector v, const void *value) {
+void vect_push(ivector v, const void *value) {
 	zvect_index vsize = 0;
 	zvect_retval rval = p_vect_check(v);
 	if (rval)
@@ -1670,12 +1736,12 @@ VECT_PUSH_JOB_DONE:
 }
 
 // Add an item at the END of the vector
-void vect_add(const vector v, const void *value) {
+void vect_add(ivector v, const void *value) {
 	vect_push(v, value);
 }
 
 // Add an item at position "i" of the vector
-void vect_add_at(const vector v, const void *value, const zvect_index i) {
+void vect_add_at(ivector v, const void *value, const zvect_index i) {
 	zvect_retval rval = p_vect_check(v);
 	if (rval)
 		goto VECT_ADD_AT_JOB_DONE;
@@ -1985,7 +2051,7 @@ VECT_DEL_JOB_DONE:
 }
 
 // Delete an item at position "i" on the vector
-void vect_delete_at(const vector v, const zvect_index i) {
+void vect_delete_at(ivector v, const zvect_index i) {
 	zvect_retval rval = p_vect_check(v);
 	if (rval)
 		goto VECT_DEL_AT_JOB_DONE;
@@ -2279,7 +2345,7 @@ static void p_vect_qsort(vector v, zvect_index low, zvect_index high,
 // it fundamentally uses the 3 ways partitioning adapted and improved
 // to deal with arrays of pointers together with having a custom
 // compare function:
-static void p_vect_qsort(const vector v, zvect_index l, zvect_index r,
+static void p_vect_qsort(ivector v, zvect_index l, zvect_index r,
                         int (*compare_func)(const void *, const void *)) {
 	if (r <= l)
 	    return;
@@ -2332,7 +2398,7 @@ static void p_vect_qsort(const vector v, zvect_index l, zvect_index r,
 }
 #endif // ! TRADITIONAL_QSORT
 
-void vect_qsort(const vector v, int (*compare_func)(const void *, const void *)) {
+void vect_qsort(ivector v, int (*compare_func)(const void *, const void *)) {
 	// Check parameters:
 	if ( compare_func == NULL )
 		return;
