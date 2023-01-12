@@ -574,13 +574,13 @@ static inline zvect_retval lock_after_signal(const vector v,
 
 static inline zvect_retval wait_for_signal(const vector v, const int32_t lock_type, bool (*f1)(const vector v), ) {
 	if (lock_type >= v->lock_type) {
-		//if (!mutex_trylock(&(v->lock))) {
+		if (!mutex_trylock(&(v->lock))) {
 			while(!(*f1)(v)) {
 				// wait until we get a signal
     				pthread_cond_wait(&(v->cond), &(v->lock))
 			}
 			return 1;
-		//}
+		}
 	}
 	return 0;
 }
@@ -667,19 +667,19 @@ static inline void p_item_safewipe(ivector v, void *const item)
 ZVECT_ALWAYSINLINE
 static inline zvect_retval p_usr_status(zvect_index flag_id)
 {
+	// For now leave the switch 'cause I may add more cases later
 	switch (flag_id) {
 		case  1: return 0;
-			 break;
 		default: return 1;
 	}
 }
 
-bool vect_check_status(const vector v, zvect_index flag_id)
+bool vect_check_status(ivector v, zvect_index flag_id)
 {
 	return (v->status >> flag_id) & 1U;
 }
 
-bool vect_set_status(const vector v, zvect_index flag_id)
+bool vect_set_status(ivector v, zvect_index flag_id)
 {
 	zvect_retval rval = p_usr_status(flag_id);
 
@@ -689,7 +689,7 @@ bool vect_set_status(const vector v, zvect_index flag_id)
 	return (bool)rval;
 }
 
-bool vect_clear_status(const vector v, zvect_index flag_id)
+bool vect_clear_status(ivector v, zvect_index flag_id)
 {
 	zvect_retval rval = p_usr_status(flag_id);
 
@@ -699,7 +699,7 @@ bool vect_clear_status(const vector v, zvect_index flag_id)
 	return (bool)rval;
 }
 
-bool vect_toggle_status(const vector v, zvect_index flag_id)
+bool vect_toggle_status(ivector v, zvect_index flag_id)
 {
 	zvect_retval rval = p_usr_status(flag_id);
 
