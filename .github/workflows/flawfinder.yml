@@ -39,4 +39,3 @@ jobs:
         uses: github/codeql-action/upload-sarif@ef51ec1e544fec1d3f2e06d20bb924508edf2016 # v1.1.38
         with:
           sarif_file: ${{github.workspace}}/flawfinder_results.sarif
-

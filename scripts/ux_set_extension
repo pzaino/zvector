@@ -86,7 +86,7 @@ then
     cp ${start_path}/src/${cfgfile} ${start_path}/src/${cfgfile}.backup
 fi
 
-#$cpath/sed -i -e "/\#define ${par1}/ s/ $par2//" ${start_path}/src/${cfgfile} 
+#$cpath/sed -i -e "/\#define ${par1}/ s/ $par2//" ${start_path}/src/${cfgfile}
 $cpath/sed -e "s/^\#[[:blank:]]*[dD][eE][fF][iI][nN][eE][[:blank:]]${par1}[[:blank:]].*/\#define ${par1} ${par2}/" ${start_path}/src/${cfgfile} >${tmpfile}
 if [ $? -eq 0 ];
 then
@@ -101,4 +101,3 @@ then
 fi
 echo ""
 exit 0
-
