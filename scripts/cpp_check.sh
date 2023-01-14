@@ -143,4 +143,3 @@ ${cppcheck_cmd} ${start_path}/src/*.c \
              --suppress=missingIncludeSystem -v 2>&1
 
 exit $?
-

@@ -105,4 +105,3 @@ ${valgrind_cmd} --leak-check=full \
             ${extra_opts} ${code_to_check} ${out_route}
 
 exit $?
-

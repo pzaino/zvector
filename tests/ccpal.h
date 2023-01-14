@@ -125,7 +125,7 @@
 
 
 #if  defined(macOS)
-#    define CCPAL_REPORT_ANALYSIS fprintf (stdout, "We have spent %lf seconds executing previous code section.\n", elaps_s + ((double)elaps_ns) / 1.0e9 );   
+#    define CCPAL_REPORT_ANALYSIS fprintf (stdout, "We have spent %lf seconds executing previous code section.\n", elaps_s + ((double)elaps_ns) / 1.0e9 );
 #else
 #  ifndef _PTHREAD_H_
 #    define CCPAL_REPORT_ANALYSIS fprintf (stdout, "We have spent %lf seconds executing previous code section.\n", elaps_s + ((double)elaps_ns) / 1.0e9 );

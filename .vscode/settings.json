@@ -76,9 +76,20 @@
 		"${workspaceFolder}/src"
 	],
 	"cSpell.words": [
+		"ALWAYSINLINE",
+		"COMPTYPE",
 		"cppcheck",
+		"cvector",
+		"DATAALIGN",
+		"ivector",
+		"LOGPRIORITY",
+		"NOLOCKING",
+		"RACECOND",
 		"safewipe",
-		"valgrind"
+		"valgrind",
+		"VECTDATASIZE",
+		"VECTEMPTY",
+		"VECTUNDEF"
 	],
 	"sonarlint.pathToCompileCommands": "${workspaceFolder}/.vscode/compile_commands.json"
 }

@@ -38,7 +38,7 @@ jobs:
     - uses: actions/checkout@dc323e67f16fb5f7663d20ff7941f27f5809e9b6 # v2.6.0
 #    - name: configure
 #      run: ./configure
-    - name: Build 
+    - name: Build
       run: make
     - name: Test
       run: make tests
@@ -67,4 +67,3 @@ jobs:
 #      run: msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} ${{env.SOLUTION_FILE_PATH}}
 #    - name: Test
 #       run:
-

@@ -1,14 +1,14 @@
-/* 
- *        Name: CCPal = C Code Performance Analysis Library 
+/*
+ *        Name: CCPal = C Code Performance Analysis Library
  *     Purpose: Measure performance (in terms of execution time) of
  *              C routines (useful to measure perfs as Unit Test)
- * 
+ *
  *    	Author: Paolo Fabio Zaino
  *     License: Copyright by Paolo Fabio Zaino, all rights reserved
  *              Distributed under GPL v2 license
  *
  * Description:
- * This file is just an empty definition set for 
+ * This file is just an empty definition set for
  * CCPal library
  */
 
