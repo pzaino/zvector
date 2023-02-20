@@ -8,10 +8,12 @@
 	],
 	"c-cpp-flylint.cppcheck.force": true,
 	"c-cpp-flylint.cppcheck.includePaths": [
+		".",
 		"${workspaceFolder}",
 		"${workspaceFolder}/src"
 	],
 	"c-cpp-flylint.clang.includePaths": [
+		".",
 		"${workspaceFolder}",
 		"${workspaceFolder}/src"
 	],
@@ -26,6 +28,7 @@
 	],
 	"c-cpp-flylint.cppcheck.verbose": true,
 	"c-cpp-flylint.includePaths": [
+		".",
 		"${workspaceFolder}",
 		"${workspaceFolder}/src"
 	],
@@ -33,13 +36,14 @@
 	"C_Cpp.default.cppStandard": "c++98",
 	"C_Cpp.default.cStandard": "c99",
 	"C_Cpp.default.includePath": [
+		".",
 		"${workspaceFolder}",
 		"${workspaceFolder}/src"
 	],
 	"C_Cpp.default.intelliSenseMode": "gcc-x64",
 	"C_Cpp.formatting": "clangFormat",
 	"c-cpp-compile-run.cpp-flags": "-Wall -Wextra ",
-	"c-cpp-compile-run.c-flags": "-Wall -Wextra -I${workspaceFolder}src ",
+	"c-cpp-compile-run.c-flags": "-Wall -Wextra -I${workspaceFolder}/src ",
 	"editor.insertSpaces": false,
 	"editor.trimAutoWhitespace": true,
 	"editor.detectIndentation": true,
@@ -48,9 +52,12 @@
 	"editor.tabSize": 8,
 	"editor.cursorStyle": "block",
 	"C_Cpp.default.systemIncludePath": [
-		"/usr/include/",
 		"/usr/local/include/",
-		"/usr/lib64/gcc/x86_64-suse-linux/11/include"
+		"/usr/include/",
+		"/usr/lib64/gcc/x86_64-suse-linux/11/include",
+		"/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include",
+                "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include",
+                "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks"
 	],
 	"makefile.compileCommandsPath": "${workspaceFolder}/.vscode/compile_commands.json",
 	"makefile.launchConfigurations": [
@@ -66,7 +73,7 @@
 		},
 	],
 	"compiler-explorer.url": "https://godbolt.org",
-    "compiler-explorer.compiler": "arm1100",
+    	"compiler-explorer.compiler": "arm1100",
 	"compiler-explorer.options": "-O3",
 	"compiler-explorer.debug": true,
 	"C_Cpp.default.compileCommands": "make all",
@@ -83,13 +90,17 @@
 		"DATAALIGN",
 		"ivector",
 		"LOGPRIORITY",
+		"mallopt",
+		"Michail",
+		"MONOBOUND",
 		"NOLOCKING",
 		"RACECOND",
 		"safewipe",
 		"valgrind",
 		"VECTDATASIZE",
 		"VECTEMPTY",
-		"VECTUNDEF"
+		"VECTUNDEF",
+		"wipefunct"
 	],
 	"sonarlint.pathToCompileCommands": "${workspaceFolder}/.vscode/compile_commands.json"
 }

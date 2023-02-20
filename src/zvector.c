@@ -1006,7 +1006,7 @@ static zvect_retval p_vect_destroy(vector v, uint32_t flags)
 	// All done and freed, so we can safely
 	// free the vector itself:
 	free(v);
-	v=NULL;
+	//v=NULL;
 
 	return 0;
 }

@@ -3,11 +3,12 @@
         {
             "name": "Linux",
             "includePath": [
+                ".",
+                "${workspaceFolder}",
                 "${workspaceFolder}/src",
                 "${workspaceFolder}/**",
-                "${workspaceFolder}",
-                "/usr/include",
-                "/usr/local/include"
+                "/usr/local/include",
+                "/usr/include"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",
@@ -19,8 +20,10 @@
         {
             "name": "Mac",
             "includePath": [
-                "${default}",
-                "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/13.0.0/include",
+                ".",
+                "/Users/pzaino/ws/CLionProjects/zvector",
+                "/Users/pzaino/ws/CLionProjects/zvector/src",
+                "/usr/local/include",
                 "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include",
                 "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include",
                 "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks"
@@ -31,7 +34,22 @@
             ],
             "compilerPath": "/usr/bin/gcc",
             "cStandard": "c99",
-            "cppStandard": "c++11"
+            "cppStandard": "c++11",
+            "compileCommands": "/Users/pzaino/ws/CLionProjects/zvector/make all",
+            "intelliSenseMode": "gcc-x64",
+            "mergeConfigurations": false,
+            "browse": {
+                "path": [
+                    "${workspaceFolder}",
+                    "${workspaceFolder}/src",
+                    "/usr/include",
+                    "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/13.0.0/include",
+                    "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include",
+                    "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include",
+                    "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks"
+                ],
+                "limitSymbolsToIncludedHeaders": true
+            }
         }
     ],
     "version": 4
