@@ -4,7 +4,7 @@
 	],
 	"c-cpp-flylint.flexelint.enable": false,
 	"c-cpp-flylint.clang.standard": [
-		""
+		"c99"
 	],
 	"c-cpp-flylint.cppcheck.force": true,
 	"c-cpp-flylint.cppcheck.includePaths": [
@@ -88,6 +88,7 @@
 		"cppcheck",
 		"cvector",
 		"DATAALIGN",
+		"datastructures",
 		"ivector",
 		"LOGPRIORITY",
 		"mallopt",
@@ -95,6 +96,7 @@
 		"MONOBOUND",
 		"NOLOCKING",
 		"RACECOND",
+		"rndstr",
 		"safewipe",
 		"valgrind",
 		"VECTDATASIZE",
@@ -102,5 +104,9 @@
 		"VECTUNDEF",
 		"wipefunct"
 	],
-	"sonarlint.pathToCompileCommands": "${workspaceFolder}/.vscode/compile_commands.json"
+	"sonarlint.pathToCompileCommands": "${workspaceFolder}/.vscode/compile_commands.json",
+	"sonarlint.connectedMode.project": {
+		"connectionId": "HTTPVMMZfpSystems",
+		"projectKey": "ZVector"
+	}
 }

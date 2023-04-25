@@ -16,8 +16,8 @@ extern "C" {
 #endif
 
 // Requires standard C libraries:
-#include <stdarg.h>
 #include <stdlib.h>
+#include <stdarg.h>
 
 // First library included is zvector_checks,
 // so we know on which platform and which features
@@ -610,7 +610,7 @@ void vect_insert(vector const v1, vector const v2, const zvect_index s2,
 /*
  * vect_move is a function that allows to move a specified
  * set of items from one vector to another.
- * It will also re-organise the source vector and (obviously)
+ * It will also re-organize the source vector and (obviously)
  * expand the destination vector if needed.
  * Please note: only vectors of the same data size can be moved
  * one into the other!
@@ -626,7 +626,7 @@ void vect_move(vector const v1, vector const v2, zvect_index start, zvect_index 
  * set of items from one vector to another if the condition
  * returned by the function pointed by f2 function pointer
  * is true.
- * It will also re-organise the source vector and (obviously)
+ * It will also re-organize the source vector and (obviously)
  * expand the destination vector if needed.
  * Please note: only vectors of the same data size can be moved
  * one into the other!
