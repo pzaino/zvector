@@ -61,6 +61,8 @@ int main(void)
 	// Rotate the vector by 0 positions.
 	vect_rotate_left(v, 0);
 
+	printf("first element: %d\n", *((int *)vect_get_at(v, 0)));
+
 	// Check that the vector is not modified.
 	assert(vect_size(v) == 10);
 	assert(*((int *)vect_get_at(v, 0)) == 1);
@@ -89,6 +91,8 @@ int main(void)
 	// Check that the vector is not modified.
 	assert(vect_size(v) == 10);
 
+	printf("first element: %d\n", *((int *)vect_get_at(v, 0)));
+
 	assert(*((int *)vect_get_at(v, 0)) == 1);
 	assert(*((int *)vect_get_at(v, 1)) == 2);
 	assert(*((int *)vect_get_at(v, 2)) == 3);
@@ -115,43 +119,8 @@ int main(void)
 	// Check that the vector is not modified.
 	assert(vect_size(v) == 10);
 
-	assert(*((int *)vect_get_at(v, 0)) == 1);
-	assert(*((int *)vect_get_at(v, 1)) == 2);
-	assert(*((int *)vect_get_at(v, 2)) == 3);
-	assert(*((int *)vect_get_at(v, 3)) == 4);
-	assert(*((int *)vect_get_at(v, 4)) == 5);
-	assert(*((int *)vect_get_at(v, 5)) == 6);
-	assert(*((int *)vect_get_at(v, 6)) == 7);
-	assert(*((int *)vect_get_at(v, 7)) == 8);
-	assert(*((int *)vect_get_at(v, 8)) == 9);
-	assert(*((int *)vect_get_at(v, 9)) == 10);
+	printf("first element: %d\n", *((int *)vect_get_at(v, 0)));
 
-	printf("done.\n");
-	testID++;
-
-	fflush(stdout);
-
-	// Rotate the vector by -1 positions.
-	vect_rotate_left(v, -1);
-
-	// Check that the vector is not modified.
-	assert(vect_size(v) == 10);
-	assert(*((int *)vect_get_at(v, 0)) == 1);
-	assert(*((int *)vect_get_at(v, 1)) == 2);
-	assert(*((int *)vect_get_at(v, 2)) == 3);
-	assert(*((int *)vect_get_at(v, 3)) == 4);
-	assert(*((int *)vect_get_at(v, 4)) == 5);
-	assert(*((int *)vect_get_at(v, 5)) == 6);
-	assert(*((int *)vect_get_at(v, 6)) == 7);
-	assert(*((int *)vect_get_at(v, 7)) == 8);
-	assert(*((int *)vect_get_at(v, 8)) == 9);
-	assert(*((int *)vect_get_at(v, 9)) == 10);
-
-	// Rotate the vector by 1 position.
-	vect_rotate_left(v, 1);
-
-	// Check that the vector is modified.
-	assert(vect_size(v) == 10);
 	assert(*((int *)vect_get_at(v, 0)) == 2);
 	assert(*((int *)vect_get_at(v, 1)) == 3);
 	assert(*((int *)vect_get_at(v, 2)) == 4);
@@ -163,27 +132,25 @@ int main(void)
 	assert(*((int *)vect_get_at(v, 8)) == 10);
 	assert(*((int *)vect_get_at(v, 9)) == 1);
 
-	// Rotate the vector by 2 positions.
-	vect_rotate_left(v, 2);
+	printf("done.\n");
+	testID++;
 
-	// Check that the vector is modified.
+	fflush(stdout);
+
+	printf("Test %s_%d: Rotate left the vector of %d items and check if it's not modified:\n",
+		testGrp, testID, -1);
+	printf("         (This should be the same as rotating right by 5)\n");
+	printf("Explanation: -1 is converted to 4,294,967,295 (2^32 - 1) and then the number of rotations is equal to 4,294,967,295 modulo 10 which is 5.\n");
+	fflush(stdout);
+
+	// Rotate the vector by -1 positions.
+	vect_rotate_left(v, -1);
+
+	// Check that the vector is not modified.
 	assert(vect_size(v) == 10);
-	assert(*((int *)vect_get_at(v, 0)) == 4);
-	assert(*((int *)vect_get_at(v, 1)) == 5);
-	assert(*((int *)vect_get_at(v, 2)) == 6);
-	assert(*((int *)vect_get_at(v, 3)) == 7);
-	assert(*((int *)vect_get_at(v, 4)) == 8);
-	assert(*((int *)vect_get_at(v, 5)) == 9);
-	assert(*((int *)vect_get_at(v, 6)) == 10);
-	assert(*((int *)vect_get_at(v, 7)) == 1);
-	assert(*((int *)vect_get_at(v, 8)) == 2);
-	assert(*((int *)vect_get_at(v, 9)) == 3);
 
-	// Rotate the vector by 3 positions.
-	vect_rotate_left(v, 3);
+	printf("first element: %d\n", *((int *)vect_get_at(v, 0)));
 
-	// Check that the vector is modified.
-	assert(vect_size(v) == 10);
 	assert(*((int *)vect_get_at(v, 0)) == 7);
 	assert(*((int *)vect_get_at(v, 1)) == 8);
 	assert(*((int *)vect_get_at(v, 2)) == 9);
@@ -195,136 +162,153 @@ int main(void)
 	assert(*((int *)vect_get_at(v, 8)) == 5);
 	assert(*((int *)vect_get_at(v, 9)) == 6);
 
+	printf("done.\n");
+	testID++;
+
+	fflush(stdout);
+
+	printf("Test %s_%d: Rotate left the vector of %d items and check if it's not modified:\n",
+		testGrp, testID, 1);
+	fflush(stdout);
+
+	// Rotate the vector by 1 position.
+	vect_rotate_left(v, 1);
+
+	// Check that the vector is modified.
+	assert(vect_size(v) == 10);
+
+	printf("first element: %d\n", *((int *)vect_get_at(v, 0)));
+
+	assert(*((int *)vect_get_at(v, 0)) == 8);
+	assert(*((int *)vect_get_at(v, 1)) == 9);
+	assert(*((int *)vect_get_at(v, 2)) == 10);
+	assert(*((int *)vect_get_at(v, 3)) == 1);
+	assert(*((int *)vect_get_at(v, 4)) == 2);
+	assert(*((int *)vect_get_at(v, 5)) == 3);
+	assert(*((int *)vect_get_at(v, 6)) == 4);
+	assert(*((int *)vect_get_at(v, 7)) == 5);
+	assert(*((int *)vect_get_at(v, 8)) == 6);
+	assert(*((int *)vect_get_at(v, 9)) == 7);
+
+	printf("done.\n");
+	testID++;
+
+	fflush(stdout);
+
+	printf("Test %s_%d: Rotate left the vector of %d items and check if it's not modified:\n",
+		testGrp, testID, 2);
+	fflush(stdout);
+
+	// Rotate the vector by 2 positions.
+	vect_rotate_left(v, 2);
+
+	// Check that the vector is modified.
+	assert(vect_size(v) == 10);
+
+	printf("first element: %d\n", *((int *)vect_get_at(v, 0)));
+
+	assert(*((int *)vect_get_at(v, 0)) == 10);
+	assert(*((int *)vect_get_at(v, 1)) == 1);
+	assert(*((int *)vect_get_at(v, 2)) == 2);
+	assert(*((int *)vect_get_at(v, 3)) == 3);
+	assert(*((int *)vect_get_at(v, 4)) == 4);
+	assert(*((int *)vect_get_at(v, 5)) == 5);
+	assert(*((int *)vect_get_at(v, 6)) == 6);
+	assert(*((int *)vect_get_at(v, 7)) == 7);
+	assert(*((int *)vect_get_at(v, 8)) == 8);
+	assert(*((int *)vect_get_at(v, 9)) == 9);
+
+	printf("done.\n");
+	testID++;
+
+	fflush(stdout);
+
+	printf("Test %s_%d: Rotate left the vector of %d items and check if it's not modified:\n",
+		testGrp, testID, 3);
+	fflush(stdout);
+
+	// Rotate the vector by 3 positions.
+	vect_rotate_left(v, 3);
+
+	// Check that the vector is modified.
+	assert(vect_size(v) == 10);
+
+	printf("first element: %d\n", *((int *)vect_get_at(v, 0)));
+
+	assert(*((int *)vect_get_at(v, 0)) == 3);
+	assert(*((int *)vect_get_at(v, 1)) == 4);
+	assert(*((int *)vect_get_at(v, 2)) == 5);
+	assert(*((int *)vect_get_at(v, 3)) == 6);
+	assert(*((int *)vect_get_at(v, 4)) == 7);
+	assert(*((int *)vect_get_at(v, 5)) == 8);
+	assert(*((int *)vect_get_at(v, 6)) == 9);
+	assert(*((int *)vect_get_at(v, 7)) == 10);
+	assert(*((int *)vect_get_at(v, 8)) == 1);
+	assert(*((int *)vect_get_at(v, 9)) == 2);
+
+	printf("done.\n");
+	testID++;
+
+	fflush(stdout);
+
+	printf("Test %s_%d: Rotate left the vector of %d items and check if it's not modified:\n",
+		testGrp, testID, 4);
+	fflush(stdout);
+
 	// Rotate the vector by 4 positions.
 	vect_rotate_left(v, 4);
 
 	// Check that the vector is modified.
 	assert(vect_size(v) == 10);
-	assert(*((int *)vect_get_at(v, 0)) == 1);
-	assert(*((int *)vect_get_at(v, 1)) == 2);
-	assert(*((int *)vect_get_at(v, 2)) == 3);
-	assert(*((int *)vect_get_at(v, 3)) == 4);
-	assert(*((int *)vect_get_at(v, 4)) == 5);
-	assert(*((int *)vect_get_at(v, 5)) == 6);
-	assert(*((int *)vect_get_at(v, 6)) == 7);
-	assert(*((int *)vect_get_at(v, 7)) == 8);
-	assert(*((int *)vect_get_at(v, 8)) == 9);
-	assert(*((int *)vect_get_at(v, 9)) == 10);
+
+	printf("first element: %d\n", *((int *)vect_get_at(v, 0)));
+
+	assert(*((int *)vect_get_at(v, 0)) == 7);
+	assert(*((int *)vect_get_at(v, 1)) == 8);
+	assert(*((int *)vect_get_at(v, 2)) == 9);
+	assert(*((int *)vect_get_at(v, 3)) == 10);
+	assert(*((int *)vect_get_at(v, 4)) == 1);
+	assert(*((int *)vect_get_at(v, 5)) == 2);
+	assert(*((int *)vect_get_at(v, 6)) == 3);
+	assert(*((int *)vect_get_at(v, 7)) == 4);
+	assert(*((int *)vect_get_at(v, 8)) == 5);
+	assert(*((int *)vect_get_at(v, 9)) == 6);
+
+	printf("done.\n");
+	testID++;
+
+	fflush(stdout);
+
+	printf("Test %s_%d: Rotate left the vector of %d items and check if it's not modified:\n",
+		testGrp, testID, 5);
+	fflush(stdout);
 
 	// Rotate the vector by 5 positions.
 	vect_rotate_left(v, 5);
 
 	// Check that the vector is modified.
 	assert(vect_size(v) == 10);
-	assert(*((int *)vect_get_at(v, 0)) == 6);
-	assert(*((int *)vect_get_at(v, 1)) == 7);
-	assert(*((int *)vect_get_at(v, 2)) == 8);
-	assert(*((int *)vect_get_at(v, 3)) == 9);
-	assert(*((int *)vect_get_at(v, 4)) == 10);
-	assert(*((int *)vect_get_at(v, 5)) == 1);
-	assert(*((int *)vect_get_at(v, 6)) == 2);
-	assert(*((int *)vect_get_at(v, 7)) == 3);
-	assert(*((int *)vect_get_at(v, 8)) == 4);
-	assert(*((int *)vect_get_at(v, 9)) == 5);
+
+	printf("first element: %d\n", *((int *)vect_get_at(v, 0)));
+
+	assert(*((int *)vect_get_at(v, 0)) == 2);
+	assert(*((int *)vect_get_at(v, 1)) == 3);
+	assert(*((int *)vect_get_at(v, 2)) == 4);
+	assert(*((int *)vect_get_at(v, 3)) == 5);
+	assert(*((int *)vect_get_at(v, 4)) == 6);
+	assert(*((int *)vect_get_at(v, 5)) == 7);
+	assert(*((int *)vect_get_at(v, 6)) == 8);
+	assert(*((int *)vect_get_at(v, 7)) == 9);
+	assert(*((int *)vect_get_at(v, 8)) == 10);
+	assert(*((int *)vect_get_at(v, 9)) == 1);
+
+	printf("done.\n");
+	testID++;
+
+	fflush(stdout);
 
 	// Rotate the vector by 6 positions.
 	vect_rotate_left(v, 6);
-
-	// Check that the vector is modified.
-	assert(vect_size(v) == 10);
-	assert(*((int *)vect_get_at(v, 0)) == 10);
-	assert(*((int *)vect_get_at(v, 1)) == 1);
-	assert(*((int *)vect_get_at(v, 2)) == 2);
-	assert(*((int *)vect_get_at(v, 3)) == 3);
-	assert(*((int *)vect_get_at(v, 4)) == 4);
-	assert(*((int *)vect_get_at(v, 5)) == 5);
-	assert(*((int *)vect_get_at(v, 6)) == 6);
-	assert(*((int *)vect_get_at(v, 7)) == 7);
-	assert(*((int *)vect_get_at(v, 8)) == 8);
-	assert(*((int *)vect_get_at(v, 9)) == 9);
-
-	// Rotate the vector by 7 positions.
-	vect_rotate_left(v, 7);
-
-	// Check that the vector is modified.
-	assert(vect_size(v) == 10);
-	assert(*((int *)vect_get_at(v, 0)) == 5);
-	assert(*((int *)vect_get_at(v, 1)) == 6);
-	assert(*((int *)vect_get_at(v, 2)) == 7);
-	assert(*((int *)vect_get_at(v, 3)) == 8);
-	assert(*((int *)vect_get_at(v, 4)) == 9);
-	assert(*((int *)vect_get_at(v, 5)) == 10);
-	assert(*((int *)vect_get_at(v, 6)) == 1);
-	assert(*((int *)vect_get_at(v, 7)) == 2);
-	assert(*((int *)vect_get_at(v, 8)) == 3);
-	assert(*((int *)vect_get_at(v, 9)) == 4);
-
-	// Rotate the vector by 8 positions.
-	vect_rotate_left(v, 8);
-
-	// Check that the vector is modified.
-	assert(vect_size(v) == 10);
-	assert(*((int *)vect_get_at(v, 0)) == 9);
-	assert(*((int *)vect_get_at(v, 1)) == 10);
-	assert(*((int *)vect_get_at(v, 2)) == 1);
-	assert(*((int *)vect_get_at(v, 3)) == 2);
-	assert(*((int *)vect_get_at(v, 4)) == 3);
-	assert(*((int *)vect_get_at(v, 5)) == 4);
-	assert(*((int *)vect_get_at(v, 6)) == 5);
-	assert(*((int *)vect_get_at(v, 7)) == 6);
-	assert(*((int *)vect_get_at(v, 8)) == 7);
-	assert(*((int *)vect_get_at(v, 9)) == 8);
-
-	// Rotate the vector by 9 positions.
-	vect_rotate_left(v, 9);
-
-	// Check that the vector is modified.
-	assert(vect_size(v) == 10);
-	assert(*((int *)vect_get_at(v, 0)) == 4);
-	assert(*((int *)vect_get_at(v, 1)) == 5);
-	assert(*((int *)vect_get_at(v, 2)) == 6);
-	assert(*((int *)vect_get_at(v, 3)) == 7);
-	assert(*((int *)vect_get_at(v, 4)) == 8);
-	assert(*((int *)vect_get_at(v, 5)) == 9);
-	assert(*((int *)vect_get_at(v, 6)) == 10);
-	assert(*((int *)vect_get_at(v, 7)) == 1);
-	assert(*((int *)vect_get_at(v, 8)) == 2);
-	assert(*((int *)vect_get_at(v, 9)) == 3);
-
-	// Rotate the vector by 10 positions.
-	vect_rotate_left(v, 10);
-
-	// Check that the vector is modified.
-	assert(vect_size(v) == 10);
-	assert(*((int *)vect_get_at(v, 0)) == 10);
-	assert(*((int *)vect_get_at(v, 1)) == 1);
-	assert(*((int *)vect_get_at(v, 2)) == 2);
-	assert(*((int *)vect_get_at(v, 3)) == 3);
-	assert(*((int *)vect_get_at(v, 4)) == 4);
-	assert(*((int *)vect_get_at(v, 5)) == 5);
-	assert(*((int *)vect_get_at(v, 6)) == 6);
-	assert(*((int *)vect_get_at(v, 7)) == 7);
-	assert(*((int *)vect_get_at(v, 8)) == 8);
-	assert(*((int *)vect_get_at(v, 9)) == 9);
-
-	// Rotate the vector by 11 positions.
-	vect_rotate_left(v, 11);
-
-	// Check that the vector is modified.
-	assert(vect_size(v) == 10);
-	assert(*((int *)vect_get_at(v, 0)) == 9);
-	assert(*((int *)vect_get_at(v, 1)) == 10);
-	assert(*((int *)vect_get_at(v, 2)) == 1);
-	assert(*((int *)vect_get_at(v, 3)) == 2);
-	assert(*((int *)vect_get_at(v, 4)) == 3);
-	assert(*((int *)vect_get_at(v, 5)) == 4);
-	assert(*((int *)vect_get_at(v, 6)) == 5);
-	assert(*((int *)vect_get_at(v, 7)) == 6);
-	assert(*((int *)vect_get_at(v, 8)) == 7);
-	assert(*((int *)vect_get_at(v, 9)) == 8);
-
-	// Rotate the vector by 12 positions.
-	vect_rotate_left(v, 12);
 
 	// Check that the vector is modified.
 	assert(vect_size(v) == 10);
@@ -339,22 +323,206 @@ int main(void)
 	assert(*((int *)vect_get_at(v, 8)) == 6);
 	assert(*((int *)vect_get_at(v, 9)) == 7);
 
+	printf("done.\n");
+	testID++;
+
+	fflush(stdout);
+
+	printf("Test %s_%d: Rotate left the vector of %d items and check if it's not modified:\n",
+		testGrp, testID, 7);
+	fflush(stdout);
+
+	// Rotate the vector by 7 positions.
+	vect_rotate_left(v, 7);
+
+	// Check that the vector is modified.
+	assert(vect_size(v) == 10);
+
+	printf("first element: %d\n", *((int *)vect_get_at(v, 0)));
+
+	assert(*((int *)vect_get_at(v, 0)) == 5);
+	assert(*((int *)vect_get_at(v, 1)) == 6);
+	assert(*((int *)vect_get_at(v, 2)) == 7);
+	assert(*((int *)vect_get_at(v, 3)) == 8);
+	assert(*((int *)vect_get_at(v, 4)) == 9);
+	assert(*((int *)vect_get_at(v, 5)) == 10);
+	assert(*((int *)vect_get_at(v, 6)) == 1);
+	assert(*((int *)vect_get_at(v, 7)) == 2);
+	assert(*((int *)vect_get_at(v, 8)) == 3);
+	assert(*((int *)vect_get_at(v, 9)) == 4);
+
+	printf("done.\n");
+	testID++;
+
+	fflush(stdout);
+
+	printf("Test %s_%d: Rotate left the vector of %d items and check if it's not modified:\n",
+		testGrp, testID, 8);
+	fflush(stdout);
+
+	// Rotate the vector by 8 positions.
+	vect_rotate_left(v, 8);
+
+	// Check that the vector is modified.
+	assert(vect_size(v) == 10);
+
+	printf("first element: %d\n", *((int *)vect_get_at(v, 0)));
+
+	assert(*((int *)vect_get_at(v, 0)) == 3);
+	assert(*((int *)vect_get_at(v, 1)) == 4);
+	assert(*((int *)vect_get_at(v, 2)) == 5);
+	assert(*((int *)vect_get_at(v, 3)) == 6);
+	assert(*((int *)vect_get_at(v, 4)) == 7);
+	assert(*((int *)vect_get_at(v, 5)) == 8);
+	assert(*((int *)vect_get_at(v, 6)) == 9);
+	assert(*((int *)vect_get_at(v, 7)) == 10);
+	assert(*((int *)vect_get_at(v, 8)) == 1);
+	assert(*((int *)vect_get_at(v, 9)) == 2);
+
+	printf("done.\n");
+	testID++;
+
+	fflush(stdout);
+
+	printf("Test %s_%d: Rotate left the vector of %d items and check if it's not modified:\n",
+		testGrp, testID, 9);
+	fflush(stdout);
+
+	// Rotate the vector by 9 positions.
+	vect_rotate_left(v, 9);
+
+	// Check that the vector is modified.
+	assert(vect_size(v) == 10);
+
+	printf("first element: %d\n", *((int *)vect_get_at(v, 0)));
+
+	assert(*((int *)vect_get_at(v, 0)) == 2);
+	assert(*((int *)vect_get_at(v, 1)) == 3);
+	assert(*((int *)vect_get_at(v, 2)) == 4);
+	assert(*((int *)vect_get_at(v, 3)) == 5);
+	assert(*((int *)vect_get_at(v, 4)) == 6);
+	assert(*((int *)vect_get_at(v, 5)) == 7);
+	assert(*((int *)vect_get_at(v, 6)) == 8);
+	assert(*((int *)vect_get_at(v, 7)) == 9);
+	assert(*((int *)vect_get_at(v, 8)) == 10);
+	assert(*((int *)vect_get_at(v, 9)) == 1);
+
+	printf("done.\n");
+	testID++;
+
+	fflush(stdout);
+
+	printf("Test %s_%d: Rotate left the vector of %d items and check if it's not modified:\n",
+		testGrp, testID, 10);
+	fflush(stdout);
+
+	// Rotate the vector by 10 positions.
+	vect_rotate_left(v, 10);
+
+	// Check that the vector is modified.
+	assert(vect_size(v) == 10);
+
+	printf("first element: %d\n", *((int *)vect_get_at(v, 0)));
+
+	assert(*((int *)vect_get_at(v, 0)) == 2);
+	assert(*((int *)vect_get_at(v, 1)) == 3);
+	assert(*((int *)vect_get_at(v, 2)) == 4);
+	assert(*((int *)vect_get_at(v, 3)) == 5);
+	assert(*((int *)vect_get_at(v, 4)) == 6);
+	assert(*((int *)vect_get_at(v, 5)) == 7);
+	assert(*((int *)vect_get_at(v, 6)) == 8);
+	assert(*((int *)vect_get_at(v, 7)) == 9);
+	assert(*((int *)vect_get_at(v, 8)) == 10);
+	assert(*((int *)vect_get_at(v, 9)) == 1);
+
+	printf("done.\n");
+	testID++;
+
+	fflush(stdout);
+
+	printf("Test %s_%d: Rotate left the vector of %d items and check if it's not modified:\n",
+		testGrp, testID, 11);
+	fflush(stdout);
+
+	// Rotate the vector by 11 positions.
+	vect_rotate_left(v, 11);
+
+	// Check that the vector is modified.
+	assert(vect_size(v) == 10);
+
+	printf("first element: %d\n", *((int *)vect_get_at(v, 0)));
+
+	assert(*((int *)vect_get_at(v, 0)) == 3);
+	assert(*((int *)vect_get_at(v, 1)) == 4);
+	assert(*((int *)vect_get_at(v, 2)) == 5);
+	assert(*((int *)vect_get_at(v, 3)) == 6);
+	assert(*((int *)vect_get_at(v, 4)) == 7);
+	assert(*((int *)vect_get_at(v, 5)) == 8);
+	assert(*((int *)vect_get_at(v, 6)) == 9);
+	assert(*((int *)vect_get_at(v, 7)) == 10);
+	assert(*((int *)vect_get_at(v, 8)) == 1);
+	assert(*((int *)vect_get_at(v, 9)) == 2);
+
+	printf("done.\n");
+	testID++;
+
+	fflush(stdout);
+
+	printf("Test %s_%d: Rotate left the vector of %d items and check if it's not modified:\n",
+		testGrp, testID, 12);
+	fflush(stdout);
+
+	// Rotate the vector by 12 positions.
+	vect_rotate_left(v, 12);
+
+	// Check that the vector is modified.
+	assert(vect_size(v) == 10);
+
+	printf("first element: %d\n", *((int *)vect_get_at(v, 0)));
+
+	assert(*((int *)vect_get_at(v, 0)) == 5);
+	assert(*((int *)vect_get_at(v, 1)) == 6);
+	assert(*((int *)vect_get_at(v, 2)) == 7);
+	assert(*((int *)vect_get_at(v, 3)) == 8);
+	assert(*((int *)vect_get_at(v, 4)) == 9);
+	assert(*((int *)vect_get_at(v, 5)) == 10);
+	assert(*((int *)vect_get_at(v, 6)) == 1);
+	assert(*((int *)vect_get_at(v, 7)) == 2);
+	assert(*((int *)vect_get_at(v, 8)) == 3);
+	assert(*((int *)vect_get_at(v, 9)) == 4);
+
+	printf("done.\n");
+	testID++;
+
+	fflush(stdout);
+
+	printf("Test %s_%d: Rotate left the vector of %d items and check if it's not modified:\n",
+		testGrp, testID, 13);
+	fflush(stdout);
+
 	// Rotate the vector by 13 positions.
 	vect_rotate_left(v, 13);
 
 	// Check that the vector is modified.
 	assert(vect_size(v) == 10);
-	assert(*((int *)vect_get_at(v, 0)) == 7);
-	assert(*((int *)vect_get_at(v, 1)) == 8);
-	assert(*((int *)vect_get_at(v, 2)) == 9);
-	assert(*((int *)vect_get_at(v, 3)) == 10);
-	assert(*((int *)vect_get_at(v, 4)) == 1);
-	assert(*((int *)vect_get_at(v, 5)) == 2);
-	assert(*((int *)vect_get_at(v, 6)) == 3);
-	assert(*((int *)vect_get_at(v, 7)) == 4);
-	assert(*((int *)vect_get_at(v, 8)) == 5);
-	assert(*((int *)vect_get_at(v, 9)) == 6);
 
+	printf("first element: %d\n", *((int *)vect_get_at(v, 0)));
+
+	assert(*((int *)vect_get_at(v, 0)) == 8);
+	assert(*((int *)vect_get_at(v, 1)) == 9);
+	assert(*((int *)vect_get_at(v, 2)) == 10);
+	assert(*((int *)vect_get_at(v, 3)) == 1);
+	assert(*((int *)vect_get_at(v, 4)) == 2);
+	assert(*((int *)vect_get_at(v, 5)) == 3);
+	assert(*((int *)vect_get_at(v, 6)) == 4);
+	assert(*((int *)vect_get_at(v, 7)) == 5);
+	assert(*((int *)vect_get_at(v, 8)) == 6);
+	assert(*((int *)vect_get_at(v, 9)) == 7);
+
+	printf("done.\n");
+	testID++;
+
+	fflush(stdout);
 
 }
 

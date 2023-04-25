@@ -599,7 +599,7 @@ static inline zvect_retval broadcast_signal(cvector v,
 	return (lock_type >= v->lock_type) ? pthread_cond_broadcast(&(v->cond)) : 0;
 }
 
-static inline zvect_retval get_mutex_unlock(ivector v,
+static zvect_retval get_mutex_unlock(ivector v,
 					    const int32_t lock_type)
 {
 	if (lock_type == v->lock_type) {
@@ -2216,7 +2216,7 @@ VECT_SWP_RANGE_JOB_DONE:
 		p_throw_error(rval, NULL);
 }
 
-void vect_rotate_left(ivector v, const zvect_index i) {
+void vect_rotate_left(ivector v, zvect_index i) {
 
 	// check if the vector exists:
 	zvect_retval rval = p_vect_check(v);
@@ -2232,10 +2232,12 @@ void vect_rotate_left(ivector v, const zvect_index i) {
 	if (i == 0 || i == vsize)
 		goto VECT_ROT_LEFT_DONE_PROCESSING;
 
-	if (i > vsize) {
+	if (i > vsize)
+		i = i % vsize;
+	/*{
 		rval = ZVERR_IDXOUTOFBOUND;
 		goto VECT_ROT_LEFT_DONE_PROCESSING;
-	}
+	} */
 
 	// Process the vector
 	if (i == 1) {
@@ -3173,15 +3175,19 @@ zvect_retval vect_move_on_signal(ivector v1, vector v2, const zvect_index s2,
 #ifdef DEBUG
 	log_msg(ZVLP_MEDIUM, "v1 owner? %*i\n", 10, lock_owner1);
 #endif
-	if (lock_owner2)
+	if (lock_owner2 != 0)
+	{
 		get_mutex_unlock(v2, 1);
+	}
 
 #ifdef DEBUG
 	log_msg(ZVLP_MEDIUM, "v2 owner? %*i\n", 10, lock_owner2);
 #endif
 
 	if (lock_owner1)
+	{
 		get_mutex_unlock(v1, 1);
+	}
 
 VECT_MOVE_ONS_JOB_DONE:
 	if(rval && (rval != 1))

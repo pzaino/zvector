@@ -88,15 +88,13 @@ void mk_rndstr(char *rndStr, size_t len) {
 	static char charset[] =
 		"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789,.-#'?!";
 
-	if (len) {
-		if (rndStr) {
-			int l = (int)(sizeof(charset) - 1);
-			for (size_t n = 0; n < len; n++) {
-				int key = rand() % l;
-				rndStr[n] = charset[key];
-			}
-			rndStr[len] = '\0';
+	if (len && rndStr) {
+		int l = (int)(sizeof(charset) - 1);
+		for (size_t n = 0; n < len; n++) {
+			int key = rand() % l;
+			rndStr[n] = charset[key];
 		}
+		rndStr[len] = '\0';
 	}
 }
 
@@ -104,7 +102,7 @@ void clear_str(char *str, size_t len) {
 	memset(str, 0, len);
 }
 
-zvect_retval check_if_correct_size(void *v1, void *v2) {
+zvect_retval check_if_correct_size(void const * const v1, void *v2) {
 	(void)v1;
 	return ( vect_size((vector)v2) >= MAX_ITEMS );
 }
