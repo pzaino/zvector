@@ -552,19 +552,13 @@ static inline zvect_retval get_mutex_lock2(const vector v1,
 					   const vector v2,
 					   const int32_t lock_type)
 {
-	while (v1->lock_type != lock_type)
-	{
-		if (lock_type >= v1->lock_type) {
-			mutex_lock(&(v1->lock));
-			v1->lock_type = lock_type;
-		}
+	if (lock_type >= v1->lock_type) {
+		mutex_lock(&(v1->lock));
+		v1->lock_type = lock_type;
 	}
-	while (v2->lock_type != lock_type)
-	{
-		if (lock_type >= v2->lock_type) {
-			mutex_lock(&(v2->lock));
-			v2->lock_type = lock_type;
-		}
+	if (lock_type >= v2->lock_type) {
+		mutex_lock(&(v2->lock));
+		v2->lock_type = lock_type;
 	}
 	return 1;
 }
@@ -748,8 +742,8 @@ static void p_free_items(ivector v, zvect_index first, zvect_index offset)
 				p_item_safewipe(v, v->data[v->begin + j]);
 			if (!(v->flags & ZV_BYREF)) {
 				free(v->data[v->begin + j]);
-                v->data[v->begin + j] = NULL;
-            }
+                		v->data[v->begin + j] = NULL;
+            		}
 		}
 		if (j == first)
 			break;	// this is required if we are using
@@ -1297,8 +1291,9 @@ static inline zvect_retval p_vect_remove_at(ivector v, const zvect_index i, void
 			// Clear leftover item pointers:
 			memset(new_data[(v->begin + vsize) - 1], 0, 1);
 #else
-			p_vect_memmove(v->data + (base + idx), v->data + (base + (idx + 1)),
-					sizeof(void *) * (vsize - idx));
+			p_vect_memmove(v->data + (base + idx), v->data +
+				       (base + (idx + 1)),
+				       sizeof(void *) * (vsize - idx));
 
 			// Clear leftover item pointers:
 			memset(v->data[(v->begin + vsize) - 1], 0, 1);
@@ -3044,15 +3039,9 @@ void vect_move(ivector v1, vector v2, const zvect_index s2,
 
 #if (ZVECT_THREAD_SAFE == 1)
 	// vect_move modifies both vectors, so has to lock them both (if needed)
-	/*
-	zvect_retval lock_owner2 = 0;
-	zvect_retval lock_owner1 = (locking_disabled || (v1->flags & ZV_NOLOCKING)) ? 0 : get_mutex_lock(v1, 1);
-	if (lock_owner1)
-		lock_owner2 = (locking_disabled || (v2->flags & ZV_NOLOCKING)) ? 0 : get_mutex_lock(v2, 1);
-	*/
 	zvect_retval lock_owner1 = 0;
 	zvect_retval lock_owner2 = 0;
-	lock_owner1 = lock_owner2 = (locking_disabled || (v1->flags & ZV_NOLOCKING)) ? 0 : get_mutex_lock2(v1, v2, 1);
+	lock_owner1 = lock_owner2 = (locking_disabled) ? 0 : get_mutex_lock2(v2, v1, 1);
 #endif
 #ifdef DEBUG
 	log_msg(ZVLP_INFO, "vect_move: --- begin ---\n");
@@ -3075,11 +3064,11 @@ VECT_MOVE_DONE_PROCESSING:
 		rval = p_vect_delete_at(v2, s2, e2 - 1, 0);
 
 #if (ZVECT_THREAD_SAFE == 1)
-	if (lock_owner2)
-		get_mutex_unlock(v2, 1);
-
 	if (lock_owner1)
 		get_mutex_unlock(v1, 1);
+
+	if (lock_owner2)
+		get_mutex_unlock(v2, 1);
 #endif
 #ifdef DEBUG
 	log_msg(ZVLP_INFO, "vect_move: --- end ---\n");
@@ -3103,15 +3092,9 @@ zvect_retval vect_move_if(ivector v1, vector v2, const zvect_index s2,
 
 #if (ZVECT_THREAD_SAFE == 1)
 	// vect_move modifies both vectors, so has to lock them both (if needed)
-	/*
-	zvect_retval lock_owner2 = 0;
-	zvect_retval lock_owner1 = (locking_disabled || (v1->flags & ZV_NOLOCKING)) ? 0 : get_mutex_lock(v1, 1);
-	if (lock_owner1)
-		lock_owner2 = (locking_disabled || (v2->flags & ZV_NOLOCKING)) ? 0 : get_mutex_lock(v2, 1);
-	*/
 	zvect_retval lock_owner1 = 0;
 	zvect_retval lock_owner2 = 0;
-	lock_owner1 = lock_owner2 = (locking_disabled || (v1->flags & ZV_NOLOCKING)) ? 0 : get_mutex_lock2(v1, v2, 1);
+	lock_owner1 = lock_owner2 = (locking_disabled) ? 0 : get_mutex_lock2(v2, v1, 1);
 
 #endif
 #ifdef DEBUG
@@ -3135,11 +3118,11 @@ VECT_MOVE_IF_DONE_PROCESSING:
 		rval = p_vect_delete_at(v2, s2, e2 - 1, 0);
 
 #if (ZVECT_THREAD_SAFE == 1)
-	if (lock_owner2)
-		get_mutex_unlock(v2, 1);
-
 	if (lock_owner1)
 		get_mutex_unlock(v1, 1);
+
+	if (lock_owner2)
+		get_mutex_unlock(v2, 1);
 #endif
 #ifdef DEBUG
 	log_msg(ZVLP_INFO, "vect_move_if: --- end ---\n");
@@ -3167,9 +3150,8 @@ zvect_retval vect_move_on_signal(ivector v1, vector v2, const zvect_index s2,
 
 	// vect_move modifies both vectors, so has to lock them both (if needed)
 	zvect_retval lock_owner2 = 0;
-	zvect_retval lock_owner1 = (locking_disabled || (v1->flags & ZV_NOLOCKING)) ? 0 : get_mutex_lock(v1, 1);
-	if (lock_owner1)
-		lock_owner2 = (locking_disabled || (v2->flags & ZV_NOLOCKING)) ? 0 : get_mutex_lock(v2, 1);
+	zvect_retval lock_owner1 = 0;
+	lock_owner1 = lock_owner2 = (locking_disabled) ? 0 : get_mutex_lock2(v2, v1, 1);
 
 #ifdef DEBUG
 	log_msg(ZVLP_MEDIUM, "vect_move_on_signal: --- start waiting ---\n");
@@ -3205,18 +3187,18 @@ zvect_retval vect_move_on_signal(ivector v1, vector v2, const zvect_index s2,
 #ifdef DEBUG
 	log_msg(ZVLP_MEDIUM, "v1 owner? %*i\n", 10, lock_owner1);
 #endif
-	if (lock_owner2 != 0)
+	if (lock_owner1 != 0)
 	{
-		get_mutex_unlock(v2, 1);
+		get_mutex_unlock(v1, 1);
 	}
 
 #ifdef DEBUG
 	log_msg(ZVLP_MEDIUM, "v2 owner? %*i\n", 10, lock_owner2);
 #endif
 
-	if (lock_owner1)
+	if (lock_owner2)
 	{
-		get_mutex_unlock(v1, 1);
+		get_mutex_unlock(v2, 1);
 	}
 
 VECT_MOVE_ONS_JOB_DONE:
@@ -3239,9 +3221,9 @@ void *vect_merge(ivector v1, vector v2) {
 
 #if (ZVECT_THREAD_SAFE == 1)
 	zvect_retval lock_owner2 = 0;
-	zvect_retval lock_owner1 = (locking_disabled || (v1->flags & ZV_NOLOCKING)) ? 0 : get_mutex_lock(v1, 1);
-	if (lock_owner1)
-		lock_owner2 = (locking_disabled || (v2->flags & ZV_NOLOCKING)) ? 0 : get_mutex_lock(v2, 1);
+	zvect_retval lock_owner1 = 0;
+	lock_owner1 = lock_owner2 = (locking_disabled) ? 0 : get_mutex_lock2(v2, v1, 1);
+
 #endif
 
 #ifdef DEBUG
@@ -3289,21 +3271,18 @@ void *vect_merge(ivector v1, vector v2) {
 
 VECT_MERGE_DONE_PROCESSING:
 #if (ZVECT_THREAD_SAFE == 1)
+	if (lock_owner1)
+		get_mutex_unlock(v1, 1);
+
 	if (lock_owner2)
 		get_mutex_unlock(v2, 1);
 #endif
-
 	if (!rval)
 		rval = p_vect_destroy(v2, 0);
 	// ^ Because we are merging two vectors in one
 	// after merged v2 to v1  there is no need for
 	// v2 to still exists, so let's  destroy it to
 	// free memory correctly.
-
-#if (ZVECT_THREAD_SAFE == 1)
-	if (lock_owner1)
-		get_mutex_unlock(v1, 1);
-#endif
 #ifdef DEBUG
 	log_msg(ZVLP_INFO, "vect_merge: --- end ---\n");
 #endif

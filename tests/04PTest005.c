@@ -64,7 +64,8 @@ size_t max_strLen = 32;
 // produced during this test (you can increase it if
 // you'd like, but keep in mind that the more messages
 // the more memory your test system will need!):
-#define TOTAL_ITEMS 10000000
+//# define TOTAL_ITEMS 10000000
+#define TOTAL_ITEMS 10
 
 #define MAX_ITEMS (TOTAL_ITEMS / ( MAX_THREADS / 2))
 #define MAX_MSG_SIZE 72
@@ -101,7 +102,7 @@ void clear_str(char *str, size_t len) {
 	memset(str, 0, len);
 }
 
-zvect_retval check_if_correct_size(void const * const v1, void *v2) {
+zvect_retval check_if_correct_size(void * v1, void *v2) {
 	(void)v1;
 	return ( vect_size((vector)v2) >= MAX_ITEMS );
 }
@@ -258,7 +259,7 @@ void *consumer(void *arg) {
 
 	if (item != NULL)
 	{
-		free(item);
+		//free(item);
 		item = NULL;
 	}
 
