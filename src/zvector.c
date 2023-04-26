@@ -1270,8 +1270,10 @@ static inline zvect_retval p_vect_remove_at(ivector v, const zvect_index i, void
 		if ((idx < (vsize - 1)) && (vsize > 0)) {
 			array_changed = 1;
 #if (ZVECT_FULL_REENTRANT == 1)
-			free(new_data[base + idx]);
-			new_data[base + idx]=NULL;
+			if (!(v->flags & ZV_BYREF)) {
+				free(new_data[base + idx]);
+				new_data[base + idx]=NULL;
+			}
 			/*
 			// old code, was faster than new logic, but too keen to problems
 			// I may try to reuse it in a better way in the future.
@@ -1280,8 +1282,10 @@ static inline zvect_retval p_vect_remove_at(ivector v, const zvect_index i, void
 				sizeof(void *) * (vsize - idx));
 			*/
 #else
+		if (!(v->flags & ZV_BYREF)) {
 			free(v->data[base + idx]);
 			v->data[base + idx]=NULL;
+		}
 #endif
 
 			// move data
@@ -1304,12 +1308,16 @@ static inline zvect_retval p_vect_remove_at(ivector v, const zvect_index i, void
 			array_changed = 1;
 #if (ZVECT_FULL_REENTRANT == 1)
 			if (new_data[base] != NULL) {
-				free(new_data[base]);
+				if (!(v->flags & ZV_BYREF)) {
+					free(new_data[base]);
+				}
 				new_data[base]=NULL;
 			}
 #else
 			if (v->data[base] != NULL) {
-				free(v->data[base]);
+				if (!(v->flags & ZV_BYREF)) {
+					free(v->data[base]);
+				}
 				v->data[base]=NULL;
 			}
 #endif

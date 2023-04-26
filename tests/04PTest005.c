@@ -64,8 +64,8 @@ size_t max_strLen = 32;
 // produced during this test (you can increase it if
 // you'd like, but keep in mind that the more messages
 // the more memory your test system will need!):
-//# define TOTAL_ITEMS 10000000
-#define TOTAL_ITEMS 10
+#define TOTAL_ITEMS 10000000
+//# define TOTAL_ITEMS 1000000000
 
 #define MAX_ITEMS (TOTAL_ITEMS / ( MAX_THREADS / 2))
 #define MAX_MSG_SIZE 72
@@ -196,7 +196,7 @@ void *consumer(void *arg) {
 	fflush(stdout);
 
 		uint32_t i;
-		vector v2 = vect_create((MAX_ITEMS)+8, sizeof(struct QueueItem), ZV_NONE | ZV_NOLOCKING);
+		vector v2 = vect_create((MAX_ITEMS)+8, sizeof(struct QueueItem), ZV_BYREF | ZV_NOLOCKING);
 
 #ifdef DEBUG
 		printf("Consumer Thread %*i, address of v2 is: %p\n", 3, id, v2);
@@ -256,12 +256,6 @@ void *consumer(void *arg) {
 				item = NULL;
 			}
 		} while (--i);
-
-	if (item != NULL)
-	{
-		//free(item);
-		item = NULL;
-	}
 
 	printf("Consumer thread %i done. Consumed %d events.\n", id, evt_counter);
 #ifdef DEBUG
