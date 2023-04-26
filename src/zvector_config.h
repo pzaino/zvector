@@ -72,7 +72,7 @@ typedef int32_t zvect_retval;
 // Enable/Disable thread safe code:
 #define ZVECT_THREAD_SAFE 1
 
-// Enable/Disbale reentrant code:
+// Enable/Disable reentrant code:
 #define ZVECT_FULL_REENTRANT 0
 
 // Enable/Disable DMF Extensions:

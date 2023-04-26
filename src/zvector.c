@@ -105,7 +105,7 @@ enum {
 
 /*---------------------------------------------------------------------------*/
 // Useful macros
-//# define min(x, y) (((x) < (y)) ? (x) : (y))
+// disabled for now: # define min(x, y) (((x) < (y)) ? (x) : (y))
 #define max(x, y) (((x) > (y)) ? (x) : (y))
 #define UNUSED(x) (void)x
 
@@ -342,7 +342,10 @@ static void p_throw_error(const zvect_retval error_code,
 
 	log_msg(ZVLP_ERROR, "Error: %*i, %s\n", 8, error_code, message);
 	if (locally_allocated)
+	{
 		free((void *)message);
+		message = NULL;
+	}
 
 	exit(error_code);
 }
@@ -439,7 +442,12 @@ static inline void mutex_init(pthread_mutex_t *lock)
 	pthread_mutexattr_setprotocol(&Attr, PTHREAD_PRIO_INHERIT);
 	pthread_mutex_init(lock, &Attr);
 #	else
-	pthread_mutex_init(lock, NULL);
+	pthread_mutexattr_t Attr;
+	pthread_mutexattr_init(&Attr);
+	pthread_mutexattr_settype(&Attr, PTHREAD_MUTEX_RECURSIVE);
+	pthread_mutexattr_setpshared(&Attr, PTHREAD_PROCESS_PRIVATE);
+	pthread_mutexattr_setprotocol(&Attr, PTHREAD_PRIO_INHERIT);
+	pthread_mutex_init(lock, &Attr);
 #	endif // macOS
 }
 
@@ -477,16 +485,16 @@ static inline int semaphore_init
 
 static inline int semaphore_destroy
 #		if !defined(macOS)
-					(sem_t *sem)
+			(sem_t *sem)
 #		else
-					(dispatch_semaphore_t *sem)
+			(dispatch_semaphore_t *sem)
 #		endif
 {
 #		if !defined(macOS)
 	return sem_destroy(sem);
 #		else
-	return 0; // dispatch_semaphore_destroy(sem);
 	(void)sem;
+	return 0; // "dispatch_semaphore_destroy(sem)" is not needed
 #		endif
 }
 
@@ -540,6 +548,21 @@ static inline zvect_retval get_mutex_lock(const vector v,
 	return 0;
 }
 
+static inline zvect_retval get_mutex_lock2(const vector v1,
+					   const vector v2,
+					   const int32_t lock_type)
+{
+	if (lock_type >= v1->lock_type) {
+		mutex_lock(&(v1->lock));
+		v1->lock_type = lock_type;
+	}
+	if (lock_type >= v2->lock_type) {
+		mutex_lock(&(v2->lock));
+		v2->lock_type = lock_type;
+	}
+	return 1;
+}
+
 static inline zvect_retval check_mutex_trylock(const vector v,
 					       const int32_t lock_type)
 {
@@ -554,21 +577,23 @@ static inline zvect_retval lock_after_signal(const vector v,
 					     const int32_t lock_type)
 {
 	if (lock_type >= v->lock_type) {
-		//if (!mutex_trylock(&(v->lock))) {
-			while (!pthread_cond_wait(&(v->cond), &(v->lock))) {
-				// wait until we get a signal
-			}
-			//mutex_lock(&(v->lock));
-			v->lock_type = lock_type;
-			return 1;
-		//}
+		while (!pthread_cond_wait(&(v->cond), &(v->lock))) {
+			// wait until we get a signal
+		}
+		v->lock_type = lock_type;
+		return 1;
 	}
 	return 0;
 }
 
 /*
  * TODO: Write a generic function to allow user to use signals:
-
+ *       wait_for_signal(v, lock_type, f1, f2, f3, ...)
+ *      where f1 is a function that returns true if the signal
+ *     should be sent, and f2, f3, ... are functions that
+ *   should be called before the signal is sent.
+ * Example:
+ *
 static inline zvect_retval wait_for_signal(const vector v, const int32_t lock_type, bool (*f1)(const vector v), ) {
 	if (lock_type >= v->lock_type) {
 		if (!mutex_trylock(&(v->lock))) {
@@ -594,7 +619,7 @@ static inline zvect_retval broadcast_signal(cvector v,
 	return (lock_type >= v->lock_type) ? pthread_cond_broadcast(&(v->cond)) : 0;
 }
 
-static inline zvect_retval get_mutex_unlock(ivector v,
+static zvect_retval get_mutex_unlock(ivector v,
 					    const int32_t lock_type)
 {
 	if (lock_type == v->lock_type) {
@@ -715,8 +740,10 @@ static void p_free_items(ivector v, zvect_index first, zvect_index offset)
 		if (v->data[v->begin + j] != NULL) {
 			if (v->flags & ZV_SEC_WIPE)
 				p_item_safewipe(v, v->data[v->begin + j]);
-			if (!(v->flags & ZV_BYREF))
+			if (!(v->flags & ZV_BYREF)) {
 				free(v->data[v->begin + j]);
+                		v->data[v->begin + j] = NULL;
+            		}
 		}
 		if (j == first)
 			break;	// this is required if we are using
@@ -1006,7 +1033,6 @@ static zvect_retval p_vect_destroy(vector v, uint32_t flags)
 	// All done and freed, so we can safely
 	// free the vector itself:
 	free(v);
-	v=NULL;
 
 	return 0;
 }
@@ -1083,6 +1109,7 @@ static inline zvect_retval p_vect_add_at(ivector v, const void *value,
 			new_data[base] = (void *)malloc(v->data_size);
 			if (new_data[base] == NULL) {
 				free(new_data);
+				new_data = NULL;
 				return ZVERR_OUTOFMEM;
 			}
 #else
@@ -1097,6 +1124,7 @@ static inline zvect_retval p_vect_add_at(ivector v, const void *value,
 		new_data[base + vsize] = (void *)malloc(v->data_size);
 		if (new_data[base + vsize] == NULL) {
 			free(new_data);
+			new_data = NULL;
 			return ZVERR_OUTOFMEM;
 		}
 #else
@@ -1126,6 +1154,7 @@ static inline zvect_retval p_vect_add_at(ivector v, const void *value,
 		new_data[base + idx] = (void *)malloc(v->data_size);
 		if (new_data[base + idx] == NULL) {
 			free(new_data);
+			new_data = NULL;
 			return ZVERR_OUTOFMEM;
 		}
 	}
@@ -1262,8 +1291,9 @@ static inline zvect_retval p_vect_remove_at(ivector v, const zvect_index i, void
 			// Clear leftover item pointers:
 			memset(new_data[(v->begin + vsize) - 1], 0, 1);
 #else
-			p_vect_memmove(v->data + (base + idx), v->data + (base + (idx + 1)),
-					sizeof(void *) * (vsize - idx));
+			p_vect_memmove(v->data + (base + idx), v->data +
+				       (base + (idx + 1)),
+				       sizeof(void *) * (vsize - idx));
 
 			// Clear leftover item pointers:
 			memset(v->data[(v->begin + vsize) - 1], 0, 1);
@@ -1370,7 +1400,7 @@ static inline zvect_retval p_vect_delete_at(ivector v,
 	log_msg(ZVLP_INFO, "p_vect_delete_at: data      %*p\n", 14, v->data);
 	*/
 #endif
-	if ( (vsize > 1) && (start < (vsize - 1)) && (tot_items < vsize) && (v->data != NULL) ) {
+	if ( (vsize > 1) && (start < (vsize - 1)) && (v->data != NULL) ) {
 		array_changed = 1;
 #ifdef DEBUG
 		/* for (zvect_index ptrID = start; ptrID < start + offset; ptrID++)
@@ -1378,7 +1408,7 @@ static inline zvect_retval p_vect_delete_at(ivector v,
 				log_msg(ZVLP_INFO, "p_vect_delete_at: data ptr  %*p\n", 14, v->data + (v->begin + ptrID));
 		}*/
 #endif
-		// Safe erase items?
+		// Safe-erase items?
 		if ( flags & 1 )
 			p_free_items(v, start, offset);
 
@@ -1398,7 +1428,7 @@ static inline zvect_retval p_vect_delete_at(ivector v,
 
 	// Check if we need to increment begin or decrement end
 	// depending on the direction of the "delete" (left or right)
-	if ( start != 0 || array_changed ) {
+	if ( (start != 0) || array_changed ) {
 		if ((v->end - (offset + 1)) > v->begin) {
 			v->end -= (offset + 1);
 		} else {
@@ -1560,19 +1590,21 @@ vector vect_create(const zvect_index init_capacity, const size_t item_size,
 	return v;
 }
 
-void vect_destroy(vector v) {
+void *vect_destroy(vector v) {
 	// Call p_vect_destroy with flags set to 1
 	// to destroy data according to the vector
 	// properties:
 	zvect_retval rval = p_vect_check(v);
 	if (rval)
-		goto JOB_DONE;
+		goto VECT_DESTROY_JOB_DONE;
 
 	rval = p_vect_destroy(v, 1);
 
-JOB_DONE:
+VECT_DESTROY_JOB_DONE:
 	if (rval)
 		p_throw_error(rval, NULL);
+
+	return NULL;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -2206,7 +2238,7 @@ VECT_SWP_RANGE_JOB_DONE:
 		p_throw_error(rval, NULL);
 }
 
-void vect_rotate_left(ivector v, const zvect_index i) {
+void vect_rotate_left(ivector v, zvect_index i) {
 
 	// check if the vector exists:
 	zvect_retval rval = p_vect_check(v);
@@ -2222,10 +2254,8 @@ void vect_rotate_left(ivector v, const zvect_index i) {
 	if (i == 0 || i == vsize)
 		goto VECT_ROT_LEFT_DONE_PROCESSING;
 
-	if (i > vsize) {
-		rval = ZVERR_IDXOUTOFBOUND;
-		goto VECT_ROT_LEFT_DONE_PROCESSING;
-	}
+	if (i > vsize)
+		i = i % vsize;
 
 	// Process the vector
 	if (i == 1) {
@@ -2245,6 +2275,7 @@ void vect_rotate_left(ivector v, const zvect_index i) {
 		p_vect_memcpy(v->data + v->begin + (vsize - i), new_data + v->begin, sizeof(void *) * i);
 
 		free(new_data);
+		new_data=NULL;
 	}
 
 VECT_ROT_LEFT_DONE_PROCESSING:
@@ -2258,7 +2289,7 @@ VECT_ROT_LEFT_JOB_DONE:
 		p_throw_error(rval, NULL);
 }
 
-void vect_rotate_right(ivector v, const zvect_index i) {
+void vect_rotate_right(ivector v, zvect_index i) {
 	// check if the vector exists:
 	zvect_retval rval = p_vect_check(v);
 	if (rval)
@@ -2273,10 +2304,8 @@ void vect_rotate_right(ivector v, const zvect_index i) {
 	if (i == 0 || i == vsize)
 		goto VECT_ROT_RIGHT_DONE_PROCESSING;
 
-	if (i > vsize) {
-		rval = ZVERR_IDXOUTOFBOUND;
-		goto VECT_ROT_RIGHT_DONE_PROCESSING;
-	}
+	if (i > vsize)
+		i = i % vsize;
 
 	// Process the vector
 	if (i == 1) {
@@ -2297,6 +2326,7 @@ void vect_rotate_right(ivector v, const zvect_index i) {
 		p_vect_memcpy(v->data + v->begin, new_data + v->begin, sizeof(void *) * i);
 
 		free(new_data);
+		new_data=NULL;
 	}
 
 VECT_ROT_RIGHT_DONE_PROCESSING:
@@ -2491,7 +2521,7 @@ static bool p_adaptive_binary_search(ivector v, const void *key,
 			}
 			bot += top;
 
-			// key < array[bot]
+			// the meaning of the line below is key < array[bot]
 			if ((*f1)(key, v->data[v->begin + bot]) < 0) {
 				bot -= top;
 				break;
@@ -2507,7 +2537,7 @@ static bool p_adaptive_binary_search(ivector v, const void *key,
 			}
 			bot -= top;
 
-			// key >= array[bot]
+			// the meaning of the line below is key >= array[bot]
 			if ((*f1)(key, v->data[v->begin + bot]) >= 0)
 				break;
 			top *= 2;
@@ -2919,7 +2949,7 @@ VECT_INSERT_JOB_DONE:
 }
 
 /*
- * vect_move moves the specified number of elements
+ * p_vect_move moves the specified number of elements
  * from vector v2 (from position s2) in vector v1 (at
  * the end of it).
  *
@@ -3009,8 +3039,9 @@ void vect_move(ivector v1, vector v2, const zvect_index s2,
 
 #if (ZVECT_THREAD_SAFE == 1)
 	// vect_move modifies both vectors, so has to lock them both (if needed)
-	zvect_retval lock_owner2 = (locking_disabled || (v2->flags & ZV_NOLOCKING)) ? 0 : get_mutex_lock(v2, 1);
-	zvect_retval lock_owner1 = (locking_disabled || (v1->flags & ZV_NOLOCKING)) ? 0 : get_mutex_lock(v1, 1);
+	zvect_retval lock_owner1 = 0;
+	zvect_retval lock_owner2 = 0;
+	lock_owner1 = lock_owner2 = (locking_disabled) ? 0 : get_mutex_lock2(v2, v1, 1);
 #endif
 #ifdef DEBUG
 	log_msg(ZVLP_INFO, "vect_move: --- begin ---\n");
@@ -3029,12 +3060,12 @@ void vect_move(ivector v1, vector v2, const zvect_index s2,
 	rval = p_vect_move(v1, v2, s2, e2);
 
 VECT_MOVE_DONE_PROCESSING:
+	if (rval == 0)
+		rval = p_vect_delete_at(v2, s2, e2 - 1, 0);
+
 #if (ZVECT_THREAD_SAFE == 1)
 	if (lock_owner1)
 		get_mutex_unlock(v1, 1);
-
-	if (!rval)
-		rval = p_vect_delete_at(v2, s2, e2 - 1, 0);
 
 	if (lock_owner2)
 		get_mutex_unlock(v2, 1);
@@ -3061,8 +3092,10 @@ zvect_retval vect_move_if(ivector v1, vector v2, const zvect_index s2,
 
 #if (ZVECT_THREAD_SAFE == 1)
 	// vect_move modifies both vectors, so has to lock them both (if needed)
-	zvect_retval lock_owner2 = (locking_disabled || (v2->flags & ZV_NOLOCKING)) ? 0 : get_mutex_lock(v2, 1);
-	zvect_retval lock_owner1 = (locking_disabled || (v1->flags & ZV_NOLOCKING)) ? 0 : get_mutex_lock(v1, 1);
+	zvect_retval lock_owner1 = 0;
+	zvect_retval lock_owner2 = 0;
+	lock_owner1 = lock_owner2 = (locking_disabled) ? 0 : get_mutex_lock2(v2, v1, 1);
+
 #endif
 #ifdef DEBUG
 	log_msg(ZVLP_INFO, "vect_move_if: --- begin ---\n");
@@ -3081,12 +3114,12 @@ zvect_retval vect_move_if(ivector v1, vector v2, const zvect_index s2,
 	rval = (*f2)(v1, v2) ? p_vect_move(v1, v2, s2, e2) : 1;
 
 VECT_MOVE_IF_DONE_PROCESSING:
+	if (rval == 0)
+		rval = p_vect_delete_at(v2, s2, e2 - 1, 0);
+
 #if (ZVECT_THREAD_SAFE == 1)
 	if (lock_owner1)
 		get_mutex_unlock(v1, 1);
-
-	if (!rval)
-		rval = p_vect_delete_at(v2, s2, e2 - 1, 0);
 
 	if (lock_owner2)
 		get_mutex_unlock(v2, 1);
@@ -3116,9 +3149,9 @@ zvect_retval vect_move_on_signal(ivector v1, vector v2, const zvect_index s2,
 		goto VECT_MOVE_ONS_JOB_DONE;
 
 	// vect_move modifies both vectors, so has to lock them both (if needed)
-	zvect_retval lock_owner2 = (locking_disabled || (v2->flags & ZV_NOLOCKING)) ? 0 : get_mutex_lock(v2, 1);
-
-	zvect_retval lock_owner1 = (locking_disabled || (v1->flags & ZV_NOLOCKING)) ? 0 : get_mutex_lock(v1, 1);
+	zvect_retval lock_owner2 = 0;
+	zvect_retval lock_owner1 = 0;
+	lock_owner1 = lock_owner2 = (locking_disabled) ? 0 : get_mutex_lock2(v2, v1, 1);
 
 #ifdef DEBUG
 	log_msg(ZVLP_MEDIUM, "vect_move_on_signal: --- start waiting ---\n");
@@ -3149,19 +3182,24 @@ zvect_retval vect_move_on_signal(ivector v1, vector v2, const zvect_index s2,
 #endif
 
 //VECT_MOVE_ONS_DONE_PROCESSING:
+	if (!rval)
+		rval = p_vect_delete_at(v2, s2, e2 - 1, 0);
 #ifdef DEBUG
 	log_msg(ZVLP_MEDIUM, "v1 owner? %*i\n", 10, lock_owner1);
 #endif
-	if (lock_owner1)
+	if (lock_owner1 != 0)
+	{
 		get_mutex_unlock(v1, 1);
+	}
 
 #ifdef DEBUG
 	log_msg(ZVLP_MEDIUM, "v2 owner? %*i\n", 10, lock_owner2);
 #endif
-	if (!rval)
-		rval = p_vect_delete_at(v2, s2, e2 - 1, 0);
+
 	if (lock_owner2)
+	{
 		get_mutex_unlock(v2, 1);
+	}
 
 VECT_MOVE_ONS_JOB_DONE:
 	if(rval && (rval != 1))
@@ -3175,15 +3213,17 @@ VECT_MOVE_ONS_JOB_DONE:
 
 /////////////////////////////////////////////////////////////////
 // vect_merge merges a vector (v2) into another (v1)
-void vect_merge(ivector v1, vector v2) {
+void *vect_merge(ivector v1, vector v2) {
 	// check if the vector v1 exists:
 	zvect_retval rval = p_vect_check(v1) | p_vect_check(v2);
 	if (rval)
 		goto VECT_MERGE_JOB_DONE;
 
 #if (ZVECT_THREAD_SAFE == 1)
-	zvect_retval lock_owner1 = (locking_disabled || (v1->flags & ZV_NOLOCKING)) ? 0 : get_mutex_lock(v1, 1);
-	zvect_retval lock_owner2 = (locking_disabled || (v2->flags & ZV_NOLOCKING)) ? 0 : get_mutex_lock(v2, 1);
+	zvect_retval lock_owner2 = 0;
+	zvect_retval lock_owner1 = 0;
+	lock_owner1 = lock_owner2 = (locking_disabled) ? 0 : get_mutex_lock2(v2, v1, 1);
+
 #endif
 
 #ifdef DEBUG
@@ -3231,21 +3271,18 @@ void vect_merge(ivector v1, vector v2) {
 
 VECT_MERGE_DONE_PROCESSING:
 #if (ZVECT_THREAD_SAFE == 1)
-	if (lock_owner2)
-		get_mutex_unlock(v2, 1);
-
-	if (!rval)
-		rval = p_vect_destroy(v2, 0);
-
 	if (lock_owner1)
 		get_mutex_unlock(v1, 1);
-#else
-	rval = p_vect_destroy(v2, 0);
+
+	if (lock_owner2)
+		get_mutex_unlock(v2, 1);
+#endif
+	if (!rval)
+		rval = p_vect_destroy(v2, 0);
 	// ^ Because we are merging two vectors in one
 	// after merged v2 to v1  there is no need for
 	// v2 to still exists, so let's  destroy it to
 	// free memory correctly.
-#endif
 #ifdef DEBUG
 	log_msg(ZVLP_INFO, "vect_merge: --- end ---\n");
 #endif
@@ -3253,6 +3290,8 @@ VECT_MERGE_DONE_PROCESSING:
 VECT_MERGE_JOB_DONE:
 	if(rval)
 		p_throw_error(rval, NULL);
+
+	return NULL;
 }
 // END of vect_merge
 

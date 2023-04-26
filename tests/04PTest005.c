@@ -61,11 +61,11 @@ size_t max_strLen = 32;
 
 
 // This is the total number of messages that will be
-// produced durign this test (you can increase it if
+// produced during this test (you can increase it if
 // you'd like, but keep in mind that the more messages
 // the more memory your test system will need!):
-#define TOTAL_ITEMS 10000000
-
+//# define TOTAL_ITEMS 10000000
+#define TOTAL_ITEMS 10
 
 #define MAX_ITEMS (TOTAL_ITEMS / ( MAX_THREADS / 2))
 #define MAX_MSG_SIZE 72
@@ -88,15 +88,13 @@ void mk_rndstr(char *rndStr, size_t len) {
 	static char charset[] =
 		"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789,.-#'?!";
 
-	if (len) {
-		if (rndStr) {
-			int l = (int)(sizeof(charset) - 1);
-			for (size_t n = 0; n < len; n++) {
-				int key = rand() % l;
-				rndStr[n] = charset[key];
-			}
-			rndStr[len] = '\0';
+	if (len && rndStr) {
+		int l = (int)(sizeof(charset) - 1);
+		for (size_t n = 0; n < len; n++) {
+			int key = rand() % l;
+			rndStr[n] = charset[key];
 		}
+		rndStr[len] = '\0';
 	}
 }
 
@@ -104,16 +102,17 @@ void clear_str(char *str, size_t len) {
 	memset(str, 0, len);
 }
 
-zvect_retval check_if_correct_size(void *v1, void *v2) {
-	return ( vect_size((vector)v2) >= MAX_ITEMS );
+zvect_retval check_if_correct_size(void * v1, void *v2) {
 	(void)v1;
+	return ( vect_size((vector)v2) >= MAX_ITEMS );
 }
 
 // Threads
+__attribute__((noreturn))
 void *producer(void *arg) {
 	struct thread_args *targs = (struct thread_args *)arg;
-	vector v = (vector)targs->v;
-	int id = (int)targs->id;
+	vector v = targs->v;
+	int id = targs->id;
 
 	// Generate a random "pause" to improve simulation of
 	// real world use case:
@@ -161,6 +160,7 @@ void *producer(void *arg) {
 		printf("Producer thread %i done. Produced %d events.\n", id, i);
 #ifdef DEBUG
 		printf("--- Events in the queue right now: %*i ---\n", 4, vect_size(v));
+		fflush(stdout);
 #endif
 		// No need to destroy v2, it was already destroyed automatically after the merge!
 
@@ -170,26 +170,23 @@ void *producer(void *arg) {
 		printf("Time spent to complete the thread vector operations:\n");
 		CCPAL_REPORT_ANALYSIS;
 
-#ifdef DEBUG
-		//printf("Signal status %*i\n\n", 8, !vect_send_signal(v));
-		//printf("\n\n");
-#endif
 		fflush(stdout);
 
 		// Let's wake up consumer threads, data is available to
 		// be processed
 		vect_sem_post(v);
 
-		vect_destroy(v2);
+		v2 = vect_destroy(v2);
 
 	pthread_exit(NULL);
-	return NULL;
+	// no need to return NULL;
 }
 
+__attribute__((noreturn))
 void *consumer(void *arg) {
 	struct thread_args *targs = (struct thread_args *)arg;
-	vector v = (vector)targs->v;
-	int id = (int)targs->id;
+	vector v = targs->v;
+	int id = targs->id;
 	int evt_counter = 0;
 
 	CCPAL_INIT_LIB;
@@ -217,7 +214,8 @@ void *consumer(void *arg) {
 		CCPAL_START_MEASURING;
 
 		while (true) {
-			if (!vect_move_if(v2, v, 0, MAX_ITEMS, check_if_correct_size))
+			if (!vect_move_if(v2, v, 0,
+				MAX_ITEMS, check_if_correct_size))
 			{
 #ifdef DEBUG
 				printf("Moved data from global vector to local, global vector size: %*i, local vector size: %*i\n", 8, vect_size(v), 8, vect_size(v2));
@@ -228,28 +226,47 @@ void *consumer(void *arg) {
 		}
 
 		printf("--- Consumer Thread %*i received a chunk of %*i messages ---\n\n", 3, id, 4, vect_size(v2));
+#ifdef DEBUG
+		fflush(stdout);
+#endif
 
-		QueueItem *item; // We do not need to allocate item,
-		                 // ZVector vect_remove_front will do it for us :)
+		QueueItem *item = NULL; // We do not need to allocate item,
+		                 	// ZVector vect_remove_front will do it for us :)
 		evt_counter = 0;
 		i = MAX_ITEMS;
 		do {
+			if (vect_size(v2) == 0)
+				break;
 			item  = (QueueItem *)vect_remove_front(v2);
 			evt_counter++;
 			if ( evt_counter < MAX_ITEMS)
+			{
+#ifdef DEBUG
+				//printf("%i",id);
+				fflush(stdout);
+#endif
 				free(item);
+				item = NULL;
+			}
+			else
+			{
+				printf("\nConsumer Thread %*i, eventID: %*i, last msg: %s\n", 3, id, 4, item->eventID, item->msg);
+				fflush(stdout);
+				free(item);
+				item = NULL;
+			}
 		} while (--i);
 
-#ifdef DEBUG
-		printf("Last element in the queue for Consumer Thread %*i: ID (%*d) - Message: %s\n",
-			8, id, 8, item->eventID, item->msg);
-#endif
-
-	free(item);
-	item = NULL;
+	if (item != NULL)
+	{
+		//free(item);
+		item = NULL;
+	}
 
 	printf("Consumer thread %i done. Consumed %d events.\n", id, evt_counter);
-
+#ifdef DEBUG
+	fflush(stdout);
+#endif
 	CCPAL_STOP_MEASURING;
 
 	// Returns perf analysis results:
@@ -259,10 +276,10 @@ void *consumer(void *arg) {
 	printf("\n\n");
 	fflush(stdout);
 
-	vect_destroy(v2);
+	v2 = vect_destroy(v2);
 
 	pthread_exit(NULL);
-	return NULL;
+	// no need to return NULL;
 }
 
 int main() {
@@ -329,7 +346,9 @@ int main() {
 		CCPAL_STOP_MEASURING;
 
 		for(i=0; i < MAX_THREADS; i++) {
-			free(targs[i]);
+			if (targs[i] != NULL)
+				free(targs[i]);
+			targs[i]=NULL;
 		}
 
 	printf("Done.\n\nAll threads have completed their job.\n");
@@ -378,6 +397,7 @@ int main() {
 	printf("Test %s_%d: destroy the Queue:\n", testGrp, testID);
 	fflush(stdout);
 
+	if (v != NULL)
 		vect_destroy(v);
 
 	printf("done.\n");
