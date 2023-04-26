@@ -40,7 +40,7 @@
 #endif
 #include ZVECTORH
 
-#define DEBUG
+//# define DEBUG
 
 // Setup tests:
 char *testGrp = "005";
@@ -65,7 +65,6 @@ size_t max_strLen = 32;
 // you'd like, but keep in mind that the more messages
 // the more memory your test system will need!):
 #define TOTAL_ITEMS 10000000
-
 
 #define MAX_ITEMS (TOTAL_ITEMS / ( MAX_THREADS / 2))
 #define MAX_MSG_SIZE 72
@@ -176,8 +175,7 @@ void *producer(void *arg) {
 		// be processed
 		vect_sem_post(v);
 
-		vect_destroy(v2);
-		v2 = NULL;
+		v2 = vect_destroy(v2);
 
 	pthread_exit(NULL);
 	// no need to return NULL;
@@ -215,7 +213,8 @@ void *consumer(void *arg) {
 		CCPAL_START_MEASURING;
 
 		while (true) {
-			if (!vect_move_if(v2, v, 0, MAX_ITEMS, 			check_if_correct_size))
+			if (!vect_move_if(v2, v, 0,
+				MAX_ITEMS, check_if_correct_size))
 			{
 #ifdef DEBUG
 				printf("Moved data from global vector to local, global vector size: %*i, local vector size: %*i\n", 8, vect_size(v), 8, vect_size(v2));
@@ -241,12 +240,16 @@ void *consumer(void *arg) {
 			evt_counter++;
 			if ( evt_counter < MAX_ITEMS)
 			{
+#ifdef DEBUG
+				//printf("%i",id);
+				fflush(stdout);
+#endif
 				free(item);
 				item = NULL;
 			}
 			else
 			{
-				printf("Consumer Thread %*i, eventID: %*i, msg: %s\n", 3, id, 4, item->eventID, item->msg);
+				printf("\nConsumer Thread %*i, eventID: %*i, last msg: %s\n", 3, id, 4, item->eventID, item->msg);
 				fflush(stdout);
 				free(item);
 				item = NULL;
@@ -272,8 +275,7 @@ void *consumer(void *arg) {
 	printf("\n\n");
 	fflush(stdout);
 
-	if (v2 != NULL)
-		vect_destroy(v2);
+	v2 = vect_destroy(v2);
 
 	pthread_exit(NULL);
 	// no need to return NULL;
@@ -343,7 +345,8 @@ int main() {
 		CCPAL_STOP_MEASURING;
 
 		for(i=0; i < MAX_THREADS; i++) {
-			free(targs[i]);
+			if (targs[i] != NULL)
+				free(targs[i]);
 			targs[i]=NULL;
 		}
 
