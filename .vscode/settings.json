@@ -1,4 +1,7 @@
 {
+	"files.exclude": {
+		".history/**": true
+	},
 	"cpplint.filters": [
 		"-whitespace"
 	],
