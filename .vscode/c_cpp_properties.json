@@ -15,7 +15,8 @@
             "cStandard": "c99",
             "cppStandard": "gnu++98",
             "intelliSenseMode": "linux-gcc-x64",
-            "compileCommands": "${workspaceFolder}/.vscode/compile_commands.json"
+            "compileCommands": "${workspaceFolder}/.vscode/compile_commands.json",
+            "configurationProvider": "ms-vscode.makefile-tools"
         },
         {
             "name": "Mac",
