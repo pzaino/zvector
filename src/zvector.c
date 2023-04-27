@@ -2393,7 +2393,7 @@ static void p_vect_qsort(ivector v, zvect_index l, zvect_index r,
 	zvect_index p;
 	zvect_index j;
 	zvect_index q;
-	void *ref_val = NULL;
+	void const *ref_val = NULL;
 
 	// l = left (also low)
 	if (l > 0)
