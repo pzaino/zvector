@@ -26,7 +26,7 @@
 #include ZVECTORH
 
 // Setup tests:
-char *testGrp = "002";
+char *testGrp = "007";
 uint8_t testID = 1;
 
 int main(void)
@@ -307,11 +307,18 @@ int main(void)
 
 	fflush(stdout);
 
+	printf("Test %s_%d: Rotate left the vector of %d items and check if it's not modified:\n",
+		testGrp, testID, 5);
+	fflush(stdout);
+
 	// Rotate the vector by 6 positions.
 	vect_rotate_left(v, 6);
 
 	// Check that the vector is modified.
 	assert(vect_size(v) == 10);
+
+	printf("first element: %d\n", *((int *)vect_get_at(v, 0)));
+
 	assert(*((int *)vect_get_at(v, 0)) == 8);
 	assert(*((int *)vect_get_at(v, 1)) == 9);
 	assert(*((int *)vect_get_at(v, 2)) == 10);
@@ -523,6 +530,10 @@ int main(void)
 	testID++;
 
 	fflush(stdout);
+
+	printf("Destroy the vector\n");
+	v = vect_destroy(v);
+	printf("done.\n");
 
 }
 
