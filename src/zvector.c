@@ -281,6 +281,7 @@ static void *safe_strncpy(const char * const str_src,
 		log_msg(ZVLP_ERROR, "Error: %*i, %s\n", 8, -1000, "Out of memory!");
 	} else {
 		strncpy((char *)str_dst, tmp_dst, sizeof(tmp_dst));
+		((char *)str_dst)[sizeof(tmp_dst)] = 0;
 	}
 	return str_dst;
 }
@@ -2392,7 +2393,7 @@ static void p_vect_qsort(ivector v, zvect_index l, zvect_index r,
 	zvect_index p;
 	zvect_index j;
 	zvect_index q;
-	void *ref_val = NULL;
+	void const *ref_val = NULL;
 
 	// l = left (also low)
 	if (l > 0)

@@ -1,4 +1,7 @@
 {
+	"files.exclude": {
+		".history/**": true
+	},
 	"cpplint.filters": [
 		"-whitespace"
 	],
@@ -83,6 +86,7 @@
 		"${workspaceFolder}/src"
 	],
 	"cSpell.words": [
+		"aarch",
 		"ALWAYSINLINE",
 		"COMPTYPE",
 		"cppcheck",
@@ -90,10 +94,12 @@
 		"DATAALIGN",
 		"datastructures",
 		"ivector",
+		"LDFLAGS",
 		"LOGPRIORITY",
 		"mallopt",
 		"Michail",
 		"MONOBOUND",
+		"msvc",
 		"NOLOCKING",
 		"RACECOND",
 		"rndstr",

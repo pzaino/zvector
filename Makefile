@@ -43,7 +43,7 @@ CC:=gcc
 CFLAGS+=
 LDFLAGS+=
 # Flags to be used only for release or production builds:
-P_CFLAGS:=-O3 -flto
+P_CFLAGS:= -O3 -flto
 
 # If you want to pass some MACROS to your code you can use the following
 # variable just add your -D<MY_MACRO>:

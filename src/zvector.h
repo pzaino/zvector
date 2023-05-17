@@ -212,9 +212,9 @@ zvect_retval vect_trylock(vector const v);
 zvect_retval vect_unlock(vector const v);
 
 /* TODO:
- * zvect_retval vect_wait_for_signal(const vector v);
+ * implement zvect_retval vect_wait_for_signal(const vector v);
  *
- * zvect_retval vect_lock_after_signal(const vector v);
+ * implement zvect_retval vect_lock_after_signal(const vector v);
  */
 
 zvect_retval vect_move_on_signal(vector const v1, vector v2,
@@ -354,7 +354,7 @@ void vect_put_front(vector const v, const void *item);
 
 /*
  * vect_remove removes an item from the vector
- * and reorganise the vector. It also returns
+ * and reorganize the vector. It also returns
  * the item remove from the vector, so you can
  * use it to simulate a stack behaviour as well.
  *
@@ -377,7 +377,7 @@ void *vect_remove_front(vector const v);
 
 /*
  * vect_delete deletes an item from the vector
- * and reorganise the vector. It does not return
+ * and reorganize the vector. It does not return
  * the item like remove.
  *
  * vect_delete(v)       will delete and the last
