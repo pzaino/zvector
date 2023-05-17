@@ -196,6 +196,36 @@ make install
 
 Note for CLang users on Linux: please check the Makefile before trying to build with clang and replace the value of variable `CC:=gcc` with `CC:=clang`.
 
+### Using zig compiler
+
+If you have zig installed, then you can build the library using zig, just edit the Makefile and set the variable `CC:=zig cc`, then add the specific target to CFLAGS and P_CFLAGS as follow:
+
+```makefile
+# Configure desired compiler:
+CC:=zig cc
+
+# Configure additional compiler and linker flags:
+CFLAGS+= -target aarch64-macos-none
+LDFLAGS+=
+# Flags to be used only for release or production builds:
+P_CFLAGS:= -O3 -target aarch64-macos-none
+```
+
+target can be any of the supported targets by zig, for example: `aarch64-macos-none`, `x86_64-linux-gnu`, `x86_64-windows-gnu`, `x86_64-windows-msvc`, `x86_64-fuchsia`, `x86_64-netbsd`, `x86_64-freebsd`, `x86_64-openbsd`, `x86_64-solaris`, `x86_64-apple-darwin`, `x86_64-pc-windows-msvc`
+etc.
+
+Then build with:
+
+```bash
+make
+```
+
+and install with
+
+```bash
+make install
+```
+
 ### Visual Studio
 
 If you use Microsoft Windows, then you can open the project in Visual Studio 2019 or 2022 and build it using Visual Studio Build function.
