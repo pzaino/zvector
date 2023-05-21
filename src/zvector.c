@@ -1671,9 +1671,13 @@ zvect_retval vect_sem_post(ivector v) {
 }
 
 /*
+TODO: Implement this function:
+
 static inline zvect_retval p_vect_wait_for_signal(const vector v) {
     	return (locking_disabled || (v->flags & ZV_NOLOCKING)) ? 1 : wait_for_signal(v, 3);
 }
+
+and also:
 
 inline zvect_retval vect_wait_for_signal(const vector v) {
     	return p_vect_wait_for_signal(v);
@@ -2471,158 +2475,12 @@ VECT_QSORT_JOB_DONE:
 #ifdef TRADITIONAL_BINARY_SEARCH
 static bool p_standard_binary_search(vector v, const void *key,
                                     zvect_index *item_index,
-                                    int (*f1)(const void *, const void *)) {
-	zvect_index bot, top;
-
-	bot = 0;
-	top = p_vect_size(v) - 1;
-
-	while (bot < top) {
-        zvect_index mid // mid-point
-		mid = top - (top - bot) / 2;
-
-		// key < array[mid]
-		if ((*f1)(key, v->data[v->begin + mid]) < 0) {
-			top = mid - 1;
-		} else {
-			bot = mid;
-		}
-	}
-
-	// key == array[top]
-	if ((*f1)(key, v->data[v->begin + top]) == 0) {
-		*item_index = top;
-		return true;
-	}
-
-	*item_index = top;
-	return false;
-}
-#endif // TRADITIONAL_BINARY_SEARCH
-
-#ifndef TRADITIONAL_BINARY_SEARCH
-// This is my re-implementation of Igor van den Hoven's Adaptive
-// Binary Search algorithm. It has few improvements over the
-// original design, most notably the use of custom compare
-// function that makes it suitable also to search through strings
-// and other types of vectors.
+                                    int (*f1)(const void *, const void *));
+#else
 static bool p_adaptive_binary_search(ivector v, const void *key,
                                     zvect_index *item_index,
-                                    int (*f1)(const void *, const void *)) {
-	zvect_index bot;
-	zvect_index top;
-	zvect_index mid;
-
-	if ((v->balance >= 32) || (p_vect_size(v) <= 64)) {
-		bot = 0;
-		top = p_vect_size(v);
-		goto P_ADP_BSEARCH_MONOBOUND;
-	}
-	bot = v->bottom;
-	top = 32;
-
-	// key >= array[bot]
-	if ((*f1)(key, v->data[v->begin + bot]) >= 0) {
-		while (1) {
-			if ((bot + top) >= p_vect_size(v)) {
-				top = p_vect_size(v) - bot;
-				break;
-			}
-			bot += top;
-
-			// the meaning of the line below is key < array[bot]
-			if ((*f1)(key, v->data[v->begin + bot]) < 0) {
-				bot -= top;
-				break;
-			}
-			top *= 2;
-		}
-	} else {
-		while (1) {
-			if (bot < top) {
-				top = bot;
-				bot = 0;
-				break;
-			}
-			bot -= top;
-
-			// the meaning of the line below is key >= array[bot]
-			if ((*f1)(key, v->data[v->begin + bot]) >= 0)
-				break;
-			top *= 2;
-		}
-	}
-
-P_ADP_BSEARCH_MONOBOUND:
-	while (top > 3) {
-		mid = top / 2;
-		// key >= array[bot + mid]
-		if ((*f1)(key, v->data[v->begin + (bot + mid)]) >= 0)
-			bot += mid;
-		top -= mid;
-	}
-
-	v->balance = v->bottom > bot ? v->bottom - bot : bot - v->bottom;
-	v->bottom = bot;
-
-	while (top) {
-		// key == array[bot + --top]
-		int test = (*f1)(key, v->data[v->begin + (bot + (--top))]);
-		if (test == 0) {
-			*item_index = bot + top;
-			return true;
-		} else if (test > 0) {
-			*item_index = bot + (top + 1);
-			return false;
-		}
-	}
-
-	*item_index = bot + top;
-	return false;
-}
-#endif // ! TRADITIONAL_BINARY_SEARCH
-
-bool vect_bsearch(ivector v, const void *key,
-                  int (*f1)(const void *, const void *),
-                  zvect_index *item_index) {
-	// Check parameters:
-	if ((key == NULL) || (f1 == NULL) || (p_vect_size(v) == 0))
-		return false;
-
-	*item_index = 0;
-	// check if the vector exists:
-	zvect_retval rval = p_vect_check(v);
-	if (rval)
-		goto VECT_BSEARCH_JOB_DONE;
-
-	// TODO: Add mutex locking
-
-#ifdef TRADITIONAL_BINARY_SEARCH
-	if (p_standard_binary_search(v, key, item_index, f1)) {
-		return true;
-	} else {
-		*item_index = 0;
-		return false;
-	}
-#endif // TRADITIONAL_BINARY_SEARCH
-#ifndef TRADITIONAL_BINARY_SEARCH
-	if (p_adaptive_binary_search(v, key, item_index, f1)) {
-		return true;
-	} else {
-		*item_index = 0;
-		return false;
-	}
-#endif // ! TRADITIONAL_BINARY_SEARCH
-
-// VECT_BSEARCH_DONE_PROCESSING:
-	// TODO: Add mutex unlock
-
-VECT_BSEARCH_JOB_DONE:
-	if (rval)
-		p_throw_error(rval, NULL);
-
-	return false;
-}
+                                    int (*f1)(const void *, const void *));
+#endif
 
 /*
  * Although if the vect_add_* doesn't belong to this group of
@@ -2676,7 +2534,11 @@ void vect_add_ordered(ivector v, const void *value,
 	// which will use item_index (which will be the
 	// place where value should have been) to insert
 	// value as an ordered item :)
+#ifdef TRADITIONAL_BINARY_SEARCH
+	p_standard_binary_search(v, value, &item_index, f1);
+#else
 	p_adaptive_binary_search(v, value, &item_index, f1);
+#endif
 
 	vect_add_at(v, value, item_index);
 
@@ -2689,6 +2551,220 @@ VECT_ADD_ORD_DONE_PROCESSING:
 VECT_ADD_ORD_JOB_DONE:
 	if(rval)
 		p_throw_error(rval, NULL);
+}
+
+
+// Searching Algorithms:
+
+#ifdef TRADITIONAL_BINARY_SEARCH
+static bool p_standard_binary_search(vector v, const void *key,
+                                    zvect_index *item_index,
+                                    int (*f1)(const void *, const void *)) {
+	zvect_index bot, top;
+
+	bot = 0;
+	top = p_vect_size(v) - 1;
+
+	while (bot < top) {
+        zvect_index mid // mid-point
+		mid = top - (top - bot) / 2;
+
+		// key < array[mid]
+		if ((*f1)(key, v->data[v->begin + mid]) < 0) {
+			top = mid - 1;
+		} else {
+			bot = mid;
+		}
+	}
+
+	// key == array[top]
+	if ((*f1)(key, v->data[v->begin + top]) == 0) {
+		*item_index = top;
+		return true;
+	}
+
+	*item_index = top;
+	return false;
+}
+#endif // TRADITIONAL_BINARY_SEARCH
+
+#ifndef TRADITIONAL_BINARY_SEARCH
+// This is my re-implementation of Igor van den Hoven's Adaptive
+// Binary Search algorithm. It has few improvements over the
+// original design, most notably the use of custom compare
+// function that makes it suitable also to search through strings
+// and other types of vectors.
+static bool p_adaptive_binary_search(ivector v, const void *key,
+                                    zvect_index *item_index,
+                                    int (*f1)(const void *, const void *)) {
+	zvect_index bot;
+	zvect_index top;
+	zvect_index mid;
+
+	if ((v->balance >= 32) || (p_vect_size(v) <= 64)) {
+		bot = 0;
+		top = p_vect_size(v);
+		goto P_ADP_BSEARCH_MONOBOUND;
+	}
+	bot = v->bottom;
+	top = 32;
+
+	// the following evaluation correspond to: key >= array[bot]
+	if ((*f1)(key, v->data[v->begin + bot]) >= 0) {
+		while (1) {
+			if ((bot + top) >= p_vect_size(v)) {
+				top = p_vect_size(v) - bot;
+				break;
+			}
+			bot += top;
+
+			// the meaning of the line below is: key < array[bot]
+			if ((*f1)(key, v->data[v->begin + bot]) < 0) {
+				bot -= top;
+				break;
+			}
+			top *= 2;
+		}
+	} else {
+		while (1) {
+			if (bot < top) {
+				top = bot;
+				bot = 0;
+				break;
+			}
+			bot -= top;
+
+			// the meaning of the line below is: key >= array[bot]
+			if ((*f1)(key, v->data[v->begin + bot]) >= 0)
+				break;
+			top *= 2;
+		}
+	}
+
+P_ADP_BSEARCH_MONOBOUND:
+	while (top > 3) {
+		mid = top / 2;
+		// the meaning of the following statement is: key >= array[bot + mid]
+		if ((*f1)(key, v->data[v->begin + (bot + mid)]) >= 0)
+			bot += mid;
+		top -= mid;
+	}
+
+	v->balance = v->bottom > bot ? v->bottom - bot : bot - v->bottom;
+	v->bottom = bot;
+
+	while (top) {
+		// the meaning of the following statement is: key == array[bot + --top]
+		int test = (*f1)(key, v->data[v->begin + (bot + (--top))]);
+		if (test == 0) {
+			*item_index = bot + top;
+			return true;
+		} else if (test > 0) {
+			*item_index = bot + (top + 1);
+			return false;
+		}
+	}
+
+	*item_index = bot + top;
+	return false;
+}
+#endif // ADAPTIVE TRADITIONAL_BINARY_SEARCH
+
+bool vect_bsearch(ivector v, const void *key,
+                  int (*f1)(const void *, const void *),
+                  zvect_index *item_index) {
+	*item_index = 0;
+
+	// Check parameters:
+	if ((key == NULL) || (f1 == NULL) || (p_vect_size(v) == 0))
+		return false;
+
+	// check if the vector exists:
+	zvect_retval rval = p_vect_check(v);
+	if (rval)
+		goto VECT_BSEARCH_JOB_DONE;
+
+	// TODO: Add mutex locking
+
+#ifdef TRADITIONAL_BINARY_SEARCH
+	if (p_standard_binary_search(v, key, item_index, f1)) {
+		return true;
+	} else {
+		*item_index = 0;
+		return false;
+	}
+#endif // TRADITIONAL_BINARY_SEARCH
+#ifndef TRADITIONAL_BINARY_SEARCH
+	if (p_adaptive_binary_search(v, key, item_index, f1)) {
+		return true;
+	} else {
+		*item_index = 0;
+		return false;
+	}
+#endif // ADAPTIVE TRADITIONAL_BINARY_SEARCH
+
+// VECT_BSEARCH_DONE_PROCESSING:
+	// TODO: Add mutex unlock
+
+VECT_BSEARCH_JOB_DONE:
+	if (rval)
+		p_throw_error(rval, NULL);
+
+	return false;
+}
+
+// Traditional Linear Search Algorithm,
+// useful with non sorted vectors:
+bool vect_lsearch(ivector v, const void *key,
+                  int (*f1)(const void *, const void *),
+                  zvect_index *item_index) {
+	*item_index = 0;
+
+	// Check parameters:
+	if ((key == NULL) || (f1 == NULL) || (p_vect_size(v) == 0))
+		return false;
+
+	// check if the vector exists:
+	zvect_retval rval = p_vect_check(v);
+	if (rval)
+		goto VECT_LSEARCH_JOB_DONE;
+
+	// TODO: Add mutex locking
+	zvect_index vsize = p_vect_size(v);
+	if ((vsize & (1<<0))==0 && (vsize>4)) {
+		for (register zvect_index x=0; x<vsize; x+=4) {
+			if ((*f1)(key, v->data[v->begin + x]) != 0) {
+				*item_index = x;
+				return true;
+			}
+			if ((*f1)(key, v->data[v->begin + (x+1)]) != 0) {
+				*item_index = x;
+				return true;
+			}
+			if ((*f1)(key, v->data[v->begin + (x+2)]) != 0) {
+				*item_index = x;
+				return true;
+			}
+			if ((*f1)(key, v->data[v->begin + (x+3)]) != 0) {
+				*item_index = x;
+				return true;
+			}
+		}
+	} else {
+		for (register zvect_index x=0; x<vsize; x++) {
+			if ((*f1)(key, v->data[v->begin + x]) != 0) {
+				*item_index = x;
+				return true;
+			}
+		}
+	}
+
+VECT_LSEARCH_JOB_DONE:
+	if (rval)
+		p_throw_error(rval, NULL);
+
+	*item_index = 0;
+	return false;
 }
 
 #endif // ZVECT_DMF_EXTENSIONS
