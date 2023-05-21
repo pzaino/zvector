@@ -515,7 +515,7 @@ bool vect_bsearch(vector const v, const void *key, int (*f1)(const void *, const
  * int i = 5;
  * vect_lsearch(v, &i, my_compare);
  */
-bool vect_lsearch(ivector v, const void *key,
+bool vect_lsearch(vector v, const void *key,
                   int (*f1)(const void *, const void *),
                   zvect_index *item_index);
 
