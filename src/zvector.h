@@ -497,6 +497,29 @@ void vect_qsort(vector const v, int (*compare_func)(const void *, const void*));
 bool vect_bsearch(vector const v, const void *key, int (*f1)(const void *, const void *), zvect_index *item_index);
 
 /*
+ * vect_lsearch is a function that allows to perform
+ * traditional linear search over an ordered or not
+ * ordered vector. If the vector size is a multiple of
+ * 2 the fuction optimize the traditional loop using
+ * 4 unrolled consecutive searches, while if the vector
+ * size is odd it uses traditional loop (for now).
+ *
+ * It finds the item "key" using the comparison function
+ * "f1", which has to be provided by the user as a pointer
+ * to a user-written comparison function that accept the
+ * vector's items (as defined by the user).
+ *
+ * For example to search for the number 5 in a vector
+ * called v using a compare function called "my_compare"
+ * use:
+ * int i = 5;
+ * vect_lsearch(v, &i, my_compare);
+ */
+bool vect_lsearch(vector v, const void *key,
+                  int (*f1)(const void *, const void *),
+                  zvect_index *item_index);
+
+/*
  * vect_add_ordered allows the insertion of new items in
  * an ordered fashion. Please note that for this to work
  * fine you should always use only ordered vectors or if
