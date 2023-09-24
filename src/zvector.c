@@ -2686,6 +2686,21 @@ bool vect_bsearch(ivector v, const void *key,
 
 	// TODO: Add mutex locking
 
+	zvect_index vsize = p_vect_size(v);
+	// First case (vector is empty, so we can't search):
+	if (vsize == 0)
+		goto VECT_BSEARCH_JOB_DONE;
+
+	// Second case (vector has only 1 item, so we can't search):
+	if (vsize == 1) {
+		if ((*f1)(key, v->data[v->begin]) != 0) {
+			*item_index = 0;
+			return true;
+		} else {
+			goto VECT_BSEARCH_JOB_DONE;
+		}
+	}
+
 #ifdef TRADITIONAL_BINARY_SEARCH
 	if (p_standard_binary_search(v, key, item_index, f1)) {
 		return true;
@@ -2731,6 +2746,21 @@ bool vect_lsearch(ivector v, const void *key,
 
 	// TODO: Add mutex locking
 	zvect_index vsize = p_vect_size(v);
+
+	// First case (vector is empty, so we can't search):
+	if (vsize == 0)
+		goto VECT_LSEARCH_JOB_DONE;
+
+	// Second case (vector has only 1 item, so we can't search):
+	if (vsize == 1) {
+		if ((*f1)(key, v->data[v->begin]) != 0) {
+			*item_index = 0;
+			return true;
+		} else {
+			goto VECT_LSEARCH_JOB_DONE;
+		}
+	}
+
 	if ((vsize & (1<<0))==0 && (vsize>4)) {
 		for (register zvect_index x=0; x<vsize; x+=4) {
 			if ((*f1)(key, v->data[v->begin + x]) != 0) {
