@@ -1,0 +1,8 @@
+# dependabot.yml
+version: 2
+updates: []
+
+# This project is a pure ANSI C99 project with a Makefile and does
+# not use any package manager or third-party libraries. Therefore,
+# Dependabot is not applicable, and this file is present to comply
+# with security requirements.
