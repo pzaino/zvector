@@ -33,7 +33,7 @@ So, I thought it would be fun to develop a dynamic array library that actually p
 
 So far, ZVector has resulted in solving the traditional issues presented by Dynamic arrays, and indeed one can use it to create high performance dynamic arrays that stay fast also when adding elements at the beginning of them or inside (check 04PTest001, 04PTest002 and 04PTest003 to see how one can do that).
 
-There are also other advantages using ZVector instead of regular C Arrays (beside of being dynamic):
+There are other advantages using ZVector instead of regular C Arrays (beside of being dynamic):
 
 - For instance, passing a ZVector to a function will NOT lose it's size, so you can safely do this.
 
@@ -101,7 +101,7 @@ The library is relatively small, however it comes with some nice features:
 
 - **Custom QuickSort and Improved Adaptive Binary Search**
 
-   ZVector comes with a custom QuickSort algorithm that uses 3 ways partitioning for very fast ordering of a vector. It also comes with an improved Adaptive Binary Search algorithm for very fast record search. Both of them supports custom user compare functions, so ordering and searches can be done for every possible type of records.
+   ZVector comes with a custom QuickSort algorithm that uses 3 ways partitioning for very fast ordering of a vector. It also comes with an improved Adaptive Binary Search algorithm for very fast record search. Both of them support custom user compare functions, so ordering and searches can be done for every possible type of records.
 
 - **CI/CD support**
 
@@ -119,11 +119,11 @@ It's very simple, it's an ANSI C99 library, no funky dependencies, so, it should
 
 ZVector uses a `p_vector` struct (everything that begins with a `p_` in zvector is "private") to represent a dynamic array of arbitrary items. The library tries to hide the `p_vector` data structure (the public type is called `vector`), this to make it easier to use the library and improve clean coding where possible. Given that, a typical size for a cache line is usually 64 Bytes (16 words), p_vector is optimized for such type of caches and so, an entire vector struct should take 1 single line in a cache, plus the number of pointers to user data.
 
-The user decides which type of items (between regular base types or custom types or data structures, etc), the initial capacity of a vector and its properties.
+The user decides which type of items (between regular base types or custom types or data structures, etc.), the initial capacity of a vector and its properties.
 
 Properties can be expressed as a set of flags, for example: `ZV_BYREF | ZV_SEC_WIPE` will set a vector with both these two properties on. Turning on a property simply means asking ZVector to automatically deal with that specific property. So enabling `ZV_SEC_WIPE` means that ZVector itself will handle secure data wipe of the data stored in a vector when such data is no longer needed.
 
-When a vector gets extended, it may also gets its data copied into the new larger vector, however, to improve performances, ZVector only maintains and copies an "array of pointers" to such data (so the actual user data is untouched) and the functions that perform such copy are optimized for memory bandwidth to improve performance.
+When a vector gets extended, it also may gets its data copied into the new larger vector, however, to improve performances, ZVector only maintains and copies an "array of pointers" to such data (so the actual user data is untouched) and the functions that perform such copy are optimized for memory bandwidth to improve performance.
 
 ## How do I use it?
 
@@ -198,7 +198,7 @@ Note for CLang users on Linux: please check the Makefile before trying to build 
 
 ### Using zig compiler
 
-If you have zig installed, then you can build the library using zig, just edit the Makefile and set the variable `CC:=zig cc`, then add the specific target to CFLAGS and P_CFLAGS as follow:
+If you have zig installed, then you can build the library using zig, just edit the Makefile and set the variable `CC:=zig cc`, then add the specific target to CFLAGS and P_CFLAGS as follows:
 
 ```makefile
 # Configure desired compiler:
@@ -257,10 +257,10 @@ Please note: when using libraries like jemalloc and similar, performance improve
 
 To have an idea of the performance, you can use the following tests that come with ZVector:
 
-- 04PTest005 This test spins 16 threads, 8 producers and 8 consumers and they all work in parallel. This happens because each producer and consumer works on a local vector that is derived from the global vector in chunks. So the only concurrency is when a chunk of items (all at once) is either moved from a local vector to the global vector or is fetched from the global vector into a local vector. This technique helps a lot to improve Amdahl's law constraints on the matter of parallelism. If you have a look at the test code, ZVector handles all the complexity of using multi-threading, so one can simply use local structures and let ZVector deal with locking mechanisms and concurrency complexity. When you run this test using jemalloc or tcmalloc you reduce the critical sections time even more improving both performance and parallelism.
+- 04PTest005 This test spins 16 threads, 8 producers and 8 consumers, and they all work in parallel. This happens because each producer and consumer works on a local vector that is derived from the global vector in chunks. So the only concurrency is when a chunk of items (all at once) is either moved from a local vector to the global vector or is fetched from the global vector into a local vector. This technique helps a lot to improve Amdahl's law constraints on the matter of parallelism. If you have a look at the test code, ZVector handles all the complexity of using multi-threading, so one can simply use local structures and let ZVector deal with locking mechanisms and concurrency complexity. When you run this test using jemalloc or tcmalloc you reduce the critical sections time even more improving both performance and parallelism.
              You can easily increase the number of threads in this test to your like, need. Look at the source for more details.
 
-- 04PTestX All the tests that starts with 04PTest are generic performance tests and they try to measure specific costs of each activity in the library.
+- 04PTestX All the tests that starts with 04PTest are generic performance tests, and they try to measure specific costs of each activity in the library.
 
 If you do not need the Thread Safe code in your own projects, then you can disable it from the Makefile (have a look at the file for details). Disabling the Thread Safe code will make the library even faster.
 

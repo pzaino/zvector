@@ -117,7 +117,6 @@ void *producer(void *arg) {
 	fflush(stdout);
 
 	pthread_exit(NULL);
-	return NULL;
 }
 
 void *consumer(void *arg) {
@@ -163,7 +162,6 @@ void *consumer(void *arg) {
 	fflush(stdout);
 
 	pthread_exit(NULL);
-	return NULL;
 }
 
 int main() {
@@ -189,16 +187,16 @@ int main() {
 	printf("Test %s_%d: Spin 2 threads and use them to manipoulate the stack created above.\n", testGrp, testID);
 	fflush(stdout);
 
-		int err = 0;
+		int err;
 		int i = 0;
 		err = pthread_create(&(tid[i]), NULL, &producer, v);
 		if (err != 0)
-		printf("Can't create thread :[%s]\n", strerror(err));
+			printf("Can't create thread :[%s]\n", strerror(err));
 		i++;
 
 		err = pthread_create(&(tid[i]), NULL, &consumer, v);
 		if (err != 0)
-		printf("Can't create thread :[%s]\n", strerror(err));
+			printf("Can't create thread :[%s]\n", strerror(err));
 		i++;
 
 		// Let's start the threads:

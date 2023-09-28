@@ -17,7 +17,7 @@
 /*
  * Few code standard notes:
  *
- * p_ <- indicate a PRIVATE method or variable. Not reachable outside this
+ * p_ <- indicates a PRIVATE method or variable. Not reachable outside this
  *       module.
  *
  */
@@ -2729,7 +2729,7 @@ VECT_BSEARCH_JOB_DONE:
 }
 
 // Traditional Linear Search Algorithm,
-// useful with non sorted vectors:
+// useful with non-sorted vectors:
 bool vect_lsearch(ivector v, const void *key,
                   int (*f1)(const void *, const void *),
                   zvect_index *item_index) {
