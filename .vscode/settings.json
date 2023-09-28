@@ -73,7 +73,7 @@
 			"$gcc"
 		    ],
 		    "makeArgs": ["all", "debug", "testing"]
-		},
+		}
 	],
 	"compiler-explorer.url": "https://godbolt.org",
     	"compiler-explorer.compiler": "arm1100",

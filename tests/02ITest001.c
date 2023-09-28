@@ -106,7 +106,6 @@ void * doSomething1(void *arg)
 #endif  // ZVECT_SFMD_EXTENSIONS
 
 	pthread_exit(NULL);
-	return NULL;
 }
 
 void * doSomething2(void *arg) {
@@ -139,7 +138,6 @@ void * doSomething2(void *arg) {
 #endif
 
 	pthread_exit(NULL);
-	return NULL;
 }
 
 int main()
@@ -186,7 +184,7 @@ int main()
 	printf("Test %s_%d: Spin 2 threads and use them to manipoulate the vector above.\n", testGrp, testID);
 	fflush(stdout);
 
-		int err = 0;
+		int err;
 		i = 0;
 		err = pthread_create(&(tid[i]), NULL, &doSomething1, v);
 		if (err != 0)

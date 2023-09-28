@@ -124,7 +124,7 @@
 // above.
 
 #if ( OS_TYPE == 1 )
-    // We are on a Unix-like OS so we can use pthreads!
+    // We are on a Unix-like OS, so we can use pthreads!
 #   define MUTEX_TYPE 1
 #   elif ( OS_TYPE == 2 ) && ( defined(__CYGWIN__) || \
            defined(__MINGW32__) || defined(__MINGW64__) )
