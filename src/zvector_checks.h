@@ -104,6 +104,10 @@
 #endif
 
 // Try to determine CPU Architecture:
+#define ARM32 0
+#define ARM64 1
+#define x86_64 2
+#define unknown -1
 #if defined(__aarch64__)
 #   define CPU_TYPE ARM64
 #   define Arch64
