@@ -3015,6 +3015,7 @@ VECT_LSEARCH_JOB_DONE:
 #ifdef ZVECT_SFMD_EXTENSIONS
 // Single Function Call Multiple Data operations extensions:
 
+#if !defined(COOPERATIVE_APPLY)
 void vect_apply(ivector v, void (*f)(void *)) {
 	// Check Parameters:
 	if (f == NULL)
@@ -3029,8 +3030,20 @@ void vect_apply(ivector v, void (*f)(void *)) {
 #endif
 
 	// Process the vector:
-	for (register zvect_index i = p_vect_size(v); i--;)
-		(*f)(v->data[v->begin + i]);
+	// Check if we can do loop unrolling
+	if ((p_vect_size(v) & 3) == 0) {
+		// Nice, we can do some unrolled apply:
+		for (register zvect_index i = 0; i < p_vect_size(v); i+=4)
+		{
+			(*f)(v->data[v->begin + i]);
+			(*f)(v->data[v->begin + (i+1)]);
+			(*f)(v->data[v->begin + (i+2)]);
+			(*f)(v->data[v->begin + (i+3)]);
+		}
+	} else {
+		for (register zvect_index i = p_vect_size(v); i--;)
+			(*f)(v->data[v->begin + i]);
+	}
 
 //VECT_APPLY_DONE_PROCESSING:
 #if (ZVECT_THREAD_SAFE == 1)
@@ -3042,6 +3055,59 @@ VECT_APPLY_JOB_DONE:
 	if(rval)
 		p_throw_error(rval, NULL);
 }
+#endif
+
+#if defined(COOPERATIVE_APPLY)
+// Struc used to store the state of the cooperative apply:
+typedef struct {
+    zvect_index currentIndex;
+    bool isInitialized;
+} VectApplyState;
+
+void vect_apply(ivector v,
+		void (*f)(void *),
+		VectApplyState* state,
+		zvect_index maxIterations)
+{
+	// Check Parameters:
+	if (f == NULL)
+		return;
+
+	zvect_retval rval = p_vect_check(v);
+	if (rval)
+		goto VECT_APPLY_JOB_DONE;
+
+	zvect_index vsize = p_vect_size(v);
+	zvect_index iterations = 0;
+
+	if ((vsize & 3) == 0) {
+		// Unrolled loop
+		while (state->currentIndex < vsize &&
+			iterations < maxIterations) {
+        		(*f)(v->data[v->begin + state->currentIndex]);
+        		(*f)(v->data[v->begin + state->currentIndex + 1]);
+        		(*f)(v->data[v->begin + state->currentIndex + 2]);
+        		(*f)(v->data[v->begin + state->currentIndex + 3]);
+        		state->currentIndex += 4;
+        		iterations += 4;
+		}
+	} else {
+		// Standard loop
+		while (state->currentIndex < vsize &&
+		       iterations < maxIterations) {
+        		(*f)(v->data[v->begin + state->currentIndex]);
+        		state->currentIndex++;
+        		iterations++;
+        	}
+	}
+
+VECT_APPLY_JOB_DONE:
+	if(rval)
+		p_throw_error(rval, NULL); // Handle error
+}
+
+
+#endif // COOPERATIVE_APPLY
 
 void vect_apply_range(ivector v, void (*f)(void *), const zvect_index x,
 			const zvect_index y)

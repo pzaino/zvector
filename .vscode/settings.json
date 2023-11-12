@@ -106,6 +106,7 @@
 		"MINRELEASE",
 		"MONOBOUND",
 		"msvc",
+		"myint",
 		"NOLOCKING",
 		"norcroftc",
 		"PATRELEASE",
