@@ -2383,7 +2383,7 @@ static void p_vect_qsort(vector v, zvect_index low, zvect_index high,
 }
 #endif // TRADITIONAL_QSORT
 
-#ifndef TRADITIONAL_QSORT
+#if !defined(TRADITIONAL_QSORT) && !defined(COOPERATIVE_QSORT)
 // This is my much faster implementation of a quicksort algorithm
 // it fundamentally uses the 3 ways partitioning adapted and improved
 // to deal with arrays of pointers together with having a custom
@@ -2441,7 +2441,96 @@ static void p_vect_qsort(ivector v, zvect_index l, zvect_index r,
 }
 #endif // ! TRADITIONAL_QSORT
 
-void vect_qsort(ivector v, int (*compare_func)(const void *, const void *)) {
+#ifdef COOPERATIVE_QSORT
+typedef struct {
+    int low;
+    int high;
+} cQSortRange;
+
+// This struct is used to store the temporary state of the
+// quicksort algorithm:
+typedef struct {
+    cQSortRange* stack;
+    int stackSize;
+    // ... Other state variables as needed ...
+} cQSortState;
+
+void initQSortState(cQSortState* state, int initialCapacity) {
+    state->stack = malloc(initialCapacity * sizeof(cQSortRange));
+    state->stackSize = 0;
+    // ... Initialize other state variables ...
+}
+
+void freeQSortState(cQSortState* state) {
+    free(state->stack);
+    // ... Clean up other state resources ...
+}
+
+void pushQSortRange(cQSortRange range, cQSortState* state) {
+    if (state->stackSize >= state->stackCapacity) {
+        // Resize the stack if needed
+        state->stackCapacity *= 2;
+        state->stack = realloc(state->stack, state->stackCapacity * sizeof(SortRange));
+    }
+    state->stack[state->stackSize] = range;
+    state->stackSize++;
+}
+
+cQSortRange popQSortRange(cQSortState* state) {
+    if (state->stackSize == 0) {
+        // Handle error for empty stack or return a default value
+        cQSortRange empty = {0, 0};
+        return empty;
+    }
+    state->stackSize--;
+    return state->stack[state->stackSize];
+}
+
+int p_qsort_is_empty(const cQSortState* state) {
+    return state->stackSize == 0;
+}
+
+// Cooperative and iterative quicksort algorithm:
+void p_vect_cqsort(ivector v, cQSortState* state,
+	    	   int(*compare_func)(const void *, const void *),
+	    	   zvect_index iterationLimit)
+{
+    int iterations = 0;
+
+    while (!p_qsort_is_empty(state) && iterations < iterationLimit) {
+        cQSortRange range = popQSortRange(state);
+
+        if (range.low < range.high) {
+            int pivot = partition(v, range.low, range.high, compare_func);
+
+            pushQSortRange((cQSortRange){range.low, pivot - 1}, state);
+            pushQSortRange((cQSortRange){pivot + 1, range.high}, state);
+
+            iterations++;
+        }
+    }
+
+    // If the function exits here, the state is automatically saved
+    // and can be used to resume in the next call.
+}
+#endif
+
+// Public quicksort function:
+// This function is a wrapper for the actual quicksort function
+// Depending on which macro is defined, it will call the:
+// traditional quicksort
+// or
+// the 3 ways partitioning quicksort
+// or
+// the cooperative quicksort
+void vect_qsort(ivector v,
+		int (*compare_func)(const void *, const void *)
+#ifdef COOPERATIVE_QSORT
+		, zvect_index iterationLimit
+		, cQSortState* state
+#endif
+		)
+{
 	// Check parameters:
 	if ( compare_func == NULL )
 		return;
@@ -2459,7 +2548,22 @@ void vect_qsort(ivector v, int (*compare_func)(const void *, const void *)) {
 		goto VECT_QSORT_DONE_PROCESSING;
 
 	// Process the vector:
+#ifndef COOPERATIVE_QSORT
 	p_vect_qsort(v, 0, vsize - 1, compare_func);
+#else
+	if (state == NULL) {
+	    cQSortState state;
+	    initQSortState(&state, 16);
+	}
+	if (iterationLimit == 0)
+	    iterationLimit = vect_size(v);
+	if (iterationLimit > vect_size(v))
+	    iterationLimit = vect_size(v);
+	cQSortRange range = {0, vsize - 1};
+	pushQSortRange(range, state);
+	p_vect_cqsort(v, state, compare_func, iterationLimit);
+	freeQSortState(&state);
+#endif
 
 VECT_QSORT_DONE_PROCESSING:
 #if (ZVECT_THREAD_SAFE == 1)

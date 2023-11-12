@@ -90,6 +90,7 @@
 		"ALWAYSINLINE",
 		"COMPTYPE",
 		"cppcheck",
+		"cqsort",
 		"crayc",
 		"cvector",
 		"DATAALIGN",
