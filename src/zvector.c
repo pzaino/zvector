@@ -2834,6 +2834,7 @@ VECT_BSEARCH_JOB_DONE:
 
 // Traditional Linear Search Algorithm,
 // useful with non-sorted vectors:
+#if defined(TRADITIONAL_LINEAR_SEARCH)
 bool vect_lsearch(ivector v, const void *key,
                   int (*f1)(const void *, const void *),
                   zvect_index *item_index) {
@@ -2865,26 +2866,31 @@ bool vect_lsearch(ivector v, const void *key,
 		}
 	}
 
-	if ((vsize & (1<<0))==0 && (vsize>4)) {
+	// Check if we can do unrolled search:
+	if ( (vsize & 3) == 0 ) {
+		// Nice, we can do some unrolled search
+		// to speed up the process:
 		for (register zvect_index x=0; x<vsize; x+=4) {
 			if ((*f1)(key, v->data[v->begin + x]) != 0) {
 				*item_index = x;
 				return true;
 			}
 			if ((*f1)(key, v->data[v->begin + (x+1)]) != 0) {
-				*item_index = x;
+				*item_index = x + 1;
 				return true;
 			}
 			if ((*f1)(key, v->data[v->begin + (x+2)]) != 0) {
-				*item_index = x;
+				*item_index = x + 2;
 				return true;
 			}
 			if ((*f1)(key, v->data[v->begin + (x+3)]) != 0) {
-				*item_index = x;
+				*item_index = x + 3;
 				return true;
 			}
 		}
 	} else {
+		// We can't do unrolled search, so let's
+		// do a normal linear search:
 		for (register zvect_index x=0; x<vsize; x++) {
 			if ((*f1)(key, v->data[v->begin + x]) != 0) {
 				*item_index = x;
@@ -2900,6 +2906,109 @@ VECT_LSEARCH_JOB_DONE:
 	*item_index = 0;
 	return false;
 }
+#endif // TRADITIONAL_LINEAR_SEARCH || ADAPTIVE_LINEAR_SEARCH
+
+#if defined(COOPERATIVE_LINEAR_SEARCH)
+// Struc used to store the state of the cooperative linear search:
+typedef struct {
+    zvect_index currentIndex;
+    bool isInitialized;
+} LinearSearchState;
+
+// Cooperative and iterative linear search algorithm:
+bool vect_lsearch(ivector v, const void *key,
+		  int (*f1)(const void *, const void *),
+		  zvect_index *item_index,
+		  LinearSearchState* state,
+		  zvect_index maxIterations)
+{
+	// Check parameters:
+	if ((key == NULL) || (f1 == NULL) || (p_vect_size(v) == 0))
+		return false;
+
+	// check if the vector exists:
+	zvect_retval rval = p_vect_check(v);
+	if (rval)
+		goto VECT_LSEARCH_JOB_DONE;
+
+	// TODO: Add mutex locking
+	zvect_index vsize = p_vect_size(v);
+
+	// Special case (vector has only 1 item, so we can't search):
+	if (vsize == 1) {
+		if ((*f1)(key, v->data[v->begin]) != 0) {
+			*item_index = 0;
+			return true;
+		} else {
+			goto VECT_LSEARCH_JOB_DONE;
+		}
+	}
+
+	// Check if the state is initialized:
+	if (!state->isInitialized) {
+		*item_index = 0;
+		state->currentIndex = 0;
+		state->isInitialized = true;
+	}
+
+	// Initialize internal parameters:
+	zvect_index iterations = 0;
+	zvect_index x = state->currentIndex;
+	if (maxIterations == 0)
+		maxIterations = vsize;
+	if (maxIterations > vsize)
+		maxIterations = vsize;
+	if (maxIterations > (vsize - x))
+		maxIterations = vsize - x;
+
+	// Search in the vector:
+	while (x < vsize && iterations < maxIterations) {
+		if (f1(key, v->data[v->begin + x]) != 0) {
+			*item_index = x;
+			return true;
+		}
+		x++;
+		iterations++;
+
+		// Check if we can do loop unrolling
+		// within the cooperative search:
+		if ((maxIterations - iterations) > 3)
+		{
+			// Nice, we can do some unrolled search
+			if (f1(key, v->data[v->begin + x]) != 0) {
+        			*item_index = x;
+        			return true;
+    			}
+    			if (f1(key, v->data[v->begin + x + 1]) != 0) {
+        			*item_index = x + 1;
+        			return true;
+    			}
+    			if (f1(key, v->data[v->begin + x + 2]) != 0) {
+        			*item_index = x + 2;
+        			return true;
+    			}
+    			if (f1(key, v->data[v->begin + x + 3]) != 0) {
+        			*item_index = x + 3;
+        			return true;
+    			}
+    			x += 3; // Skip ahead for unrolled iterations
+    			iterations += 3; // Update iteration count
+        	}
+	}
+
+	state->currentIndex = x;
+
+	// Check if the search is complete
+	if (x >= vsize) {
+		*item_index = 0;
+		return false;
+	}
+
+VECT_LSEARCH_JOB_DONE:
+	return false; // Indicate more iterations are needed
+}
+
+#endif // COOPERATIVE_LINEAR_SEARCH
 
 #endif // ZVECT_DMF_EXTENSIONS
 
