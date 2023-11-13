@@ -33,6 +33,12 @@ extern "C" {
 // Declare required structs:
 typedef struct p_vector * vector;
 
+#if defined(ZVECT_COOPERATIVE)
+// Cooperative Scheduler support
+typedef struct p_cmt_state * cmt_state;
+typedef struct p_cmt_state_range cmt_state_range;
+#endif
+
 
 // Declare required enums:
 
@@ -474,7 +480,14 @@ void vect_rotate_right(vector const v, const zvect_index i);
  * pointers to your datastructures stored in the vector.
  *
  */
+#if !defined(ZVECT_COOPERATIVE)
 void vect_qsort(vector const v, int (*compare_func)(const void *, const void*));
+#else
+void vect_qsort(vector const v, int (*compare_func)(const void *, const void*),
+		cmt_state const state,
+		zvect_index maxIterations);
+#endif
+
 
 /*
  * vect_bsearch is a function that allows to perform
@@ -515,9 +528,17 @@ bool vect_bsearch(vector const v, const void *key, int (*f1)(const void *, const
  * int i = 5;
  * vect_lsearch(v, &i, my_compare);
  */
-bool vect_lsearch(vector v, const void *key,
+#if !defined(ZVECT_COOPERATIVE)
+bool vect_lsearch(vector const v, const void *key,
                   int (*f1)(const void *, const void *),
                   zvect_index *item_index);
+#else
+bool vect_lsearch(vector const v, const void *key,
+		  int (*f1)(const void *, const void *),
+		  zvect_index *item_index,
+		  cmt_state state,
+		  zvect_index maxIterations);
+#endif
 
 /*
  * vect_add_ordered allows the insertion of new items in
@@ -557,7 +578,14 @@ void vect_add_ordered(vector const v, const void *value, int (*f1)(const void *,
  * to deal with return values especially when you'll be
  * using complex data structures as item of the vector.
  */
+#if !defined(ZVECT_COOPERATIVE)
 void vect_apply(vector const v, void (*f1)(void *));
+#else
+void vect_apply(vector const v,
+		void (*f)(void *),
+		cmt_state const state,
+		zvect_index maxIterations);
+#endif
 
 /*
  * vect_apply_if is a function that will apply "f1" C function

@@ -81,42 +81,10 @@ typedef int32_t zvect_retval;
 // Enable/Disable SFMD Extensions:
 #define ZVECT_SFMD_EXTENSIONS 1
 
-// If you have enabled ZVector extensions
-// you can choose to enable/disable
-// which type of algorithms you want to use
-// for some of the extensions:
-
-// Linear search:
-// Uncomment the following line to have
-// traditional linear search (it's optimized)
-// but it's still linear search.
-// If you do not need linear search at all then
-// comment all *_LINEAR_SEARCH defines.
-#define TRADITIONAL_LINEAR_SEARCH
-// Use cooperative ONLY on cooperative multitasking
-// systems (like RISC OS or some embedded systems)
-// If you use cooperative, please disable traditional
-// #define COOPERATIVE_LINEAR_SEARCH
-
-// Binary Search:
-// Default is improved Adaptive Binary Search, but
-// if you need traditional binary search then
-// uncomment the following line:
-// #define TRADITIONAL_BINARY_SEARCH
-// Use cooperative ONLY on cooperative multitasking
-// systems (like RISC OS or some embedded systems)
-// If you use cooperative, please disable traditional
-// #define COOPERATIVE_BINARY_SEARCH
-
-// Quick Sort:
-// Default is improved Quick Sort (3 ways partitioning),
-// but if you need traditional quick sort then
-// uncomment the following line:
-//#define TRADITIONAL_QSORT
-// uncomment the following line if you want
-// cooperative quick sort (only on cooperative
-// multitasking systems)
-//#define COOPERATIVE_QSORT
-
+// If you are using ZVector on a system
+// that supports cooperative multitasking
+// (like RISC OS or some embedded systems)
+// then uncomment the following line:
+//#define ZVECT_COOPERATIVE
 
 #endif  // SRC_ZVECTOR_CONFIG_H_
