@@ -199,6 +199,24 @@ struct ZVECT_PACKING p_vector
 typedef struct p_vector * const ivector;
 typedef struct p_vector * const cvector;
 
+#if defined(ZVECT_COOPERATIVE)
+// Struct used to store temporary range of the vector:
+// when ZVector is used on CMT systems (like RISC OS or some embedded systems)
+struct p_cmt_state_range {
+    int low;
+    int high;
+};
+
+// Struc used to store the state of the cooperative apply:
+struct p_cmt_state {
+    zvect_index currentIndex;
+    cmt_state_range *stack;
+    int stackSize;
+    int stackCapacity;
+    bool isInitialized;
+};
+#endif
+
 // Initialisation state:
 static uint32_t p_init_state = 0;
 
@@ -2353,6 +2371,7 @@ VECT_ROT_RIGHT_JOB_DONE:
 		p_throw_error(rval, NULL);
 }
 
+#if !defined(ZVECT_COOPERATIVE)
 #ifdef TRADITIONAL_QSORT
 static inline zvect_index
 p_partition(vector v, zvect_index low, zvect_index high,
@@ -2383,7 +2402,7 @@ static void p_vect_qsort(vector v, zvect_index low, zvect_index high,
 }
 #endif // TRADITIONAL_QSORT
 
-#ifndef TRADITIONAL_QSORT
+#if !defined(TRADITIONAL_QSORT)
 // This is my much faster implementation of a quicksort algorithm
 // it fundamentally uses the 3 ways partitioning adapted and improved
 // to deal with arrays of pointers together with having a custom
@@ -2440,8 +2459,109 @@ static void p_vect_qsort(ivector v, zvect_index l, zvect_index r,
 	p_vect_qsort(v, i, r, compare_func);
 }
 #endif // ! TRADITIONAL_QSORT
+#endif // ! ZVECT_COOPERATIVE
 
-void vect_qsort(ivector v, int (*compare_func)(const void *, const void *)) {
+#if defined(ZVECT_COOPERATIVE)
+// Cooperative quicksort algorithm:
+void initQSortState(cmt_state const state, int initialCapacity) {
+    state->stack = malloc(initialCapacity * sizeof(struct p_cmt_state_range));
+    state->stackSize = 0;
+    state->isInitialized = 1;
+}
+
+void freeQSortState(cmt_state const state) {
+    free(state->stack);
+    state->stackSize = 0;
+    state->stack = NULL;
+}
+
+void pushQSortRange(struct p_cmt_state_range range, cmt_state const state) {
+    if (state->stackSize >= state->stackCapacity) {
+        // Resize the stack if needed
+        state->stackCapacity *= 2;
+        state->stack = realloc(state->stack, state->stackCapacity * sizeof(struct p_cmt_state_range));
+    }
+    state->stack[state->stackSize] = range;
+    state->stackSize++;
+}
+
+struct p_cmt_state_range popQSortRange(cmt_state const state) {
+    if (state->stackSize == 0) {
+        // Handle error for empty stack or return a default value
+        struct p_cmt_state_range empty = {0, 0};
+        return empty;
+    }
+    state->stackSize--;
+    return state->stack[state->stackSize];
+}
+
+int p_qsort_is_empty(cmt_state const state) {
+    return state->stackSize == 0;
+}
+
+zvect_index partition(ivector v,
+		      zvect_index low, zvect_index high,
+		      int (*compare_func)(const void *, const void *))
+{
+    void* pivot = vect_get_at(v, high); // Pivot element
+    zvect_index i = (low - 1); // Index of smaller element
+
+    for (zvect_index j = low; j <= high - 1; j++) {
+        // If current element is smaller than or equal to pivot
+        if (compare_func(vect_get_at(v, j), pivot) <= 0) {
+            i++; // Increment index of smaller element
+            vect_swap(v, i, j); // Swap elements at i and j
+        }
+    }
+    vect_swap(v, i + 1, high); // Swap the pivot element with the element at i + 1
+    return (i + 1);
+}
+
+
+// Cooperative and iterative quicksort algorithm:
+void p_vect_cqsort(ivector v, cmt_state state,
+	    	   int(*compare_func)(const void *, const void *),
+	    	   zvect_index iterationLimit)
+{
+    zvect_index iterations = 0;
+    if (!state->isInitialized) {
+	initQSortState(state, p_vect_size(v) / iterationLimit );
+    }
+
+    while (!p_qsort_is_empty(state) && iterations < iterationLimit) {
+        cmt_state_range range = popQSortRange(state);
+
+        if (range.low < range.high) {
+            zvect_index pivot = partition(v, range.low, range.high, compare_func);
+
+            pushQSortRange((struct p_cmt_state_range){range.low, pivot - 1}, state);
+            pushQSortRange((struct p_cmt_state_range){pivot + 1, range.high}, state);
+
+            iterations++;
+        }
+    }
+
+    // If the function exits here, the state is automatically saved
+    // and can be used to resume in the next call.
+}
+#endif
+
+// Public quicksort function:
+// This function is a wrapper for the actual quicksort function
+// Depending on which macro is defined, it will call the:
+// traditional quicksort
+// or
+// the 3 ways partitioning quicksort
+// or
+// the cooperative quicksort
+void vect_qsort(ivector v,
+		int (*compare_func)(const void *, const void *)
+#if defined(ZVECT_COOPERATIVE)
+		, struct p_cmt_state* const state
+		, zvect_index iterationLimit
+#endif
+		)
+{
 	// Check parameters:
 	if ( compare_func == NULL )
 		return;
@@ -2459,7 +2579,21 @@ void vect_qsort(ivector v, int (*compare_func)(const void *, const void *)) {
 		goto VECT_QSORT_DONE_PROCESSING;
 
 	// Process the vector:
+#ifndef ZVECT_COOPERATIVE
 	p_vect_qsort(v, 0, vsize - 1, compare_func);
+#else
+	if (iterationLimit == 0)
+	    iterationLimit = vect_size(v);
+	if (iterationLimit > vect_size(v))
+	    iterationLimit = vect_size(v);
+	if (!state->isInitialized) {
+	    initQSortState(state, vsize / iterationLimit );
+	}
+	struct p_cmt_state_range range = {0, vsize - 1};
+	pushQSortRange(range, state);
+	p_vect_cqsort(v, state, compare_func, iterationLimit);
+	freeQSortState(state);
+#endif
 
 VECT_QSORT_DONE_PROCESSING:
 #if (ZVECT_THREAD_SAFE == 1)
@@ -2730,6 +2864,7 @@ VECT_BSEARCH_JOB_DONE:
 
 // Traditional Linear Search Algorithm,
 // useful with non-sorted vectors:
+#if !defined(ZVECT_COOPERATIVE)
 bool vect_lsearch(ivector v, const void *key,
                   int (*f1)(const void *, const void *),
                   zvect_index *item_index) {
@@ -2761,26 +2896,31 @@ bool vect_lsearch(ivector v, const void *key,
 		}
 	}
 
-	if ((vsize & (1<<0))==0 && (vsize>4)) {
+	// Check if we can do unrolled search:
+	if ( (vsize & 3) == 0 ) {
+		// Nice, we can do some unrolled search
+		// to speed up the process:
 		for (register zvect_index x=0; x<vsize; x+=4) {
 			if ((*f1)(key, v->data[v->begin + x]) != 0) {
 				*item_index = x;
 				return true;
 			}
 			if ((*f1)(key, v->data[v->begin + (x+1)]) != 0) {
-				*item_index = x;
+				*item_index = x + 1;
 				return true;
 			}
 			if ((*f1)(key, v->data[v->begin + (x+2)]) != 0) {
-				*item_index = x;
+				*item_index = x + 2;
 				return true;
 			}
 			if ((*f1)(key, v->data[v->begin + (x+3)]) != 0) {
-				*item_index = x;
+				*item_index = x + 3;
 				return true;
 			}
 		}
 	} else {
+		// We can't do unrolled search, so let's
+		// do a normal linear search:
 		for (register zvect_index x=0; x<vsize; x++) {
 			if ((*f1)(key, v->data[v->begin + x]) != 0) {
 				*item_index = x;
@@ -2796,12 +2936,110 @@ VECT_LSEARCH_JOB_DONE:
 	*item_index = 0;
 	return false;
 }
+#endif // TRADITIONAL_LINEAR_SEARCH
+
+#if defined(ZVECT_COOPERATIVE)
+// Cooperative and iterative linear search algorithm:
+bool vect_lsearch(ivector v, const void *key,
+		  int (*f1)(const void *, const void *),
+		  zvect_index *item_index,
+		  cmt_state const state,
+		  zvect_index maxIterations)
+{
+	// Check parameters:
+	if ((key == NULL) || (f1 == NULL) || (p_vect_size(v) == 0))
+		return false;
+
+	// check if the vector exists:
+	zvect_retval rval = p_vect_check(v);
+	if (rval)
+		goto VECT_LSEARCH_JOB_DONE;
+
+	// TODO: Add mutex locking
+	zvect_index vsize = p_vect_size(v);
+
+	// Special case (vector has only 1 item, so we can't search):
+	if (vsize == 1) {
+		if ((*f1)(key, v->data[v->begin]) != 0) {
+			*item_index = 0;
+			return true;
+		} else {
+			goto VECT_LSEARCH_JOB_DONE;
+		}
+	}
+
+	// Check if the state is initialized:
+	if (!state->isInitialized) {
+		*item_index = 0;
+		state->currentIndex = 0;
+		state->isInitialized = true;
+	}
+
+	// Initialize internal parameters:
+	zvect_index iterations = 0;
+	zvect_index x = state->currentIndex;
+	if (maxIterations == 0)
+		maxIterations = vsize;
+	if (maxIterations > vsize)
+		maxIterations = vsize;
+	if (maxIterations > (vsize - x))
+		maxIterations = vsize - x;
+
+	// Search in the vector:
+	while (x < vsize && iterations < maxIterations) {
+		if (f1(key, v->data[v->begin + x]) != 0) {
+			*item_index = x;
+			return true;
+		}
+		x++;
+		iterations++;
+
+		// Check if we can do loop unrolling
+		// within the cooperative search:
+		if ((maxIterations - iterations) > 3)
+		{
+			// Nice, we can do some unrolled search
+			if (f1(key, v->data[v->begin + x]) != 0) {
+        			*item_index = x;
+        			return true;
+    			}
+    			if (f1(key, v->data[v->begin + x + 1]) != 0) {
+        			*item_index = x + 1;
+        			return true;
+    			}
+    			if (f1(key, v->data[v->begin + x + 2]) != 0) {
+        			*item_index = x + 2;
+        			return true;
+    			}
+    			if (f1(key, v->data[v->begin + x + 3]) != 0) {
+        			*item_index = x + 3;
+        			return true;
+    			}
+    			x += 3; // Skip ahead for unrolled iterations
+    			iterations += 3; // Update iteration count
+        	}
+	}
+
+	state->currentIndex = x;
+
+	// Check if the search is complete
+	if (x >= vsize) {
+		*item_index = 0;
+		return false;
+	}
+
+VECT_LSEARCH_JOB_DONE:
+	return false; // Indicate more iterations are needed
+}
+
+#endif // COOPERATIVE_LINEAR_SEARCH
 
 #endif // ZVECT_DMF_EXTENSIONS
 
 #ifdef ZVECT_SFMD_EXTENSIONS
 // Single Function Call Multiple Data operations extensions:
 
+#if !defined(ZVECT_COOPERATIVE)
 void vect_apply(ivector v, void (*f)(void *)) {
 	// Check Parameters:
 	if (f == NULL)
@@ -2816,8 +3054,20 @@ void vect_apply(ivector v, void (*f)(void *)) {
 #endif
 
 	// Process the vector:
-	for (register zvect_index i = p_vect_size(v); i--;)
-		(*f)(v->data[v->begin + i]);
+	// Check if we can do loop unrolling
+	if ((p_vect_size(v) & 3) == 0) {
+		// Nice, we can do some unrolled apply:
+		for (register zvect_index i = 0; i < p_vect_size(v); i+=4)
+		{
+			(*f)(v->data[v->begin + i]);
+			(*f)(v->data[v->begin + (i+1)]);
+			(*f)(v->data[v->begin + (i+2)]);
+			(*f)(v->data[v->begin + (i+3)]);
+		}
+	} else {
+		for (register zvect_index i = p_vect_size(v); i--;)
+			(*f)(v->data[v->begin + i]);
+	}
 
 //VECT_APPLY_DONE_PROCESSING:
 #if (ZVECT_THREAD_SAFE == 1)
@@ -2829,6 +3079,57 @@ VECT_APPLY_JOB_DONE:
 	if(rval)
 		p_throw_error(rval, NULL);
 }
+#endif
+
+#if defined(ZVECT_COOPERATIVE)
+void vect_apply(ivector v,
+		void (*f)(void *),
+		cmt_state const state,
+		zvect_index maxIterations)
+{
+	// Check Parameters:
+	if (f == NULL)
+		return;
+
+	zvect_retval rval = p_vect_check(v);
+	if (rval)
+		goto VECT_APPLY_JOB_DONE;
+
+	zvect_index vsize = p_vect_size(v);
+	zvect_index iterations = 0;
+	if (!state->isInitialized) {
+		state->currentIndex = 0;
+		state->isInitialized = true;
+	}
+
+	if ((vsize & 3) == 0) {
+		// Unrolled loop
+		while (state->currentIndex < vsize &&
+			iterations < maxIterations) {
+        		(*f)(v->data[v->begin + state->currentIndex]);
+        		(*f)(v->data[v->begin + state->currentIndex + 1]);
+        		(*f)(v->data[v->begin + state->currentIndex + 2]);
+        		(*f)(v->data[v->begin + state->currentIndex + 3]);
+        		state->currentIndex += 4;
+        		iterations += 4;
+		}
+	} else {
+		// Standard loop
+		while (state->currentIndex < vsize &&
+		       iterations < maxIterations) {
+        		(*f)(v->data[v->begin + state->currentIndex]);
+        		state->currentIndex++;
+        		iterations++;
+        	}
+	}
+
+VECT_APPLY_JOB_DONE:
+	if(rval)
+		p_throw_error(rval, NULL); // Handle error
+}
+
+
+#endif // COOPERATIVE_APPLY
 
 void vect_apply_range(ivector v, void (*f)(void *), const zvect_index x,
 			const zvect_index y)

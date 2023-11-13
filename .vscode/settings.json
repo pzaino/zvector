@@ -90,6 +90,7 @@
 		"ALWAYSINLINE",
 		"COMPTYPE",
 		"cppcheck",
+		"cqsort",
 		"crayc",
 		"cvector",
 		"DATAALIGN",
@@ -105,6 +106,7 @@
 		"MINRELEASE",
 		"MONOBOUND",
 		"msvc",
+		"myint",
 		"NOLOCKING",
 		"norcroftc",
 		"PATRELEASE",
@@ -122,5 +124,11 @@
 	"sonarlint.connectedMode.project": {
 		"connectionId": "HTTPVMMZfpSystems",
 		"projectKey": "ZVector"
+	},
+	"files.associations": {
+		"array": "c",
+		"string": "c",
+		"string_view": "c",
+		"vector": "c"
 	}
 }

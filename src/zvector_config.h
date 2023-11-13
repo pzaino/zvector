@@ -81,4 +81,10 @@ typedef int32_t zvect_retval;
 // Enable/Disable SFMD Extensions:
 #define ZVECT_SFMD_EXTENSIONS 1
 
+// If you are using ZVector on a system
+// that supports cooperative multitasking
+// (like RISC OS or some embedded systems)
+// then uncomment the following line:
+//#define ZVECT_COOPERATIVE
+
 #endif  // SRC_ZVECTOR_CONFIG_H_
