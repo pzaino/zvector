@@ -1557,27 +1557,27 @@ void vect_shrink(ivector v)
 /*---------------------------------------------------------------------------*/
 // Vector Structural Information report:
 
-bool vect_is_empty(cvector v)
+bool vect_is_empty(const_vector const v)
 {
 	return !p_vect_check(v) ? (p_vect_size(v) == 0) : (bool)ZVERR_VECTUNDEF;
 }
 
-zvect_index vect_size(cvector v)
+zvect_index vect_size(const_vector const v)
 {
 	return !p_vect_check(v) ? p_vect_size(v) : 0;
 }
 
-zvect_index vect_max_size(cvector v)
+zvect_index vect_max_size(const_vector const v)
 {
 	return (!p_vect_check(v) ? zvect_index_max : 0);
 }
 
-void *vect_begin(cvector v)
+void *vect_begin(const_vector const v)
 {
 	return !p_vect_check(v) ? v->data[v->begin] : NULL;
 }
 
-void *vect_end(cvector v)
+void *vect_end(const_vector const v)
 {
 	return !p_vect_check(v) ? v->data[v->end] : NULL;
 }
@@ -1721,7 +1721,7 @@ zvect_retval vect_sem_post(ivector v) {
 #	if !defined(macOS)
 	return sem_post(&(v->semaphore));
 #	else
-	return dispatch_semaphore_signal(v->semaphore);
+	return (zvect_retval)dispatch_semaphore_signal(v->semaphore);
 #	endif
 }
 
@@ -1921,7 +1921,7 @@ VECT_ADD_FRONT_JOB_DONE:
 }
 
 // inline implementation for all get(s):
-static inline void *p_vect_get_at(ivector v, const zvect_index i) {
+static inline void *p_vect_get_at(const_vector const v, const zvect_index i) {
 	// Check if passed index is out of bounds:
 	if (i >= p_vect_size(v))
 		p_throw_error(ZVERR_IDXOUTOFBOUND, NULL);
@@ -1930,7 +1930,7 @@ static inline void *p_vect_get_at(ivector v, const zvect_index i) {
 	return v->data[v->begin + i];
 }
 
-void *vect_get(ivector v) {
+void *vect_get(const_vector const v) {
 	// check if the vector exists:
 	zvect_retval rval = p_vect_check(v);
 	if (!rval)
@@ -1941,7 +1941,7 @@ void *vect_get(ivector v) {
 	return NULL;
 }
 
-void *vect_get_at(ivector v, const zvect_index i) {
+void *vect_get_at(const_vector const v, const zvect_index i) {
 	// check if the vector exists:
 	zvect_retval rval = p_vect_check(v);
 	if (!rval)
@@ -1952,7 +1952,7 @@ void *vect_get_at(ivector v, const zvect_index i) {
 	return NULL;
 }
 
-void *vect_get_front(ivector v) {
+void *vect_get_front(const_vector const v) {
 	// check if the vector exists:
 	zvect_retval rval = p_vect_check(v);
 	if (!rval)

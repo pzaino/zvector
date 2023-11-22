@@ -126,22 +126,22 @@ void vect_set_wipefunct(vector const v, void (*f1)(const void *item, size_t size
  * vect_is_empty returns true if the vector is empty
  * and false if the vector is NOT empty.
  */
-bool vect_is_empty(vector const v);
+bool vect_is_empty(const_vector const v);
 
 /*
  * vect_size returns the actual size (the number of)
  * USED slots in the vector storage.
  */
-zvect_index vect_size(vector const v);
+zvect_index vect_size(const_vector const v);
 
 /*
  * vect_size returns the maximum size (the max number of)
  * slots in the vector storage.
  */
-zvect_index vect_max_size(vector const v);
+zvect_index vect_max_size(const_vector const v);
 
-void *vect_begin(vector const v);
-void *vect_end(vector const v);
+void *vect_begin(const_vector const v);
+void *vect_end(const_vector const v);
 
 /*
  * vect_clear clears out a vector and also resizes it
@@ -312,7 +312,7 @@ void vect_add_front(vector const v, const void *item);
  *                      the  element  as  it  happens  in
  *                      vect_pop(v)).
  */
-void *vect_get(vector const v);
+void *vect_get(const_vector const v);
 #define vect_back(v)  vect_get(v)
 
 /*
@@ -320,14 +320,14 @@ void *vect_get(vector const v);
  * vect_get_at(v, 3)    will return the element at location
  *                      3 in the vector v.
  */
-void *vect_get_at(vector const v, const zvect_index i);
+void *vect_get_at(const_vector const v, const zvect_index i);
 #define vect_at(v, x)  vect_get_at(v, x)
 
 /*
  * vect_get_front(v)    will return the first element in
  *                      the vector v.
  */
-void *vect_get_front(vector const v);
+void *vect_get_front(const_vector const v);
 #define vect_front(v)  vect_get_front(v)
 
 /*
