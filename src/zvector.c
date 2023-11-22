@@ -2503,7 +2503,7 @@ zvect_index partition(ivector v,
 		      zvect_index low, zvect_index high,
 		      int (*compare_func)(const void *, const void *))
 {
-    void* pivot = vect_get_at(v, high); // Pivot element
+    const void * const pivot = vect_get_at(v, high); // Pivot element
     zvect_index i = (low - 1); // Index of smaller element
 
     for (zvect_index j = low; j <= high - 1; j++) {
@@ -3132,7 +3132,7 @@ VECT_APPLY_JOB_DONE:
 #endif // COOPERATIVE_APPLY
 
 void vect_apply_range(ivector v, void (*f)(void *), const zvect_index x,
-			const zvect_index y)
+		      const zvect_index y)
 {
 	// Check parameters:
 	if ( f == NULL )
@@ -3178,6 +3178,7 @@ VECT_APPLY_RNG_JOB_DONE:
 		p_throw_error(rval, NULL);
 }
 
+#if !defined(ZVECT_COOPERATIVE)
 void vect_apply_if(ivector v1, ivector v2, void (*f1)(void *),
                    bool (*f2)(void *, void *)) {
 	// Check parameters:
@@ -3214,6 +3215,79 @@ VECT_APPLY_IF_JOB_DONE:
 	if(rval)
 		p_throw_error(rval, NULL);
 }
+#else
+void vect_apply_if(ivector v1, ivector v2, void (*f1)(void *),
+		   bool (*f2)(void *, void *),
+		   cmt_state const state,
+		   zvect_index maxIterations) {
+	// Check parameters:
+	if (f1 == NULL || f2 == NULL)
+		return;
+
+	// check if the vector exists:
+	zvect_retval rval = p_vect_check(v1) | p_vect_check(v2);
+	if (rval)
+		goto VECT_APPLY_IF_JOB_DONE;
+
+#if (ZVECT_THREAD_SAFE == 1)
+	zvect_retval lock_owner = (locking_disabled || (v1->flags & ZV_NOLOCKING)) ? 0 : get_mutex_lock(v1, 1);
+#endif
+
+	zvect_index vsize = p_vect_size(v1);
+	zvect_index iterations = 0;
+	if (!state->isInitialized) {
+		state->currentIndex = 0;
+		state->isInitialized = true;
+	}
+
+	if (vsize > p_vect_size(v2)) {
+		rval = ZVERR_VECTTOOSMALL;
+		goto VECT_APPLY_IF_DONE_PROCESSING;
+	}
+
+	if ((vsize & 3) == 0) {
+		// Unrolled loop
+		while (state->currentIndex < vsize &&
+			iterations < maxIterations) {
+			if ((*f2)(v1->data[v1->begin + state->currentIndex],
+				  v2->data[v2->begin + state->currentIndex]))
+				(*f1)(v1->data[v1->begin + state->currentIndex]);
+			if ((*f2)(v1->data[v1->begin + state->currentIndex + 1],
+				  v2->data[v2->begin + state->currentIndex + 1]))
+				(*f1)(v1->data[v1->begin + state->currentIndex + 1]);
+			if ((*f2)(v1->data[v1->begin + state->currentIndex + 2],
+				  v2->data[v2->begin + state->currentIndex + 2]))
+				(*f1)(v1->data[v1->begin + state->currentIndex + 2]);
+			if ((*f2)(v1->data[v1->begin + state->currentIndex + 3],
+				  v2->data[v2->begin + state->currentIndex + 3]))
+				(*f1)(v1->data[v1->begin + state->currentIndex + 3]);
+			state->currentIndex += 4;
+			iterations += 4;
+		}
+	} else {
+		// Standard loop
+		while (state->currentIndex < vsize &&
+		       iterations < maxIterations) {
+			if ((*f2)(v1->data[v1->begin + state->currentIndex],
+				  v2->data[v2->begin + state->currentIndex]))
+				(*f1)(v1->data[v1->begin + state->currentIndex]);
+			state->currentIndex++;
+			iterations++;
+		}
+	}
+
+VECT_APPLY_IF_DONE_PROCESSING:
+#if (ZVECT_THREAD_SAFE == 1)
+	if (lock_owner)
+		get_mutex_unlock(v1, 1);
+#endif
+
+VECT_APPLY_IF_JOB_DONE:
+	if(rval)
+		p_throw_error(rval, NULL);
+}
+
+#endif // COOPERATIVE_APPLY_IF
 
 void vect_copy(ivector v1, ivector v2, const zvect_index s2,
                const zvect_index e2) {

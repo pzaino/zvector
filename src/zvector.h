@@ -615,7 +615,15 @@ void vect_apply(vector const v,
  *  return false;
  * }
  */
+#if !defined(ZVECT_COOPERATIVE)
 void vect_apply_if(vector const v1, vector const v2, void (*f1)(void *), bool (*f2)(void *, void *));
+#else
+void vect_apply_if(vector const v1, vector const v2,
+		   void (*f1)(void *),
+		   bool (*f2)(void *, void *),
+		   cmt_state const state,
+		   zvect_index maxIterations);
+#endif
 
 void vect_apply_range(vector const v, void (*f)(void *), const zvect_index x, const zvect_index y);
 
