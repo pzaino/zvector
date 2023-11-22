@@ -32,6 +32,7 @@ extern "C" {
 
 // Declare required structs:
 typedef struct p_vector * vector;
+typedef struct p_vector const * const_vector;
 
 #if defined(ZVECT_COOPERATIVE)
 // Cooperative Scheduler support
@@ -151,7 +152,7 @@ void vect_clear(vector const v);
 /*
  * Vector status bits control
  */
-bool vect_check_status(const vector v, zvect_index flag_id);
+bool vect_check_status(const_vector const v, zvect_index flag_id);
 
 bool vect_set_status(const vector v, zvect_index flag_id);
 
