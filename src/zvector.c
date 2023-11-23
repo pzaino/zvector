@@ -378,7 +378,7 @@ static void p_throw_error(const zvect_retval error_code,
 ZVECT_ALWAYSINLINE
 static inline
 #endif // ZVECT_MEMX_METHOD
-void *p_vect_memcpy(const void * __restrict dst, const void * __restrict src,
+void *p_vect_memcpy(const void * dst, const void * src,
                     size_t size)
 {
 #if (ZVECT_MEMX_METHOD == 0)
@@ -411,8 +411,8 @@ void *p_vect_memcpy(const void * __restrict dst, const void * __restrict src,
 }
 
 ZVECT_ALWAYSINLINE
-static inline void *p_vect_memmove(const void *__restrict dst,
-                                   const void *__restrict src, size_t size)
+static inline void *p_vect_memmove(const void * dst,
+                                   const void * src, size_t size)
 {
 #ifdef DEBUG
 	log_msg(ZVLP_INFO, "p_vect_memmove: dst      %*p\n", 14, dst);
