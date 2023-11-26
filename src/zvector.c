@@ -289,16 +289,16 @@ static void *safe_strncpy(const char * const str_src,
 	char tmp_dst[max_len];
 	tmp_dst[sizeof(tmp_dst) - 1] = 0;
 
-	strncpy(tmp_dst, str_src, sizeof(tmp_dst));
+	strncpy(tmp_dst, str_src, sizeof(tmp_dst) - 1);
 
 	tmp_dst[sizeof(tmp_dst) - 1] = 0;
 
-	str_dst = (void *)malloc(sizeof(char *) * (sizeof(tmp_dst) + 1));
+	str_dst = malloc(sizeof(char *) * (sizeof(tmp_dst) + 1));
 	if ( str_dst == NULL )
 	{
 		log_msg(ZVLP_ERROR, "Error: %*i, %s\n", 8, -1000, "Out of memory!");
 	} else {
-		strncpy((char *)str_dst, tmp_dst, sizeof(tmp_dst));
+		strncpy((char *)str_dst, tmp_dst, sizeof(tmp_dst) - 1);
 		((char *)str_dst)[sizeof(tmp_dst)] = 0;
 	}
 	return str_dst;
@@ -378,7 +378,7 @@ static void p_throw_error(const zvect_retval error_code,
 ZVECT_ALWAYSINLINE
 static inline
 #endif // ZVECT_MEMX_METHOD
-void *p_vect_memcpy(const void *__restrict dst, const void *__restrict src,
+void *p_vect_memcpy(const void * dst, const void * src,
                     size_t size)
 {
 #if (ZVECT_MEMX_METHOD == 0)
@@ -411,8 +411,8 @@ void *p_vect_memcpy(const void *__restrict dst, const void *__restrict src,
 }
 
 ZVECT_ALWAYSINLINE
-static inline void *p_vect_memmove(const void *__restrict dst,
-                                   const void *__restrict src, size_t size)
+static inline void *p_vect_memmove(const void * dst,
+                                   const void * src, size_t size)
 {
 #ifdef DEBUG
 	log_msg(ZVLP_INFO, "p_vect_memmove: dst      %*p\n", 14, dst);
@@ -605,27 +605,64 @@ static inline zvect_retval lock_after_signal(const vector v,
 	return 0;
 }
 
-/*
- * TODO: Write a generic function to allow user to use signals:
- *       wait_for_signal(v, lock_type, f1, f2, f3, ...)
- *      where f1 is a function that returns true if the signal
- *     should be sent, and f2, f3, ... are functions that
- *   should be called before the signal is sent.
- * Example:
- *
-static inline zvect_retval wait_for_signal(const vector v, const int32_t lock_type, bool (*f1)(const vector v), ) {
-	if (lock_type >= v->lock_type) {
-		if (!mutex_trylock(&(v->lock))) {
-			while(!(*f1)(v)) {
-				// wait until we get a signal
-    				pthread_cond_wait(&(v->cond), &(v->lock))
-			}
-			return 1;
-		}
-	}
-	return 0;
-}
+/* This function waits for a signal from another thread
+ * and then it locks the vector.
+ * It's used by the ZVector primitives.
+
+ * The function takes a variable number of arguments.
+ * The first argument is the vector to lock.
+ * The second argument is the lock type.
+ * The third argument is a function that returns a boolean
+ * value. This function is used to check if the condition
+ * for the signal is true or not.
+ * The fourth argument is a function that is called before
+ * the signal is sent.
+ * The fifth argument is a function that is called after
+ * the signal is sent.
 */
+
+// Function prototype for condition check function
+ typedef bool (*condition_func)(const vector*);
+
+// Function prototype for other functions to be called before signal
+ typedef void (*before_signal_func)(void);
+
+static inline bool wait_for_signal(ivector v, const int32_t lock_type,
+                                   condition_func f1, ...)
+{
+	if (lock_type >= v->lock_type)
+	{
+	    mutex_lock(&(v->lock));
+            while(!f1(&v)) {
+                va_list args;
+                va_start(args, f1);
+                before_signal_func func;
+
+                // Calling functions f2, f3, ... before the signal is sent
+                while ((func = va_arg(args, before_signal_func)) != NULL) {
+                    func();
+                }
+
+                va_end(args);
+
+                // Wait for the condition to be true
+#if (MUTEX_TYPE == 1)
+                pthread_cond_wait(&(v->cond), &(v->lock));
+#elif (MUTEX_TYPE == 2)
+		LeaveCriticalSection(&(v->lock));
+		WaitForSingleObject(&(v->cond), INFINITE);
+		EnterCriticalSection(&(v->lock));
+#endif
+            }
+#if (MUTEX_TYPE == 1)
+            mutex_unlock(&(v->lock));
+#elif (MUTEX_TYPE == 2)
+	    LeaveCriticalSection(&(v->lock));
+#endif
+            return true;
+        }
+    return false;
+}
 
 static inline zvect_retval send_signal(cvector v, const int32_t lock_type)
 {
@@ -677,24 +714,24 @@ void p_init_zvect(void)
 // Vector's Utilities:
 
 ZVECT_ALWAYSINLINE
-static inline zvect_retval p_vect_check(cvector x)
+static inline zvect_retval p_vect_check(const_vector const x)
 {
 	return (x == NULL) ? ZVERR_VECTUNDEF : 0;
 }
 
 ZVECT_ALWAYSINLINE
-static inline zvect_index p_vect_capacity(cvector v)
+static inline zvect_index p_vect_capacity(const_vector const v)
 {
 	return ( v->cap_left + v->cap_right );
 }
 
 ZVECT_ALWAYSINLINE
-static inline zvect_index p_vect_size(cvector v)
+static inline zvect_index p_vect_size(const_vector const v)
 {
 	return ( v->end > v->begin ) ? ( v->end - v->begin ) : ( v->begin - v->end );
 }
 
-static inline void p_item_safewipe(ivector v, void *const item)
+static inline void p_item_safewipe(const_vector const v, void *const item)
 {
 	if (item != NULL) {
 		if (!(v->status & ZVS_CUST_WIPE_ON)) {
@@ -715,7 +752,7 @@ static inline zvect_retval p_usr_status(zvect_index flag_id)
 	}
 }
 
-bool vect_check_status(ivector v, zvect_index flag_id)
+bool vect_check_status(const_vector const v, zvect_index flag_id)
 {
 	return (v->status >> flag_id) & 1U;
 }
@@ -1094,6 +1131,10 @@ static zvect_retval p_vect_put_at(ivector v, const void *value,
 // inline implementation for all add(s):
 static inline zvect_retval p_vect_add_at(ivector v, const void *value,
                                 	 const zvect_index i) {
+	// Check if the item is NULL:
+	if (value == NULL)
+		return 0;
+
 	zvect_index idx = i;
 
 	// Get vector size:
@@ -1132,7 +1173,7 @@ static inline zvect_retval p_vect_add_at(ivector v, const void *value,
 				return ZVERR_OUTOFMEM;
 			}
 #else
-			v->data[base] = (void *)malloc(v->data_size);
+			v->data[base] = malloc(v->data_size);
 			if (v->data[base] == NULL)
 				return ZVERR_OUTOFMEM;
 #endif
@@ -1147,7 +1188,7 @@ static inline zvect_retval p_vect_add_at(ivector v, const void *value,
 			return ZVERR_OUTOFMEM;
 		}
 #else
-		v->data[base + vsize] = (void *)malloc(v->data_size);
+		v->data[base + vsize] = malloc(v->data_size);
 		if (v->data[base + vsize] == NULL)
 			return ZVERR_OUTOFMEM;
 #endif
@@ -1520,27 +1561,27 @@ void vect_shrink(ivector v)
 /*---------------------------------------------------------------------------*/
 // Vector Structural Information report:
 
-bool vect_is_empty(cvector v)
+bool vect_is_empty(const_vector const v)
 {
 	return !p_vect_check(v) ? (p_vect_size(v) == 0) : (bool)ZVERR_VECTUNDEF;
 }
 
-zvect_index vect_size(cvector v)
+zvect_index vect_size(const_vector const v)
 {
 	return !p_vect_check(v) ? p_vect_size(v) : 0;
 }
 
-zvect_index vect_max_size(cvector v)
+zvect_index vect_max_size(const_vector const v)
 {
 	return (!p_vect_check(v) ? zvect_index_max : 0);
 }
 
-void *vect_begin(cvector v)
+void *vect_begin(const_vector const v)
 {
 	return !p_vect_check(v) ? v->data[v->begin] : NULL;
 }
 
-void *vect_end(cvector v)
+void *vect_end(const_vector const v)
 {
 	return !p_vect_check(v) ? v->data[v->end] : NULL;
 }
@@ -1684,7 +1725,7 @@ zvect_retval vect_sem_post(ivector v) {
 #	if !defined(macOS)
 	return sem_post(&(v->semaphore));
 #	else
-	return dispatch_semaphore_signal(v->semaphore);
+	return (zvect_retval)dispatch_semaphore_signal(v->semaphore);
 #	endif
 }
 
@@ -1884,7 +1925,7 @@ VECT_ADD_FRONT_JOB_DONE:
 }
 
 // inline implementation for all get(s):
-static inline void *p_vect_get_at(ivector v, const zvect_index i) {
+static inline void *p_vect_get_at(const_vector const v, const zvect_index i) {
 	// Check if passed index is out of bounds:
 	if (i >= p_vect_size(v))
 		p_throw_error(ZVERR_IDXOUTOFBOUND, NULL);
@@ -1893,7 +1934,7 @@ static inline void *p_vect_get_at(ivector v, const zvect_index i) {
 	return v->data[v->begin + i];
 }
 
-void *vect_get(ivector v) {
+void *vect_get(const_vector const v) {
 	// check if the vector exists:
 	zvect_retval rval = p_vect_check(v);
 	if (!rval)
@@ -1904,7 +1945,7 @@ void *vect_get(ivector v) {
 	return NULL;
 }
 
-void *vect_get_at(ivector v, const zvect_index i) {
+void *vect_get_at(const_vector const v, const zvect_index i) {
 	// check if the vector exists:
 	zvect_retval rval = p_vect_check(v);
 	if (!rval)
@@ -1915,7 +1956,7 @@ void *vect_get_at(ivector v, const zvect_index i) {
 	return NULL;
 }
 
-void *vect_get_front(ivector v) {
+void *vect_get_front(const_vector const v) {
 	// check if the vector exists:
 	zvect_retval rval = p_vect_check(v);
 	if (!rval)
