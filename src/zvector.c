@@ -289,7 +289,7 @@ static void *safe_strncpy(const char * const str_src,
 	char tmp_dst[max_len];
 	tmp_dst[sizeof(tmp_dst) - 1] = 0;
 
-	strncpy(tmp_dst, str_src, sizeof(tmp_dst));
+	strncpy(tmp_dst, str_src, sizeof(tmp_dst) - 1);
 
 	tmp_dst[sizeof(tmp_dst) - 1] = 0;
 
@@ -298,7 +298,7 @@ static void *safe_strncpy(const char * const str_src,
 	{
 		log_msg(ZVLP_ERROR, "Error: %*i, %s\n", 8, -1000, "Out of memory!");
 	} else {
-		strncpy((char *)str_dst, tmp_dst, sizeof(tmp_dst));
+		strncpy((char *)str_dst, tmp_dst, sizeof(tmp_dst) - 1);
 		((char *)str_dst)[sizeof(tmp_dst)] = 0;
 	}
 	return str_dst;
@@ -1131,6 +1131,10 @@ static zvect_retval p_vect_put_at(ivector v, const void *value,
 // inline implementation for all add(s):
 static inline zvect_retval p_vect_add_at(ivector v, const void *value,
                                 	 const zvect_index i) {
+	// Check if the item is NULL:
+	if (value == NULL)
+		return 0;
+
 	zvect_index idx = i;
 
 	// Get vector size:
