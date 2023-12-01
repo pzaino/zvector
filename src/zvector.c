@@ -288,7 +288,7 @@ static void *safe_strncpy(const char * const str_src,
         void *str_dst = NULL;
         char tmp_dst[max_len];
         memset(tmp_dst, 0, max_len - 1);
-        memcpy(tmp_dst, str_src, max_len - 1);
+        strncpy(tmp_dst, str_src, max_len - 1);
         tmp_dst[max_len - 1] = 0;
 
         str_dst = malloc(sizeof(char) * (strlen(tmp_dst) + 1));
