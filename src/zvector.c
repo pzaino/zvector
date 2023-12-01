@@ -283,25 +283,23 @@ static size_t safe_strlen(const char *str, size_t max_len)
 }
 
 static void *safe_strncpy(const char * const str_src,
-			  size_t max_len)
+                          size_t max_len)
 {
-	void *str_dst = NULL;
-	char tmp_dst[max_len];
-	tmp_dst[sizeof(tmp_dst) - 1] = 0;
+        void *str_dst = NULL;
+        char tmp_dst[max_len];
+        memset(tmp_dst, 0, max_len - 1);
+        strncpy(tmp_dst, str_src, max_len - 1);
+        tmp_dst[max_len - 1] = 0;
 
-	strncpy(tmp_dst, str_src, sizeof(tmp_dst) - 1);
-
-	tmp_dst[sizeof(tmp_dst) - 1] = 0;
-
-	str_dst = malloc(sizeof(char *) * (sizeof(tmp_dst) + 1));
-	if ( str_dst == NULL )
-	{
-		log_msg(ZVLP_ERROR, "Error: %*i, %s\n", 8, -1000, "Out of memory!");
-	} else {
-		strncpy((char *)str_dst, tmp_dst, sizeof(tmp_dst) - 1);
-		((char *)str_dst)[sizeof(tmp_dst)] = 0;
-	}
-	return str_dst;
+        str_dst = malloc(sizeof(char) * (strlen(tmp_dst) + 1));
+        if ( str_dst == NULL )
+        {
+                log_msg(ZVLP_ERROR, "Error: %*i, %s\n", 8, -1000, "Out of memory!");
+        } else {
+                memcpy((char *)str_dst, tmp_dst, strlen(tmp_dst));
+                ((char *)str_dst)[strlen(tmp_dst) - 1] = 0;
+        }
+        return str_dst;
 }
 
 #if (ZVECT_COMPTYPE == 1) || (ZVECT_COMPTYPE == 3)
