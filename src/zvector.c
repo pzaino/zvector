@@ -288,16 +288,16 @@ static void *safe_strncpy(const char * const str_src,
         void *str_dst = NULL;
         char tmp_dst[max_len];
         memset(tmp_dst, 0, max_len - 1);
-        strncpy(tmp_dst, str_src, max_len - 1);
+        memcpy(tmp_dst, str_src, max_len - 1);
         tmp_dst[max_len - 1] = 0;
 
-        str_dst = malloc(sizeof(char) * (strlen(tmp_dst) + 1));
+        str_dst = malloc(sizeof(char) * (safe_strlen(tmp_dst, max_len) + 1));
         if ( str_dst == NULL )
         {
                 log_msg(ZVLP_ERROR, "Error: %*i, %s\n", 8, -1000, "Out of memory!");
         } else {
-                memcpy((char *)str_dst, tmp_dst, strlen(tmp_dst));
-                ((char *)str_dst)[strlen(tmp_dst) - 1] = 0;
+                memcpy((char *)str_dst, tmp_dst, safe_strlen(tmp_dst, max_len));
+                ((char *)str_dst)[safe_strlen(tmp_dst, max_len) - 1] = 0;
         }
         return str_dst;
 }
