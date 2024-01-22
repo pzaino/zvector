@@ -6,3 +6,8 @@ updates: []
 # not use any package manager or third-party libraries. Therefore,
 # Dependabot is not applicable, and this file is present to comply
 # with security requirements.
+
+         - package-ecosystem: github-actions
+           directory: /
+           schedule:
+             interval: daily
