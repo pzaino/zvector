@@ -129,13 +129,23 @@ void vect_set_wipefunct(vector const v, void (*f1)(const void *item, size_t size
 bool vect_is_empty(const_vector const v);
 
 /*
+ * vect_get_last_error returns the last error code
+ * that occurred in the vector while performing an
+ * operation. If no error occurred it will return 0.
+ * If an error occurred it will return a negative
+ * value that corresponds to the error code. You can
+ * use the ZVECT_ERR enum to check the error code.
+ */
+int vect_get_last_error(const_vector const v);
+
+/*
  * vect_size returns the actual size (the number of)
  * USED slots in the vector storage.
  */
 zvect_index vect_size(const_vector const v);
 
 /*
- * vect_size returns the maximum size (the max number of)
+ * vect_max_size returns the maximum size (the max number of)
  * slots in the vector storage.
  */
 zvect_index vect_max_size(const_vector const v);
@@ -233,9 +243,9 @@ zvect_retval vect_send_signal(const vector v);
 
 zvect_retval vect_broadcast_signal(const vector v);
 
-zvect_retval vect_sem_wait(const vector v);
+zvect_retptr vect_sem_wait(const vector v);
 
-zvect_retval vect_sem_post(const vector v);
+zvect_retptr vect_sem_post(const vector v);
 
 #endif  // ( ZVECT_THREAD_SAFE == 1 )
 
@@ -307,7 +317,7 @@ void vect_add_front(vector const v, const void *item);
 /*
  * vect_get returns an item from the specified vector
  *
- * vect_get(v)          will  return  the  ast element in
+ * vect_get(v)          will  return  the last element in
  *                      the v vector (but will not remove
  *                      the  element  as  it  happens  in
  *                      vect_pop(v)).
@@ -491,13 +501,12 @@ void vect_qsort(vector const v, int (*compare_func)(const void *, const void*),
 
 
 /*
- * vect_bsearch is a function that allows to perform
- * a binary  search over the vector we pass to it to
- * find the item "key" using the comparison function
- * "f1".
+ * vect_bsearch is a function that performs a binary
+ * search over the vector we pass to it, to find the
+ * item "key" using the comparison function "f1".
  *
  * The specific algorithm used to implement vect_bsearch
- * if my own re-implementation of the Adaptive Binary
+ * is my own re-implementation of the Adaptive Binary
  * Search algorithm (from Igor van den Hoven) which has
  * some improvements over the original one (look at the
  * sources for more details).
@@ -511,12 +520,12 @@ void vect_qsort(vector const v, int (*compare_func)(const void *, const void*),
 bool vect_bsearch(vector const v, const void *key, int (*f1)(const void *, const void *), zvect_index *item_index);
 
 /*
- * vect_lsearch is a function that allows to perform
- * traditional linear search over an ordered or not
+ * vect_lsearch is a function that performs a
+ * traditional linear search over an ordered or non
  * ordered vector. If the vector size is a multiple of
- * 2 the fuction optimize the traditional loop using
+ * 2, the fuction optimizes the traditional loop using
  * 4 unrolled consecutive searches, while if the vector
- * size is odd it uses traditional loop (for now).
+ * size is odd, it uses traditional loop (for now).
  *
  * It finds the item "key" using the comparison function
  * "f1", which has to be provided by the user as a pointer
@@ -617,9 +626,9 @@ void vect_apply(vector const v,
  * }
  */
 #if !defined(ZVECT_COOPERATIVE)
-void vect_apply_if(vector const v1, vector const v2, void (*f1)(void *), bool (*f2)(void *, void *));
+void vect_apply_if(vector const v1, const_vector const v2, void (*f1)(void *), bool (*f2)(void *, void *));
 #else
-void vect_apply_if(vector const v1, vector const v2,
+void vect_apply_if(vector const v1, const_vector const v2,
 		   void (*f1)(void *),
 		   bool (*f2)(void *, void *),
 		   cmt_state const state,

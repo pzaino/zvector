@@ -111,6 +111,7 @@
 		"norcroftc",
 		"PATRELEASE",
 		"RACECOND",
+		"retptr",
 		"rndstr",
 		"safewipe",
 		"TINYC",
