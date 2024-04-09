@@ -48,6 +48,10 @@ typedef uint32_t zvect_index;
 // attributes, like 1 is generally true
 typedef int32_t zvect_retval;
 
+// Default vector return type for
+// pointers.
+typedef uintptr_t zvect_retptr;
+
 // Default vector storage size
 // This will be used when the user
 // specifies 0 (zero) as data type
@@ -80,6 +84,13 @@ typedef int32_t zvect_retval;
 
 // Enable/Disable SFMD Extensions:
 #define ZVECT_SFMD_EXTENSIONS 1
+
+// Enable/Disable ZVector own error handling:
+#define ZVECT_HANDLE_ERRORS 0
+// Please note: If you disable ZVector error handling
+// you will need to handle errors yourself, by using
+// vect_get_last_error(v) function. You can use the
+// ZVECT_ERR enum to identify the error.
 
 // If you are using ZVector on a system
 // that supports cooperative multitasking
