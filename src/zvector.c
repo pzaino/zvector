@@ -2391,11 +2391,45 @@ void vect_swap_range(ivector v, const zvect_index s1, const zvect_index e1,
 	}
 
 	// Let's swap items:
-	register zvect_index i;
-	for (register zvect_index j = s1; j <= (s1 + end); j++) {
-		i = j - s1;
-		void *temp = v->data[v->begin + j];
-		v->data[v->begin + j] = v->data[v->begin + (s2 + i)];
+	register zvect_index i = 0;
+	register zvect_index j = s1;
+	// Let's check if we can unroll the loop:
+	if ((s1 + end) > 4) {
+		// Nice we can unroll the loop!
+		for (j = s1; j <= (s1 + end)-4; j += 4) {
+			i = j - s1;
+#if (COMPILER == COMPILER_GCC)
+			__builtin_prefetch(v->data[v->begin + j + 4]);
+			#pragma GCC unroll 4
+			for (register zvect_index k = 0; k < 4; k++) {
+				void *temp = v->data[v->begin + j + k];
+				v->data[v->begin + j + k] = v->data[v->begin + (s2 + i + k)];
+				v->data[v->begin + (s2 + i + k)] = temp;
+			}
+#else
+			void *temp = v->data[v->begin + j];
+			v->data[v->begin + j] = v->data[v->begin + (s2 + i)];
+			v->data[v->begin + (s2 + i)] = temp;
+
+			temp = v->data[v->begin + j + 1];
+			v->data[v->begin + j + 1] = v->data[v->begin + (s2 + i + 1)];
+			v->data[v->begin + (s2 + i + 1)] = temp;
+
+			temp = v->data[v->begin + j + 2];
+			v->data[v->begin + j + 2] = v->data[v->begin + (s2 + i + 2)];
+			v->data[v->begin + (s2 + i + 2)] = temp;
+
+			temp = v->data[v->begin + j + 3];
+			v->data[v->begin + j + 3] = v->data[v->begin + (s2 + i + 3)];
+			v->data[v->begin + (s2 + i + 3)] = temp;
+#endif
+		}
+	}
+	// let's process the rest of the items:
+	for (register zvect_index j2 = j; j2 <= (s1 + end); j2++) {
+		i = j2 - s1;
+		void *temp = v->data[v->begin + j2];
+		v->data[v->begin + j2] = v->data[v->begin + (s2 + i)];
 		v->data[v->begin + (s2 + i)] = temp;
 	}
 
@@ -3229,19 +3263,27 @@ void vect_apply(ivector v, void (*f)(void *)) {
 
 	// Process the vector:
 	// Check if we can do loop unrolling
-	if ((p_vect_size(v) & 3) == 0) {
+	zvect_index vsize = p_vect_size(v);
+	register zvect_index i = 0;
+	if (vsize > 4) {
 		// Nice, we can do some unrolled apply:
-		for (register zvect_index i = 0; i < p_vect_size(v); i+=4)
+		for (i = 0; i <= (vsize - 4); i+=4)
 		{
+#if (COMPILER == COMPILER_GCC)
+			#pragma GCC unroll 4
+			for (zvect_index x=i; x < i + 4; x++)
+				(*f)(v->data[v->begin + x]);
+#else
 			(*f)(v->data[v->begin + i]);
 			(*f)(v->data[v->begin + (i+1)]);
 			(*f)(v->data[v->begin + (i+2)]);
 			(*f)(v->data[v->begin + (i+3)]);
+#endif
 		}
-	} else {
-		for (register zvect_index i = p_vect_size(v); i--;)
-			(*f)(v->data[v->begin + i]);
 	}
+	// Cleanup loop for remaining elements if any
+	for (; i < vsize; i++)
+		(*f)(v->data[v->begin + i]);
 
 //VECT_APPLY_DONE_PROCESSING:
 #if (ZVECT_THREAD_SAFE == 1)
@@ -3387,7 +3429,38 @@ void vect_apply_if(ivector v1, const_vector const v2, void (*f1)(void *),
 	}
 
 	// Process vectors:
-	for (register zvect_index i = p_vect_size(v1); i--;)
+	//for (register zvect_index i = p_vect_size(v1); i--;)
+	//	if ((*f2)(v1->data[v1->begin + i], v2->data[v2->begin + i]))
+	//		(*f1)(v1->data[v1->begin + i]);
+	// Unrolled loop if vsize > 4
+	zvect_index vsize = p_vect_size(v1);
+	register zvect_index i = 0;
+	if (vsize > 4) {
+		// Nice, we can do some unrolled apply:
+		for (i = 0; i <= (vsize - 4); i+=4)
+		{
+#if (COMPILER == COMPILER_GCC)
+			#pragma GCC unroll 4
+			for (zvect_index x=i; x < i + 4; x++)
+				if ((*f2)(v1->data[v1->begin + x], v2->data[v2->begin + x]))
+					(*f1)(v1->data[v1->begin + x]);
+#else
+			if ((*f2)(v1->data[v1->begin + i], v2->data[v2->begin + i]))
+				(*f1)(v1->data[v1->begin + i]);
+
+			if ((*f2)(v1->data[v1->begin + (i+1)], v2->data[v2->begin + (i+1)])
+				(*f1)(v1->data[v1->begin + (i+1)]);
+
+			if ((*f2)(v1->data[v1->begin + (i+2)], v2->data[v2->begin + (i+2)])
+				(*f1)(v1->data[v1->begin + (i+2)]);
+
+			if ((*f2)(v1->data[v1->begin + (i+3)], v2->data[v2->begin + (i+3)])
+				(*f1)(v1->data[v1->begin + (i+3)]);
+#endif
+		}
+	}
+	// Cleanup loop for remaining elements if any
+	for (; i < vsize; i++)
 		if ((*f2)(v1->data[v1->begin + i], v2->data[v2->begin + i]))
 			(*f1)(v1->data[v1->begin + i]);
 
